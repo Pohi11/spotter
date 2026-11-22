@@ -76,11 +76,14 @@ def train(
     val_set: ImageSet,
     hp: Hyperparams,
     on_epoch_end: Callable[[dict], None] | None = None,
+    augment: Callable[[torch.Tensor, torch.Generator], torch.Tensor] | None = None,
 ) -> TrainResult:
     """Train on train_set, choose the best epoch on val_set, and load its weights.
 
-    The holdout set is deliberately not a parameter.
+    The holdout set is deliberately not a parameter. `augment` replaces the default
+    random flips (retraining adds degradations on top of them).
     """
+    augment = augment or _augment
     torch.manual_seed(hp.seed)
     g = torch.Generator().manual_seed(hp.seed)
     opt = torch.optim.AdamW(model.parameters(), lr=hp.learning_rate, weight_decay=hp.weight_decay)
@@ -101,7 +104,7 @@ def train(
         total_loss = 0.0
         for i in range(0, len(perm), hp.batch_size):
             x, y = train_set.batch(perm[i : i + hp.batch_size])
-            logits = model(normalize(_augment(x, g)))
+            logits = model(normalize(augment(x, g)))
             loss = loss_fn(logits, y)
             opt.zero_grad()
             loss.backward()

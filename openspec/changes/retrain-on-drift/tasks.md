@@ -6,9 +6,9 @@
 
 ## 2. Retraining
 
-- [ ] 2.1 `retrain.augment` with degradations (`test_retrain.py`: probability 0, probability 1, same seed).
-- [ ] 2.2 Clean and degraded holdout evaluation; publish, register, validate, shadow (`test_retrain.py` with a fake registry: accurate enough, below the floor, metrics and metadata).
-- [ ] 2.3 `spotter-retrain` CLI and watch mode (`test_retrain_watch.py` against real NATS: two events, failed run).
+- [x] 2.1 `retrain.augment` with degradations (`test_retrain.py`: probability 0, probability 1, same seed).
+- [x] 2.2 Clean and degraded holdout evaluation; publish, register, validate, shadow (`test_retrain.py` with a fake registry: accurate enough, below the floor, metrics and metadata).
+- [x] 2.3 `spotter-retrain` CLI and watch mode (`test_retrain_watch.py` against real NATS: two events, failed run).
 
 ## 3. Packaging and real run
 
