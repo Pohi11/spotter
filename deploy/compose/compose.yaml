@@ -60,12 +60,12 @@ services:
       - "4317:4317"
       - "16686:16686"
 
-  # Metrics: UI on http://localhost:9090; scrapes the services on the host.
+  # Metrics: UI on http://localhost:9099 (host port 9090 is the registry's gRPC); scrapes the services on the host.
   prometheus:
     image: prom/prometheus:v3.16.0
     command: ["--config.file=/etc/prometheus/prometheus.yml"]
     ports:
-      - "9090:9090"
+      - "9099:9090"
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
     extra_hosts:
