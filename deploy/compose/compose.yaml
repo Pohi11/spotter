@@ -1,0 +1,59 @@
+# Runtime dependencies for local development (decision record 0004).
+# Services run on the host. From the repository root:
+#   docker compose --env-file .env -f deploy/compose/compose.yaml up -d
+name: spotter
+
+services:
+  postgres:
+    image: postgres:18
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      # Postgres 18+ keeps data under /var/lib/postgresql/<major>/.
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+  nats:
+    image: nats:2.15.3-alpine
+    command: ["--jetstream", "--store_dir=/data", "--http_port=8222"]
+    ports:
+      - "4222:4222" # clients
+      - "8222:8222" # monitoring: /healthz, /varz, /jsz
+    volumes:
+      - natsdata:/data
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8222/healthz?js-enabled-only=true"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+  seaweedfs:
+    image: chrislusf/seaweedfs:4.54
+    environment:
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY}
+      S3_SECRET_KEY: ${S3_SECRET_KEY}
+    entrypoint: ["/bin/sh", "/entrypoint-spotter.sh"]
+    ports:
+      - "8333:8333" # S3 API
+    volumes:
+      - ./seaweedfs-entrypoint.sh:/entrypoint-spotter.sh:ro
+      - seaweeddata:/data
+    healthcheck:
+      # 127.0.0.1, not localhost: localhost resolves to IPv6 here and SeaweedFS listens on IPv4 only.
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8333/healthz"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+volumes:
+  pgdata:
+  natsdata:
+  seaweeddata:

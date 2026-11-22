@@ -1,0 +1,8 @@
+# Local runtime dependencies (Postgres, NATS JetStream, SeaweedFS). From the repository root:
+#   docker compose up -d
+# The definitions live in deploy/compose/ next to the rest of the deployment code (decision record 0002).
+name: spotter
+
+include:
+  - path: deploy/compose/compose.yaml
+    env_file: .env
