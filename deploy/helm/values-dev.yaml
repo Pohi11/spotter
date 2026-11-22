@@ -1,0 +1,8 @@
+# Overrides for local development with Tilt on k3d (decision record 0014).
+worker:
+  autoscaling:
+    enabled: true
+    minReplicas: 1
+    maxReplicas: 4
+    lagThreshold: 20
+    scaleDownStabilizationSeconds: 30

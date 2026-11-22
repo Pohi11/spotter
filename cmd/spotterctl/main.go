@@ -5,6 +5,8 @@
 //	spotterctl ping  [-nats-url URL] [-timeout 2s]
 //	spotterctl setup [-nats-url URL]
 //	spotterctl infer [-gateway localhost:9091] [-model eurosat-classifier] [-timeout 30s] IMAGE...
+//	spotterctl wait  [-timeout 5m] HOST:PORT...
+//	spotterctl smoke [-gateway-url URL] [-registry-url URL] [-nats-url URL] [-timeout 2m]
 package main
 
 import (
@@ -25,7 +27,7 @@ import (
 	"github.com/Pohi11/spotter/internal/natsping"
 )
 
-const usage = "usage: spotterctl ping|setup [flags] | spotterctl infer [flags] IMAGE..."
+const usage = "usage: spotterctl ping|setup|smoke [flags] | spotterctl infer [flags] IMAGE... | spotterctl wait [flags] HOST:PORT..."
 
 func main() {
 	if err := run(os.Args[1:]); err != nil {
@@ -45,6 +47,10 @@ func run(args []string) error {
 		return infer(args[1:])
 	case "setup":
 		return setup(args[1:])
+	case "wait":
+		return wait(args[1:])
+	case "smoke":
+		return smoke(args[1:])
 	default:
 		return errors.New(usage)
 	}

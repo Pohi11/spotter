@@ -1,0 +1,5 @@
+# Overrides for the CI install on kind (decision record 0014): KEDA is installed first, so
+# the ScaledObject is exercised too.
+worker:
+  autoscaling:
+    enabled: true

@@ -162,7 +162,7 @@ A new version earns production on real traffic, through gates that are plain cod
 
 - **Shadow:** while a version is in `shadow`, the worker classifies every job with it too, after the job is acknowledged, and publishes `ShadowCompared` (both labels, agreement, both model times) on `inference.shadow.<model>`. Results and completion events come from production only, and a failing shadow model never changes a job's outcome.
 - **Statistics:** the registry consumes the comparisons and stores one row per job, so a redelivered event is counted once.
-- **Gates:** `accuracy` (holdout ≥ production − 0.01), `shadow_agreement` (≥ 200 comparisons, ≥ 95% agreement), `shadow_latency` (mean ≤ 25 ms), and `approval` (≥ 1 recorded approval with name and reason). `GET /v1/versions/{id}/gates` shows each with its reason.
+- **Gates:** `accuracy` (holdout ≥ production − 0.01), `shadow_agreement` (≥ 200 comparisons, ≥ 95% agreement), `shadow_latency` (mean ≤ 25 ms), and `approval` (≥ 1 recorded approval with name and reason). `GET /v1/versions/{id}/gates` shows each with its reason. A model's first version has nothing to be compared with, so its accuracy and shadow gates pass and say so, and the approval decides ([0015](docs/decisions/0015-first-promotion-without-shadow-evidence.md)).
 - **Atomic swap:** `POST /v1/versions/{id}:promote` retires the current production version and promotes the candidate in one transaction, with both history entries and both events. `POST /v1/models/{name}:rollback` marks production `rolled_back` and restores the version most recently retired from production, also in one transaction. There is never zero or two production versions, and the generic transition endpoint refuses `production`.
 
 Measured on the live stack ([report](benchmarks/2026-11-22-promotion-run.md)), shadowing fp32 v2 against int8 v3 in production:
@@ -174,6 +174,26 @@ Measured on the live stack ([report](benchmarks/2026-11-22-promotion-run.md)), s
 The run also exposed a worker problem: with two ONNX Runtime sessions, the default per-core thread pools busy-waited across 16 cores and slowed every service on the host to 7.5 jobs/s. Single-threaded models without spinning fixed it (43 jobs/s while shadowing, 63–65 without).
 
 Specs: [model-promotion](openspec/specs/model-promotion/spec.md), [shadow-inference](openspec/specs/shadow-inference/spec.md).
+
+## Kubernetes
+
+One Helm chart, [`deploy/helm/spotter`](deploy/helm/spotter), declares the platform ([0014](docs/decisions/0014-helm-umbrella-chart-keda-scaling.md)): registry, gateway, monitor, and worker Deployments; Postgres and SeaweedFS StatefulSets; NATS with JetStream from the official chart, vendored so installs work offline; and an optional trainer Job.
+
+- **Two images:** one distroless image with every Go binary, one slim image with the Python workspace (CPU PyTorch). Both run as non-root users with read-only root filesystems.
+- **Credentials** are generated into a Secret at first install and kept on upgrade; workloads read them only through `secretKeyRef`. A test renders the chart and fails if a credential shows up in a ConfigMap or a literal value.
+- **Health and shutdown:** every container has probes and CPU/memory requests and limits; Go services get a grace period longer than their `SHUTDOWN_TIMEOUT`, and the worker's `MODEL_THREADS` follows its CPU limit. Init containers run `spotterctl wait` so services start after their dependencies listen.
+- **Autoscaling on backlog:** KEDA scales the worker on the lag of its JetStream consumer, not on CPU.
+- **Checked:** `helm test` runs `spotterctl smoke` (gateway and registry ready, a model registered and read back over REST, the worker answers a NATS ping). CI installs the chart into kind and runs it.
+
+Measured on k3d ([report](benchmarks/2026-11-22-kubernetes.md)):
+
+| Empty cluster → all ready (`tilt ci`) | Spike, 64 clients for 90 s | Scale up | Scale down |
+|---|---|---|---|
+| 7 min 29 s, 0 restarts | **188.7 jobs/s** with KEDA (1 → 3 workers) vs 78.3 with one worker; 0 failed, 0 lost | 3 workers ready 18 s after the spike started | back to 1 worker 18 s after the load ended |
+
+Installing into an empty cluster found two real bugs: the Go image's named user failed `runAsNonRoot`, and a model's first version could never be promoted, because the worker can't shadow without a production version ([0015](docs/decisions/0015-first-promotion-without-shadow-evidence.md)).
+
+Spec: [platform-deployment](openspec/specs/platform-deployment/spec.md).
 
 ## Architecture
 
@@ -194,6 +214,18 @@ Spec-driven, one change at a time:
 ## Run it
 
 Requirements: Docker Desktop, Go 1.27+, [uv](https://docs.astral.sh/uv/), and [buf](https://buf.build/) (only to regenerate code).
+
+**On Kubernetes** (also needs [k3d](https://k3d.io/), [Tilt](https://tilt.dev/), Helm, and kubectl):
+
+```bash
+k3d cluster create --config deploy/k3d/cluster.yaml   # one node plus a local image registry
+tilt up                                               # builds images, installs KEDA and the chart
+helm test spotter -n spotter                          # end-to-end smoke test
+```
+
+k3d makes the new cluster your current kube context unless you pass `--kubeconfig-switch-context=false` (then run `tilt up --context k3d-spotter`). Tilt forwards the gateway to `localhost:8080` (REST) and `:9091` (gRPC), and NATS to `:4222`.
+
+**On the host,** with only the dependencies in Docker:
 
 ```bash
 cp .env.example .env

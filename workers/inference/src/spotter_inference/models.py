@@ -73,6 +73,7 @@ def _pytorch(data: bytes) -> Predict:
 def _onnx(data: bytes) -> Predict:
     import onnxruntime as ort
 
+    ort.disable_telemetry_events()  # no outbound telemetry from a disconnected deployment
     opts = ort.SessionOptions()
     opts.intra_op_num_threads = _threads
     opts.inter_op_num_threads = 1

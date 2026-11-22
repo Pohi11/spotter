@@ -1,0 +1,21 @@
+# Local Kubernetes for development (decision record 0014):
+#   k3d cluster create --config deploy/k3d/cluster.yaml && tilt up
+# The cluster gets a local image registry that Tilt finds on its own and pushes builds to.
+apiVersion: k3d.io/v1alpha5
+kind: Simple
+metadata:
+  name: spotter
+servers: 1
+agents: 0
+image: rancher/k3s:v1.35.5-k3s1
+registries:
+  create:
+    name: spotter-registry.localhost
+    host: "127.0.0.1"
+    hostPort: "5005"
+options:
+  k3s:
+    extraArgs:
+      # No ingress yet; Tilt port-forwards the gateway.
+      - arg: --disable=traefik
+        nodeFilters: ["server:*"]

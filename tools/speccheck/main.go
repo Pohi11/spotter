@@ -3,7 +3,7 @@
 //
 // Usage:
 //
-//	speccheck -openspec openspec -go go-test.json -junit python-test.xml
+//	speccheck -openspec openspec -go go-test.json[,more.json] -junit python-test.xml
 //
 // Either report may be omitted; every report given is read and joined.
 package main
@@ -13,11 +13,12 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 )
 
 func main() {
 	specDir := flag.String("openspec", "openspec", "OpenSpec directory")
-	goReport := flag.String("go", "", "`go test -json` report")
+	goReport := flag.String("go", "", "`go test -json` reports, comma-separated")
 	junitReport := flag.String("junit", "", "JUnit XML report (pytest --junitxml)")
 	flag.Parse()
 	if *goReport == "" && *junitReport == "" {
@@ -28,11 +29,17 @@ func main() {
 	if err != nil {
 		fail(err)
 	}
-	var links []Link
-	for _, src := range []struct {
+	type source struct {
 		path string
 		read func(io.Reader) ([]Link, error)
-	}{{*goReport, ReadGoLinks}, {*junitReport, ReadJUnitLinks}} {
+	}
+	var sources []source
+	for _, p := range strings.Split(*goReport, ",") {
+		sources = append(sources, source{p, ReadGoLinks})
+	}
+	sources = append(sources, source{*junitReport, ReadJUnitLinks})
+	var links []Link
+	for _, src := range sources {
 		if src.path == "" {
 			continue
 		}

@@ -1,0 +1,20 @@
+# Build context for deploy/docker/*.Dockerfile: sources only.
+.git
+.github
+.venv
+**/__pycache__
+**/.pytest_cache
+**/.ruff_cache
+node_modules
+data
+benchmarks
+docs
+openspec
+deploy
+*.json
+*.xml
+.env
+.env.*
+CLAUDE.md
+PLAN.md
+Tiltfile

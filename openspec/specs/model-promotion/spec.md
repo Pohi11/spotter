@@ -17,19 +17,26 @@ The registry SHALL record each `ShadowCompared` event against its shadow version
 - **THEN** its statistics report 3 comparisons, 2 agreeing, and a mean latency of 4 ms
 
 ### Requirement: Promotion gates are evaluated as code
-For a candidate in `shadow`, the gates SHALL be: `accuracy` (holdout accuracy at least production's minus a tolerance, default 0.01; passes if there is no production version), `shadow_agreement` (at least 200 comparisons and an agreement rate of at least 0.95), `shadow_latency` (mean shadow latency at most a budget, default 25 ms), and `approval` (at least one approval recorded for the version). Each gate SHALL report whether it passed and why.
+For a candidate in `shadow`, the gates SHALL be: `accuracy` (holdout accuracy at least production's minus a tolerance, default 0.01), `shadow_agreement` (at least 200 comparisons and an agreement rate of at least 0.95), `shadow_latency` (mean shadow latency at most a budget, default 25 ms), and `approval` (at least one approval recorded for the version). Each gate SHALL report whether it passed and why.
 
 #### Scenario: All gates pass
 - **WHEN** the candidate's accuracy is 0.9657 against production's 0.9654, it has 500 comparisons with 497 agreeing at a mean of 3 ms, and it has an approval
 - **THEN** every gate passes
 
 #### Scenario: Too few comparisons
-- **WHEN** the candidate has 120 comparisons, all agreeing
+- **WHEN** a production version exists and the candidate has 120 comparisons, all agreeing
 - **THEN** the `shadow_agreement` gate fails with a reason stating 120 of at least 200
 
 #### Scenario: No approval
 - **WHEN** every other gate passes and no approval is recorded
 - **THEN** the `approval` gate fails
+
+### Requirement: A model's first version is promoted on approval
+When the model has no production version, the `accuracy`, `shadow_agreement`, and `shadow_latency` gates SHALL pass with a reason saying there is no production version to compare with, so that the approval decides.
+
+#### Scenario: First version of a model
+- **WHEN** the model has no production version and the candidate has no comparisons
+- **THEN** only the `approval` gate can fail, and the shadow gates say there is no production version to compare with
 
 ### Requirement: Approvals are recorded
 Approving a version SHALL record the approver's name, the reason, and the time. The approver and reason SHALL be non-blank, and only a version in `shadow` SHALL be approvable.

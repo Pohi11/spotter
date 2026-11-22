@@ -43,7 +43,7 @@ func start() (Store, error) {
 			store = Store{Endpoint: ep, AccessKey: os.Getenv("S3_ACCESS_KEY"), SecretKey: os.Getenv("S3_SECRET_KEY"), Region: "us-east-1"}
 			return
 		}
-		entrypoint, err := repoFile("deploy/compose/seaweedfs-entrypoint.sh")
+		entrypoint, err := repoFile("deploy/helm/spotter/files/seaweedfs-entrypoint.sh")
 		if err != nil {
 			initErr = err
 			return
