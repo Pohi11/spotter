@@ -718,6 +718,124 @@ func (x *InferenceCompleted) GetCompletedAt() *timestamppb.Timestamp {
 	return nil
 }
 
+// Published by a worker on inference.shadow.<model_name>, message id shadow-<job_id>, when a
+// job was also classified by the shadow version. Only production's result is returned.
+type ShadowCompared struct {
+	state               protoimpl.MessageState `protogen:"open.v1"`
+	JobId               string                 `protobuf:"bytes,1,opt,name=job_id,json=jobId,proto3" json:"job_id,omitempty"`
+	ModelName           string                 `protobuf:"bytes,2,opt,name=model_name,json=modelName,proto3" json:"model_name,omitempty"`
+	ProductionVersionId string                 `protobuf:"bytes,3,opt,name=production_version_id,json=productionVersionId,proto3" json:"production_version_id,omitempty"`
+	ShadowVersionId     string                 `protobuf:"bytes,4,opt,name=shadow_version_id,json=shadowVersionId,proto3" json:"shadow_version_id,omitempty"`
+	ProductionLabel     string                 `protobuf:"bytes,5,opt,name=production_label,json=productionLabel,proto3" json:"production_label,omitempty"`
+	ShadowLabel         string                 `protobuf:"bytes,6,opt,name=shadow_label,json=shadowLabel,proto3" json:"shadow_label,omitempty"`
+	Agree               bool                   `protobuf:"varint,7,opt,name=agree,proto3" json:"agree,omitempty"`
+	ProductionMs        float32                `protobuf:"fixed32,8,opt,name=production_ms,json=productionMs,proto3" json:"production_ms,omitempty"`
+	ShadowMs            float32                `protobuf:"fixed32,9,opt,name=shadow_ms,json=shadowMs,proto3" json:"shadow_ms,omitempty"`
+	ComparedAt          *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=compared_at,json=comparedAt,proto3" json:"compared_at,omitempty"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
+}
+
+func (x *ShadowCompared) Reset() {
+	*x = ShadowCompared{}
+	mi := &file_spotter_v1_inference_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ShadowCompared) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ShadowCompared) ProtoMessage() {}
+
+func (x *ShadowCompared) ProtoReflect() protoreflect.Message {
+	mi := &file_spotter_v1_inference_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ShadowCompared.ProtoReflect.Descriptor instead.
+func (*ShadowCompared) Descriptor() ([]byte, []int) {
+	return file_spotter_v1_inference_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *ShadowCompared) GetJobId() string {
+	if x != nil {
+		return x.JobId
+	}
+	return ""
+}
+
+func (x *ShadowCompared) GetModelName() string {
+	if x != nil {
+		return x.ModelName
+	}
+	return ""
+}
+
+func (x *ShadowCompared) GetProductionVersionId() string {
+	if x != nil {
+		return x.ProductionVersionId
+	}
+	return ""
+}
+
+func (x *ShadowCompared) GetShadowVersionId() string {
+	if x != nil {
+		return x.ShadowVersionId
+	}
+	return ""
+}
+
+func (x *ShadowCompared) GetProductionLabel() string {
+	if x != nil {
+		return x.ProductionLabel
+	}
+	return ""
+}
+
+func (x *ShadowCompared) GetShadowLabel() string {
+	if x != nil {
+		return x.ShadowLabel
+	}
+	return ""
+}
+
+func (x *ShadowCompared) GetAgree() bool {
+	if x != nil {
+		return x.Agree
+	}
+	return false
+}
+
+func (x *ShadowCompared) GetProductionMs() float32 {
+	if x != nil {
+		return x.ProductionMs
+	}
+	return 0
+}
+
+func (x *ShadowCompared) GetShadowMs() float32 {
+	if x != nil {
+		return x.ShadowMs
+	}
+	return 0
+}
+
+func (x *ShadowCompared) GetComparedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ComparedAt
+	}
+	return nil
+}
+
 // Published by a worker on inference.failed.<model_name> when a job is dead-lettered.
 type InferenceFailed struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -733,7 +851,7 @@ type InferenceFailed struct {
 
 func (x *InferenceFailed) Reset() {
 	*x = InferenceFailed{}
-	mi := &file_spotter_v1_inference_proto_msgTypes[10]
+	mi := &file_spotter_v1_inference_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -745,7 +863,7 @@ func (x *InferenceFailed) String() string {
 func (*InferenceFailed) ProtoMessage() {}
 
 func (x *InferenceFailed) ProtoReflect() protoreflect.Message {
-	mi := &file_spotter_v1_inference_proto_msgTypes[10]
+	mi := &file_spotter_v1_inference_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -758,7 +876,7 @@ func (x *InferenceFailed) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use InferenceFailed.ProtoReflect.Descriptor instead.
 func (*InferenceFailed) Descriptor() ([]byte, []int) {
-	return file_spotter_v1_inference_proto_rawDescGZIP(), []int{10}
+	return file_spotter_v1_inference_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *InferenceFailed) GetJobId() string {
@@ -862,7 +980,21 @@ const file_spotter_v1_inference_proto_rawDesc = "" +
 	"\vinput_stats\x18\x04 \x01(\v2\x16.spotter.v1.InputStatsR\n" +
 	"inputStats\x12!\n" +
 	"\finference_ms\x18\x05 \x01(\x02R\vinferenceMs\x12=\n" +
-	"\fcompleted_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\vcompletedAt\"\xb8\x01\n" +
+	"\fcompleted_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\vcompletedAt\"\x89\x03\n" +
+	"\x0eShadowCompared\x12\x15\n" +
+	"\x06job_id\x18\x01 \x01(\tR\x05jobId\x12\x1d\n" +
+	"\n" +
+	"model_name\x18\x02 \x01(\tR\tmodelName\x122\n" +
+	"\x15production_version_id\x18\x03 \x01(\tR\x13productionVersionId\x12*\n" +
+	"\x11shadow_version_id\x18\x04 \x01(\tR\x0fshadowVersionId\x12)\n" +
+	"\x10production_label\x18\x05 \x01(\tR\x0fproductionLabel\x12!\n" +
+	"\fshadow_label\x18\x06 \x01(\tR\vshadowLabel\x12\x14\n" +
+	"\x05agree\x18\a \x01(\bR\x05agree\x12#\n" +
+	"\rproduction_ms\x18\b \x01(\x02R\fproductionMs\x12\x1b\n" +
+	"\tshadow_ms\x18\t \x01(\x02R\bshadowMs\x12;\n" +
+	"\vcompared_at\x18\n" +
+	" \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"comparedAt\"\xb8\x01\n" +
 	"\x0fInferenceFailed\x12\x15\n" +
 	"\x06job_id\x18\x01 \x01(\tR\x05jobId\x12\x1d\n" +
 	"\n" +
@@ -897,7 +1029,7 @@ func file_spotter_v1_inference_proto_rawDescGZIP() []byte {
 }
 
 var file_spotter_v1_inference_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_spotter_v1_inference_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
+var file_spotter_v1_inference_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_spotter_v1_inference_proto_goTypes = []any{
 	(JobStatus)(0),                  // 0: spotter.v1.JobStatus
 	(*ClassScore)(nil),              // 1: spotter.v1.ClassScore
@@ -910,31 +1042,33 @@ var file_spotter_v1_inference_proto_goTypes = []any{
 	(*InferenceRequested)(nil),      // 8: spotter.v1.InferenceRequested
 	(*InputStats)(nil),              // 9: spotter.v1.InputStats
 	(*InferenceCompleted)(nil),      // 10: spotter.v1.InferenceCompleted
-	(*InferenceFailed)(nil),         // 11: spotter.v1.InferenceFailed
-	(*timestamppb.Timestamp)(nil),   // 12: google.protobuf.Timestamp
+	(*ShadowCompared)(nil),          // 11: spotter.v1.ShadowCompared
+	(*InferenceFailed)(nil),         // 12: spotter.v1.InferenceFailed
+	(*timestamppb.Timestamp)(nil),   // 13: google.protobuf.Timestamp
 }
 var file_spotter_v1_inference_proto_depIdxs = []int32{
 	1,  // 0: spotter.v1.Prediction.scores:type_name -> spotter.v1.ClassScore
 	0,  // 1: spotter.v1.InferenceJob.status:type_name -> spotter.v1.JobStatus
 	2,  // 2: spotter.v1.InferenceJob.prediction:type_name -> spotter.v1.Prediction
-	12, // 3: spotter.v1.InferenceJob.submitted_at:type_name -> google.protobuf.Timestamp
-	12, // 4: spotter.v1.InferenceJob.completed_at:type_name -> google.protobuf.Timestamp
+	13, // 3: spotter.v1.InferenceJob.submitted_at:type_name -> google.protobuf.Timestamp
+	13, // 4: spotter.v1.InferenceJob.completed_at:type_name -> google.protobuf.Timestamp
 	9,  // 5: spotter.v1.InferenceJob.input_stats:type_name -> spotter.v1.InputStats
 	3,  // 6: spotter.v1.GetInferenceResponse.job:type_name -> spotter.v1.InferenceJob
-	12, // 7: spotter.v1.InferenceRequested.submitted_at:type_name -> google.protobuf.Timestamp
+	13, // 7: spotter.v1.InferenceRequested.submitted_at:type_name -> google.protobuf.Timestamp
 	2,  // 8: spotter.v1.InferenceCompleted.prediction:type_name -> spotter.v1.Prediction
 	9,  // 9: spotter.v1.InferenceCompleted.input_stats:type_name -> spotter.v1.InputStats
-	12, // 10: spotter.v1.InferenceCompleted.completed_at:type_name -> google.protobuf.Timestamp
-	12, // 11: spotter.v1.InferenceFailed.failed_at:type_name -> google.protobuf.Timestamp
-	4,  // 12: spotter.v1.InferenceService.SubmitInference:input_type -> spotter.v1.SubmitInferenceRequest
-	6,  // 13: spotter.v1.InferenceService.GetInference:input_type -> spotter.v1.GetInferenceRequest
-	5,  // 14: spotter.v1.InferenceService.SubmitInference:output_type -> spotter.v1.SubmitInferenceResponse
-	7,  // 15: spotter.v1.InferenceService.GetInference:output_type -> spotter.v1.GetInferenceResponse
-	14, // [14:16] is the sub-list for method output_type
-	12, // [12:14] is the sub-list for method input_type
-	12, // [12:12] is the sub-list for extension type_name
-	12, // [12:12] is the sub-list for extension extendee
-	0,  // [0:12] is the sub-list for field type_name
+	13, // 10: spotter.v1.InferenceCompleted.completed_at:type_name -> google.protobuf.Timestamp
+	13, // 11: spotter.v1.ShadowCompared.compared_at:type_name -> google.protobuf.Timestamp
+	13, // 12: spotter.v1.InferenceFailed.failed_at:type_name -> google.protobuf.Timestamp
+	4,  // 13: spotter.v1.InferenceService.SubmitInference:input_type -> spotter.v1.SubmitInferenceRequest
+	6,  // 14: spotter.v1.InferenceService.GetInference:input_type -> spotter.v1.GetInferenceRequest
+	5,  // 15: spotter.v1.InferenceService.SubmitInference:output_type -> spotter.v1.SubmitInferenceResponse
+	7,  // 16: spotter.v1.InferenceService.GetInference:output_type -> spotter.v1.GetInferenceResponse
+	15, // [15:17] is the sub-list for method output_type
+	13, // [13:15] is the sub-list for method input_type
+	13, // [13:13] is the sub-list for extension type_name
+	13, // [13:13] is the sub-list for extension extendee
+	0,  // [0:13] is the sub-list for field type_name
 }
 
 func init() { file_spotter_v1_inference_proto_init() }
@@ -948,7 +1082,7 @@ func file_spotter_v1_inference_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_spotter_v1_inference_proto_rawDesc), len(file_spotter_v1_inference_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   11,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

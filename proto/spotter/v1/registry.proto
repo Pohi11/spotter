@@ -52,6 +52,85 @@ service RegistryService {
   rpc GetVersionHistory(GetVersionHistoryRequest) returns (GetVersionHistoryResponse) {
     option (google.api.http) = {get: "/v1/versions/{version_id}/history"};
   }
+
+  // Records a person's approval of a shadow version.
+  rpc ApproveVersion(ApproveVersionRequest) returns (ApproveVersionResponse) {
+    option (google.api.http) = {
+      post: "/v1/versions/{version_id}:approve"
+      body: "*"
+    };
+  }
+
+  // Evaluates the promotion gates for a shadow version without changing anything.
+  rpc GetPromotionGates(GetPromotionGatesRequest) returns (GetPromotionGatesResponse) {
+    option (google.api.http) = {get: "/v1/versions/{version_id}/gates"};
+  }
+
+  // Promotes a shadow version whose gates all pass, retiring the current production
+  // version in the same transaction.
+  rpc PromoteVersion(PromoteVersionRequest) returns (PromoteVersionResponse) {
+    option (google.api.http) = {
+      post: "/v1/versions/{version_id}:promote"
+      body: "*"
+    };
+  }
+
+  // Marks the production version rolled back and restores the previous one atomically.
+  rpc RollbackModel(RollbackModelRequest) returns (RollbackModelResponse) {
+    option (google.api.http) = {
+      post: "/v1/models/{model_name}:rollback"
+      body: "*"
+    };
+  }
+}
+
+message Gate {
+  // accuracy, shadow_agreement, shadow_latency, or approval.
+  string name = 1;
+  bool passed = 2;
+  string detail = 3;
+}
+
+message ApproveVersionRequest {
+  string version_id = 1;
+  string approver = 2;
+  string reason = 3;
+}
+
+message ApproveVersionResponse {
+  string version_id = 1;
+  string approver = 2;
+  google.protobuf.Timestamp approved_at = 3;
+}
+
+message GetPromotionGatesRequest {
+  string version_id = 1;
+}
+
+message GetPromotionGatesResponse {
+  repeated Gate gates = 1;
+  bool all_passed = 2;
+}
+
+message PromoteVersionRequest {
+  string version_id = 1;
+  string reason = 2;
+}
+
+message PromoteVersionResponse {
+  ModelVersion promoted = 1;
+  // The previous production version, now retired; unset if there was none.
+  ModelVersion retired = 2;
+}
+
+message RollbackModelRequest {
+  string model_name = 1;
+  string reason = 2;
+}
+
+message RollbackModelResponse {
+  ModelVersion restored = 1;
+  ModelVersion rolled_back = 2;
 }
 
 message Model {

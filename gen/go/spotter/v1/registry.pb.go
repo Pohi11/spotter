@@ -23,6 +23,492 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type Gate struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// accuracy, shadow_agreement, shadow_latency, or approval.
+	Name          string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Passed        bool   `protobuf:"varint,2,opt,name=passed,proto3" json:"passed,omitempty"`
+	Detail        string `protobuf:"bytes,3,opt,name=detail,proto3" json:"detail,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Gate) Reset() {
+	*x = Gate{}
+	mi := &file_spotter_v1_registry_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Gate) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Gate) ProtoMessage() {}
+
+func (x *Gate) ProtoReflect() protoreflect.Message {
+	mi := &file_spotter_v1_registry_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Gate.ProtoReflect.Descriptor instead.
+func (*Gate) Descriptor() ([]byte, []int) {
+	return file_spotter_v1_registry_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *Gate) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *Gate) GetPassed() bool {
+	if x != nil {
+		return x.Passed
+	}
+	return false
+}
+
+func (x *Gate) GetDetail() string {
+	if x != nil {
+		return x.Detail
+	}
+	return ""
+}
+
+type ApproveVersionRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	VersionId     string                 `protobuf:"bytes,1,opt,name=version_id,json=versionId,proto3" json:"version_id,omitempty"`
+	Approver      string                 `protobuf:"bytes,2,opt,name=approver,proto3" json:"approver,omitempty"`
+	Reason        string                 `protobuf:"bytes,3,opt,name=reason,proto3" json:"reason,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ApproveVersionRequest) Reset() {
+	*x = ApproveVersionRequest{}
+	mi := &file_spotter_v1_registry_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ApproveVersionRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ApproveVersionRequest) ProtoMessage() {}
+
+func (x *ApproveVersionRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_spotter_v1_registry_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ApproveVersionRequest.ProtoReflect.Descriptor instead.
+func (*ApproveVersionRequest) Descriptor() ([]byte, []int) {
+	return file_spotter_v1_registry_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *ApproveVersionRequest) GetVersionId() string {
+	if x != nil {
+		return x.VersionId
+	}
+	return ""
+}
+
+func (x *ApproveVersionRequest) GetApprover() string {
+	if x != nil {
+		return x.Approver
+	}
+	return ""
+}
+
+func (x *ApproveVersionRequest) GetReason() string {
+	if x != nil {
+		return x.Reason
+	}
+	return ""
+}
+
+type ApproveVersionResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	VersionId     string                 `protobuf:"bytes,1,opt,name=version_id,json=versionId,proto3" json:"version_id,omitempty"`
+	Approver      string                 `protobuf:"bytes,2,opt,name=approver,proto3" json:"approver,omitempty"`
+	ApprovedAt    *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=approved_at,json=approvedAt,proto3" json:"approved_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ApproveVersionResponse) Reset() {
+	*x = ApproveVersionResponse{}
+	mi := &file_spotter_v1_registry_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ApproveVersionResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ApproveVersionResponse) ProtoMessage() {}
+
+func (x *ApproveVersionResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_spotter_v1_registry_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ApproveVersionResponse.ProtoReflect.Descriptor instead.
+func (*ApproveVersionResponse) Descriptor() ([]byte, []int) {
+	return file_spotter_v1_registry_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *ApproveVersionResponse) GetVersionId() string {
+	if x != nil {
+		return x.VersionId
+	}
+	return ""
+}
+
+func (x *ApproveVersionResponse) GetApprover() string {
+	if x != nil {
+		return x.Approver
+	}
+	return ""
+}
+
+func (x *ApproveVersionResponse) GetApprovedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ApprovedAt
+	}
+	return nil
+}
+
+type GetPromotionGatesRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	VersionId     string                 `protobuf:"bytes,1,opt,name=version_id,json=versionId,proto3" json:"version_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetPromotionGatesRequest) Reset() {
+	*x = GetPromotionGatesRequest{}
+	mi := &file_spotter_v1_registry_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetPromotionGatesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetPromotionGatesRequest) ProtoMessage() {}
+
+func (x *GetPromotionGatesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_spotter_v1_registry_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetPromotionGatesRequest.ProtoReflect.Descriptor instead.
+func (*GetPromotionGatesRequest) Descriptor() ([]byte, []int) {
+	return file_spotter_v1_registry_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *GetPromotionGatesRequest) GetVersionId() string {
+	if x != nil {
+		return x.VersionId
+	}
+	return ""
+}
+
+type GetPromotionGatesResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Gates         []*Gate                `protobuf:"bytes,1,rep,name=gates,proto3" json:"gates,omitempty"`
+	AllPassed     bool                   `protobuf:"varint,2,opt,name=all_passed,json=allPassed,proto3" json:"all_passed,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetPromotionGatesResponse) Reset() {
+	*x = GetPromotionGatesResponse{}
+	mi := &file_spotter_v1_registry_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetPromotionGatesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetPromotionGatesResponse) ProtoMessage() {}
+
+func (x *GetPromotionGatesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_spotter_v1_registry_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetPromotionGatesResponse.ProtoReflect.Descriptor instead.
+func (*GetPromotionGatesResponse) Descriptor() ([]byte, []int) {
+	return file_spotter_v1_registry_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *GetPromotionGatesResponse) GetGates() []*Gate {
+	if x != nil {
+		return x.Gates
+	}
+	return nil
+}
+
+func (x *GetPromotionGatesResponse) GetAllPassed() bool {
+	if x != nil {
+		return x.AllPassed
+	}
+	return false
+}
+
+type PromoteVersionRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	VersionId     string                 `protobuf:"bytes,1,opt,name=version_id,json=versionId,proto3" json:"version_id,omitempty"`
+	Reason        string                 `protobuf:"bytes,2,opt,name=reason,proto3" json:"reason,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PromoteVersionRequest) Reset() {
+	*x = PromoteVersionRequest{}
+	mi := &file_spotter_v1_registry_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PromoteVersionRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PromoteVersionRequest) ProtoMessage() {}
+
+func (x *PromoteVersionRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_spotter_v1_registry_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PromoteVersionRequest.ProtoReflect.Descriptor instead.
+func (*PromoteVersionRequest) Descriptor() ([]byte, []int) {
+	return file_spotter_v1_registry_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *PromoteVersionRequest) GetVersionId() string {
+	if x != nil {
+		return x.VersionId
+	}
+	return ""
+}
+
+func (x *PromoteVersionRequest) GetReason() string {
+	if x != nil {
+		return x.Reason
+	}
+	return ""
+}
+
+type PromoteVersionResponse struct {
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	Promoted *ModelVersion          `protobuf:"bytes,1,opt,name=promoted,proto3" json:"promoted,omitempty"`
+	// The previous production version, now retired; unset if there was none.
+	Retired       *ModelVersion `protobuf:"bytes,2,opt,name=retired,proto3" json:"retired,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PromoteVersionResponse) Reset() {
+	*x = PromoteVersionResponse{}
+	mi := &file_spotter_v1_registry_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PromoteVersionResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PromoteVersionResponse) ProtoMessage() {}
+
+func (x *PromoteVersionResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_spotter_v1_registry_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PromoteVersionResponse.ProtoReflect.Descriptor instead.
+func (*PromoteVersionResponse) Descriptor() ([]byte, []int) {
+	return file_spotter_v1_registry_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *PromoteVersionResponse) GetPromoted() *ModelVersion {
+	if x != nil {
+		return x.Promoted
+	}
+	return nil
+}
+
+func (x *PromoteVersionResponse) GetRetired() *ModelVersion {
+	if x != nil {
+		return x.Retired
+	}
+	return nil
+}
+
+type RollbackModelRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ModelName     string                 `protobuf:"bytes,1,opt,name=model_name,json=modelName,proto3" json:"model_name,omitempty"`
+	Reason        string                 `protobuf:"bytes,2,opt,name=reason,proto3" json:"reason,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RollbackModelRequest) Reset() {
+	*x = RollbackModelRequest{}
+	mi := &file_spotter_v1_registry_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RollbackModelRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RollbackModelRequest) ProtoMessage() {}
+
+func (x *RollbackModelRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_spotter_v1_registry_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RollbackModelRequest.ProtoReflect.Descriptor instead.
+func (*RollbackModelRequest) Descriptor() ([]byte, []int) {
+	return file_spotter_v1_registry_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *RollbackModelRequest) GetModelName() string {
+	if x != nil {
+		return x.ModelName
+	}
+	return ""
+}
+
+func (x *RollbackModelRequest) GetReason() string {
+	if x != nil {
+		return x.Reason
+	}
+	return ""
+}
+
+type RollbackModelResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Restored      *ModelVersion          `protobuf:"bytes,1,opt,name=restored,proto3" json:"restored,omitempty"`
+	RolledBack    *ModelVersion          `protobuf:"bytes,2,opt,name=rolled_back,json=rolledBack,proto3" json:"rolled_back,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RollbackModelResponse) Reset() {
+	*x = RollbackModelResponse{}
+	mi := &file_spotter_v1_registry_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RollbackModelResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RollbackModelResponse) ProtoMessage() {}
+
+func (x *RollbackModelResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_spotter_v1_registry_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RollbackModelResponse.ProtoReflect.Descriptor instead.
+func (*RollbackModelResponse) Descriptor() ([]byte, []int) {
+	return file_spotter_v1_registry_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *RollbackModelResponse) GetRestored() *ModelVersion {
+	if x != nil {
+		return x.Restored
+	}
+	return nil
+}
+
+func (x *RollbackModelResponse) GetRolledBack() *ModelVersion {
+	if x != nil {
+		return x.RolledBack
+	}
+	return nil
+}
+
 type Model struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -35,7 +521,7 @@ type Model struct {
 
 func (x *Model) Reset() {
 	*x = Model{}
-	mi := &file_spotter_v1_registry_proto_msgTypes[0]
+	mi := &file_spotter_v1_registry_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -47,7 +533,7 @@ func (x *Model) String() string {
 func (*Model) ProtoMessage() {}
 
 func (x *Model) ProtoReflect() protoreflect.Message {
-	mi := &file_spotter_v1_registry_proto_msgTypes[0]
+	mi := &file_spotter_v1_registry_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -60,7 +546,7 @@ func (x *Model) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Model.ProtoReflect.Descriptor instead.
 func (*Model) Descriptor() ([]byte, []int) {
-	return file_spotter_v1_registry_proto_rawDescGZIP(), []int{0}
+	return file_spotter_v1_registry_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *Model) GetId() string {
@@ -114,7 +600,7 @@ type ModelVersion struct {
 
 func (x *ModelVersion) Reset() {
 	*x = ModelVersion{}
-	mi := &file_spotter_v1_registry_proto_msgTypes[1]
+	mi := &file_spotter_v1_registry_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -126,7 +612,7 @@ func (x *ModelVersion) String() string {
 func (*ModelVersion) ProtoMessage() {}
 
 func (x *ModelVersion) ProtoReflect() protoreflect.Message {
-	mi := &file_spotter_v1_registry_proto_msgTypes[1]
+	mi := &file_spotter_v1_registry_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -139,7 +625,7 @@ func (x *ModelVersion) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ModelVersion.ProtoReflect.Descriptor instead.
 func (*ModelVersion) Descriptor() ([]byte, []int) {
-	return file_spotter_v1_registry_proto_rawDescGZIP(), []int{1}
+	return file_spotter_v1_registry_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *ModelVersion) GetId() string {
@@ -233,7 +719,7 @@ type StageChange struct {
 
 func (x *StageChange) Reset() {
 	*x = StageChange{}
-	mi := &file_spotter_v1_registry_proto_msgTypes[2]
+	mi := &file_spotter_v1_registry_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -245,7 +731,7 @@ func (x *StageChange) String() string {
 func (*StageChange) ProtoMessage() {}
 
 func (x *StageChange) ProtoReflect() protoreflect.Message {
-	mi := &file_spotter_v1_registry_proto_msgTypes[2]
+	mi := &file_spotter_v1_registry_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -258,7 +744,7 @@ func (x *StageChange) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StageChange.ProtoReflect.Descriptor instead.
 func (*StageChange) Descriptor() ([]byte, []int) {
-	return file_spotter_v1_registry_proto_rawDescGZIP(), []int{2}
+	return file_spotter_v1_registry_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *StageChange) GetFromStage() ModelVersionStage {
@@ -306,7 +792,7 @@ type RegisterModelRequest struct {
 
 func (x *RegisterModelRequest) Reset() {
 	*x = RegisterModelRequest{}
-	mi := &file_spotter_v1_registry_proto_msgTypes[3]
+	mi := &file_spotter_v1_registry_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -318,7 +804,7 @@ func (x *RegisterModelRequest) String() string {
 func (*RegisterModelRequest) ProtoMessage() {}
 
 func (x *RegisterModelRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_spotter_v1_registry_proto_msgTypes[3]
+	mi := &file_spotter_v1_registry_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -331,7 +817,7 @@ func (x *RegisterModelRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegisterModelRequest.ProtoReflect.Descriptor instead.
 func (*RegisterModelRequest) Descriptor() ([]byte, []int) {
-	return file_spotter_v1_registry_proto_rawDescGZIP(), []int{3}
+	return file_spotter_v1_registry_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *RegisterModelRequest) GetName() string {
@@ -357,7 +843,7 @@ type RegisterModelResponse struct {
 
 func (x *RegisterModelResponse) Reset() {
 	*x = RegisterModelResponse{}
-	mi := &file_spotter_v1_registry_proto_msgTypes[4]
+	mi := &file_spotter_v1_registry_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -369,7 +855,7 @@ func (x *RegisterModelResponse) String() string {
 func (*RegisterModelResponse) ProtoMessage() {}
 
 func (x *RegisterModelResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_spotter_v1_registry_proto_msgTypes[4]
+	mi := &file_spotter_v1_registry_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -382,7 +868,7 @@ func (x *RegisterModelResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegisterModelResponse.ProtoReflect.Descriptor instead.
 func (*RegisterModelResponse) Descriptor() ([]byte, []int) {
-	return file_spotter_v1_registry_proto_rawDescGZIP(), []int{4}
+	return file_spotter_v1_registry_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *RegisterModelResponse) GetModel() *Model {
@@ -401,7 +887,7 @@ type GetModelRequest struct {
 
 func (x *GetModelRequest) Reset() {
 	*x = GetModelRequest{}
-	mi := &file_spotter_v1_registry_proto_msgTypes[5]
+	mi := &file_spotter_v1_registry_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -413,7 +899,7 @@ func (x *GetModelRequest) String() string {
 func (*GetModelRequest) ProtoMessage() {}
 
 func (x *GetModelRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_spotter_v1_registry_proto_msgTypes[5]
+	mi := &file_spotter_v1_registry_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -426,7 +912,7 @@ func (x *GetModelRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetModelRequest.ProtoReflect.Descriptor instead.
 func (*GetModelRequest) Descriptor() ([]byte, []int) {
-	return file_spotter_v1_registry_proto_rawDescGZIP(), []int{5}
+	return file_spotter_v1_registry_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *GetModelRequest) GetName() string {
@@ -445,7 +931,7 @@ type GetModelResponse struct {
 
 func (x *GetModelResponse) Reset() {
 	*x = GetModelResponse{}
-	mi := &file_spotter_v1_registry_proto_msgTypes[6]
+	mi := &file_spotter_v1_registry_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -457,7 +943,7 @@ func (x *GetModelResponse) String() string {
 func (*GetModelResponse) ProtoMessage() {}
 
 func (x *GetModelResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_spotter_v1_registry_proto_msgTypes[6]
+	mi := &file_spotter_v1_registry_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -470,7 +956,7 @@ func (x *GetModelResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetModelResponse.ProtoReflect.Descriptor instead.
 func (*GetModelResponse) Descriptor() ([]byte, []int) {
-	return file_spotter_v1_registry_proto_rawDescGZIP(), []int{6}
+	return file_spotter_v1_registry_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *GetModelResponse) GetModel() *Model {
@@ -493,7 +979,7 @@ type RegisterVersionRequest struct {
 
 func (x *RegisterVersionRequest) Reset() {
 	*x = RegisterVersionRequest{}
-	mi := &file_spotter_v1_registry_proto_msgTypes[7]
+	mi := &file_spotter_v1_registry_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -505,7 +991,7 @@ func (x *RegisterVersionRequest) String() string {
 func (*RegisterVersionRequest) ProtoMessage() {}
 
 func (x *RegisterVersionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_spotter_v1_registry_proto_msgTypes[7]
+	mi := &file_spotter_v1_registry_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -518,7 +1004,7 @@ func (x *RegisterVersionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegisterVersionRequest.ProtoReflect.Descriptor instead.
 func (*RegisterVersionRequest) Descriptor() ([]byte, []int) {
-	return file_spotter_v1_registry_proto_rawDescGZIP(), []int{7}
+	return file_spotter_v1_registry_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *RegisterVersionRequest) GetModelName() string {
@@ -565,7 +1051,7 @@ type RegisterVersionResponse struct {
 
 func (x *RegisterVersionResponse) Reset() {
 	*x = RegisterVersionResponse{}
-	mi := &file_spotter_v1_registry_proto_msgTypes[8]
+	mi := &file_spotter_v1_registry_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -577,7 +1063,7 @@ func (x *RegisterVersionResponse) String() string {
 func (*RegisterVersionResponse) ProtoMessage() {}
 
 func (x *RegisterVersionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_spotter_v1_registry_proto_msgTypes[8]
+	mi := &file_spotter_v1_registry_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -590,7 +1076,7 @@ func (x *RegisterVersionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegisterVersionResponse.ProtoReflect.Descriptor instead.
 func (*RegisterVersionResponse) Descriptor() ([]byte, []int) {
-	return file_spotter_v1_registry_proto_rawDescGZIP(), []int{8}
+	return file_spotter_v1_registry_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *RegisterVersionResponse) GetVersion() *ModelVersion {
@@ -609,7 +1095,7 @@ type ListVersionsRequest struct {
 
 func (x *ListVersionsRequest) Reset() {
 	*x = ListVersionsRequest{}
-	mi := &file_spotter_v1_registry_proto_msgTypes[9]
+	mi := &file_spotter_v1_registry_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -621,7 +1107,7 @@ func (x *ListVersionsRequest) String() string {
 func (*ListVersionsRequest) ProtoMessage() {}
 
 func (x *ListVersionsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_spotter_v1_registry_proto_msgTypes[9]
+	mi := &file_spotter_v1_registry_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -634,7 +1120,7 @@ func (x *ListVersionsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListVersionsRequest.ProtoReflect.Descriptor instead.
 func (*ListVersionsRequest) Descriptor() ([]byte, []int) {
-	return file_spotter_v1_registry_proto_rawDescGZIP(), []int{9}
+	return file_spotter_v1_registry_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *ListVersionsRequest) GetModelName() string {
@@ -653,7 +1139,7 @@ type ListVersionsResponse struct {
 
 func (x *ListVersionsResponse) Reset() {
 	*x = ListVersionsResponse{}
-	mi := &file_spotter_v1_registry_proto_msgTypes[10]
+	mi := &file_spotter_v1_registry_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -665,7 +1151,7 @@ func (x *ListVersionsResponse) String() string {
 func (*ListVersionsResponse) ProtoMessage() {}
 
 func (x *ListVersionsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_spotter_v1_registry_proto_msgTypes[10]
+	mi := &file_spotter_v1_registry_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -678,7 +1164,7 @@ func (x *ListVersionsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListVersionsResponse.ProtoReflect.Descriptor instead.
 func (*ListVersionsResponse) Descriptor() ([]byte, []int) {
-	return file_spotter_v1_registry_proto_rawDescGZIP(), []int{10}
+	return file_spotter_v1_registry_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *ListVersionsResponse) GetVersions() []*ModelVersion {
@@ -697,7 +1183,7 @@ type GetVersionRequest struct {
 
 func (x *GetVersionRequest) Reset() {
 	*x = GetVersionRequest{}
-	mi := &file_spotter_v1_registry_proto_msgTypes[11]
+	mi := &file_spotter_v1_registry_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -709,7 +1195,7 @@ func (x *GetVersionRequest) String() string {
 func (*GetVersionRequest) ProtoMessage() {}
 
 func (x *GetVersionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_spotter_v1_registry_proto_msgTypes[11]
+	mi := &file_spotter_v1_registry_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -722,7 +1208,7 @@ func (x *GetVersionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetVersionRequest.ProtoReflect.Descriptor instead.
 func (*GetVersionRequest) Descriptor() ([]byte, []int) {
-	return file_spotter_v1_registry_proto_rawDescGZIP(), []int{11}
+	return file_spotter_v1_registry_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *GetVersionRequest) GetVersionId() string {
@@ -741,7 +1227,7 @@ type GetVersionResponse struct {
 
 func (x *GetVersionResponse) Reset() {
 	*x = GetVersionResponse{}
-	mi := &file_spotter_v1_registry_proto_msgTypes[12]
+	mi := &file_spotter_v1_registry_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -753,7 +1239,7 @@ func (x *GetVersionResponse) String() string {
 func (*GetVersionResponse) ProtoMessage() {}
 
 func (x *GetVersionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_spotter_v1_registry_proto_msgTypes[12]
+	mi := &file_spotter_v1_registry_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -766,7 +1252,7 @@ func (x *GetVersionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetVersionResponse.ProtoReflect.Descriptor instead.
 func (*GetVersionResponse) Descriptor() ([]byte, []int) {
-	return file_spotter_v1_registry_proto_rawDescGZIP(), []int{12}
+	return file_spotter_v1_registry_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *GetVersionResponse) GetVersion() *ModelVersion {
@@ -788,7 +1274,7 @@ type TransitionVersionRequest struct {
 
 func (x *TransitionVersionRequest) Reset() {
 	*x = TransitionVersionRequest{}
-	mi := &file_spotter_v1_registry_proto_msgTypes[13]
+	mi := &file_spotter_v1_registry_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -800,7 +1286,7 @@ func (x *TransitionVersionRequest) String() string {
 func (*TransitionVersionRequest) ProtoMessage() {}
 
 func (x *TransitionVersionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_spotter_v1_registry_proto_msgTypes[13]
+	mi := &file_spotter_v1_registry_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -813,7 +1299,7 @@ func (x *TransitionVersionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TransitionVersionRequest.ProtoReflect.Descriptor instead.
 func (*TransitionVersionRequest) Descriptor() ([]byte, []int) {
-	return file_spotter_v1_registry_proto_rawDescGZIP(), []int{13}
+	return file_spotter_v1_registry_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *TransitionVersionRequest) GetVersionId() string {
@@ -853,7 +1339,7 @@ type TransitionVersionResponse struct {
 
 func (x *TransitionVersionResponse) Reset() {
 	*x = TransitionVersionResponse{}
-	mi := &file_spotter_v1_registry_proto_msgTypes[14]
+	mi := &file_spotter_v1_registry_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -865,7 +1351,7 @@ func (x *TransitionVersionResponse) String() string {
 func (*TransitionVersionResponse) ProtoMessage() {}
 
 func (x *TransitionVersionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_spotter_v1_registry_proto_msgTypes[14]
+	mi := &file_spotter_v1_registry_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -878,7 +1364,7 @@ func (x *TransitionVersionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TransitionVersionResponse.ProtoReflect.Descriptor instead.
 func (*TransitionVersionResponse) Descriptor() ([]byte, []int) {
-	return file_spotter_v1_registry_proto_rawDescGZIP(), []int{14}
+	return file_spotter_v1_registry_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *TransitionVersionResponse) GetVersion() *ModelVersion {
@@ -897,7 +1383,7 @@ type GetVersionHistoryRequest struct {
 
 func (x *GetVersionHistoryRequest) Reset() {
 	*x = GetVersionHistoryRequest{}
-	mi := &file_spotter_v1_registry_proto_msgTypes[15]
+	mi := &file_spotter_v1_registry_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -909,7 +1395,7 @@ func (x *GetVersionHistoryRequest) String() string {
 func (*GetVersionHistoryRequest) ProtoMessage() {}
 
 func (x *GetVersionHistoryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_spotter_v1_registry_proto_msgTypes[15]
+	mi := &file_spotter_v1_registry_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -922,7 +1408,7 @@ func (x *GetVersionHistoryRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetVersionHistoryRequest.ProtoReflect.Descriptor instead.
 func (*GetVersionHistoryRequest) Descriptor() ([]byte, []int) {
-	return file_spotter_v1_registry_proto_rawDescGZIP(), []int{15}
+	return file_spotter_v1_registry_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *GetVersionHistoryRequest) GetVersionId() string {
@@ -941,7 +1427,7 @@ type GetVersionHistoryResponse struct {
 
 func (x *GetVersionHistoryResponse) Reset() {
 	*x = GetVersionHistoryResponse{}
-	mi := &file_spotter_v1_registry_proto_msgTypes[16]
+	mi := &file_spotter_v1_registry_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -953,7 +1439,7 @@ func (x *GetVersionHistoryResponse) String() string {
 func (*GetVersionHistoryResponse) ProtoMessage() {}
 
 func (x *GetVersionHistoryResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_spotter_v1_registry_proto_msgTypes[16]
+	mi := &file_spotter_v1_registry_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -966,7 +1452,7 @@ func (x *GetVersionHistoryResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetVersionHistoryResponse.ProtoReflect.Descriptor instead.
 func (*GetVersionHistoryResponse) Descriptor() ([]byte, []int) {
-	return file_spotter_v1_registry_proto_rawDescGZIP(), []int{16}
+	return file_spotter_v1_registry_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *GetVersionHistoryResponse) GetChanges() []*StageChange {
@@ -981,7 +1467,44 @@ var File_spotter_v1_registry_proto protoreflect.FileDescriptor
 const file_spotter_v1_registry_proto_rawDesc = "" +
 	"\n" +
 	"\x19spotter/v1/registry.proto\x12\n" +
-	"spotter.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a spotter/v1/registry_events.proto\"\x88\x01\n" +
+	"spotter.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a spotter/v1/registry_events.proto\"J\n" +
+	"\x04Gate\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12\x16\n" +
+	"\x06passed\x18\x02 \x01(\bR\x06passed\x12\x16\n" +
+	"\x06detail\x18\x03 \x01(\tR\x06detail\"j\n" +
+	"\x15ApproveVersionRequest\x12\x1d\n" +
+	"\n" +
+	"version_id\x18\x01 \x01(\tR\tversionId\x12\x1a\n" +
+	"\bapprover\x18\x02 \x01(\tR\bapprover\x12\x16\n" +
+	"\x06reason\x18\x03 \x01(\tR\x06reason\"\x90\x01\n" +
+	"\x16ApproveVersionResponse\x12\x1d\n" +
+	"\n" +
+	"version_id\x18\x01 \x01(\tR\tversionId\x12\x1a\n" +
+	"\bapprover\x18\x02 \x01(\tR\bapprover\x12;\n" +
+	"\vapproved_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"approvedAt\"9\n" +
+	"\x18GetPromotionGatesRequest\x12\x1d\n" +
+	"\n" +
+	"version_id\x18\x01 \x01(\tR\tversionId\"b\n" +
+	"\x19GetPromotionGatesResponse\x12&\n" +
+	"\x05gates\x18\x01 \x03(\v2\x10.spotter.v1.GateR\x05gates\x12\x1d\n" +
+	"\n" +
+	"all_passed\x18\x02 \x01(\bR\tallPassed\"N\n" +
+	"\x15PromoteVersionRequest\x12\x1d\n" +
+	"\n" +
+	"version_id\x18\x01 \x01(\tR\tversionId\x12\x16\n" +
+	"\x06reason\x18\x02 \x01(\tR\x06reason\"\x82\x01\n" +
+	"\x16PromoteVersionResponse\x124\n" +
+	"\bpromoted\x18\x01 \x01(\v2\x18.spotter.v1.ModelVersionR\bpromoted\x122\n" +
+	"\aretired\x18\x02 \x01(\v2\x18.spotter.v1.ModelVersionR\aretired\"M\n" +
+	"\x14RollbackModelRequest\x12\x1d\n" +
+	"\n" +
+	"model_name\x18\x01 \x01(\tR\tmodelName\x12\x16\n" +
+	"\x06reason\x18\x02 \x01(\tR\x06reason\"\x88\x01\n" +
+	"\x15RollbackModelResponse\x124\n" +
+	"\brestored\x18\x01 \x01(\v2\x18.spotter.v1.ModelVersionR\brestored\x129\n" +
+	"\vrolled_back\x18\x02 \x01(\v2\x18.spotter.v1.ModelVersionR\n" +
+	"rolledBack\"\x88\x01\n" +
 	"\x05Model\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
@@ -1057,7 +1580,7 @@ const file_spotter_v1_registry_proto_rawDesc = "" +
 	"\n" +
 	"version_id\x18\x01 \x01(\tR\tversionId\"N\n" +
 	"\x19GetVersionHistoryResponse\x121\n" +
-	"\achanges\x18\x01 \x03(\v2\x17.spotter.v1.StageChangeR\achanges2\xf9\x06\n" +
+	"\achanges\x18\x01 \x03(\v2\x17.spotter.v1.StageChangeR\achanges2\x99\v\n" +
 	"\x0fRegistryService\x12k\n" +
 	"\rRegisterModel\x12 .spotter.v1.RegisterModelRequest\x1a!.spotter.v1.RegisterModelResponse\"\x15\x82\xd3\xe4\x93\x02\x0f:\x01*\"\n" +
 	"/v1/models\x12`\n" +
@@ -1067,7 +1590,11 @@ const file_spotter_v1_registry_proto_rawDesc = "" +
 	"\n" +
 	"GetVersion\x12\x1d.spotter.v1.GetVersionRequest\x1a\x1e.spotter.v1.GetVersionResponse\"!\x82\xd3\xe4\x93\x02\x1b\x12\x19/v1/versions/{version_id}\x12\x91\x01\n" +
 	"\x11TransitionVersion\x12$.spotter.v1.TransitionVersionRequest\x1a%.spotter.v1.TransitionVersionResponse\"/\x82\xd3\xe4\x93\x02):\x01*\"$/v1/versions/{version_id}:transition\x12\x8b\x01\n" +
-	"\x11GetVersionHistory\x12$.spotter.v1.GetVersionHistoryRequest\x1a%.spotter.v1.GetVersionHistoryResponse\")\x82\xd3\xe4\x93\x02#\x12!/v1/versions/{version_id}/historyB\x9f\x01\n" +
+	"\x11GetVersionHistory\x12$.spotter.v1.GetVersionHistoryRequest\x1a%.spotter.v1.GetVersionHistoryResponse\")\x82\xd3\xe4\x93\x02#\x12!/v1/versions/{version_id}/history\x12\x85\x01\n" +
+	"\x0eApproveVersion\x12!.spotter.v1.ApproveVersionRequest\x1a\".spotter.v1.ApproveVersionResponse\",\x82\xd3\xe4\x93\x02&:\x01*\"!/v1/versions/{version_id}:approve\x12\x89\x01\n" +
+	"\x11GetPromotionGates\x12$.spotter.v1.GetPromotionGatesRequest\x1a%.spotter.v1.GetPromotionGatesResponse\"'\x82\xd3\xe4\x93\x02!\x12\x1f/v1/versions/{version_id}/gates\x12\x85\x01\n" +
+	"\x0ePromoteVersion\x12!.spotter.v1.PromoteVersionRequest\x1a\".spotter.v1.PromoteVersionResponse\",\x82\xd3\xe4\x93\x02&:\x01*\"!/v1/versions/{version_id}:promote\x12\x81\x01\n" +
+	"\rRollbackModel\x12 .spotter.v1.RollbackModelRequest\x1a!.spotter.v1.RollbackModelResponse\"+\x82\xd3\xe4\x93\x02%:\x01*\" /v1/models/{model_name}:rollbackB\x9f\x01\n" +
 	"\x0ecom.spotter.v1B\rRegistryProtoP\x01Z5github.com/Pohi11/spotter/gen/go/spotter/v1;spotterv1\xa2\x02\x03SXX\xaa\x02\n" +
 	"Spotter.V1\xca\x02\n" +
 	"Spotter\\V1\xe2\x02\x16Spotter\\V1\\GPBMetadata\xea\x02\vSpotter::V1b\x06proto3"
@@ -1084,67 +1611,90 @@ func file_spotter_v1_registry_proto_rawDescGZIP() []byte {
 	return file_spotter_v1_registry_proto_rawDescData
 }
 
-var file_spotter_v1_registry_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
+var file_spotter_v1_registry_proto_msgTypes = make([]protoimpl.MessageInfo, 28)
 var file_spotter_v1_registry_proto_goTypes = []any{
-	(*Model)(nil),                     // 0: spotter.v1.Model
-	(*ModelVersion)(nil),              // 1: spotter.v1.ModelVersion
-	(*StageChange)(nil),               // 2: spotter.v1.StageChange
-	(*RegisterModelRequest)(nil),      // 3: spotter.v1.RegisterModelRequest
-	(*RegisterModelResponse)(nil),     // 4: spotter.v1.RegisterModelResponse
-	(*GetModelRequest)(nil),           // 5: spotter.v1.GetModelRequest
-	(*GetModelResponse)(nil),          // 6: spotter.v1.GetModelResponse
-	(*RegisterVersionRequest)(nil),    // 7: spotter.v1.RegisterVersionRequest
-	(*RegisterVersionResponse)(nil),   // 8: spotter.v1.RegisterVersionResponse
-	(*ListVersionsRequest)(nil),       // 9: spotter.v1.ListVersionsRequest
-	(*ListVersionsResponse)(nil),      // 10: spotter.v1.ListVersionsResponse
-	(*GetVersionRequest)(nil),         // 11: spotter.v1.GetVersionRequest
-	(*GetVersionResponse)(nil),        // 12: spotter.v1.GetVersionResponse
-	(*TransitionVersionRequest)(nil),  // 13: spotter.v1.TransitionVersionRequest
-	(*TransitionVersionResponse)(nil), // 14: spotter.v1.TransitionVersionResponse
-	(*GetVersionHistoryRequest)(nil),  // 15: spotter.v1.GetVersionHistoryRequest
-	(*GetVersionHistoryResponse)(nil), // 16: spotter.v1.GetVersionHistoryResponse
-	nil,                               // 17: spotter.v1.ModelVersion.MetricsEntry
-	nil,                               // 18: spotter.v1.RegisterVersionRequest.MetricsEntry
-	(*timestamppb.Timestamp)(nil),     // 19: google.protobuf.Timestamp
-	(ModelVersionStage)(0),            // 20: spotter.v1.ModelVersionStage
+	(*Gate)(nil),                      // 0: spotter.v1.Gate
+	(*ApproveVersionRequest)(nil),     // 1: spotter.v1.ApproveVersionRequest
+	(*ApproveVersionResponse)(nil),    // 2: spotter.v1.ApproveVersionResponse
+	(*GetPromotionGatesRequest)(nil),  // 3: spotter.v1.GetPromotionGatesRequest
+	(*GetPromotionGatesResponse)(nil), // 4: spotter.v1.GetPromotionGatesResponse
+	(*PromoteVersionRequest)(nil),     // 5: spotter.v1.PromoteVersionRequest
+	(*PromoteVersionResponse)(nil),    // 6: spotter.v1.PromoteVersionResponse
+	(*RollbackModelRequest)(nil),      // 7: spotter.v1.RollbackModelRequest
+	(*RollbackModelResponse)(nil),     // 8: spotter.v1.RollbackModelResponse
+	(*Model)(nil),                     // 9: spotter.v1.Model
+	(*ModelVersion)(nil),              // 10: spotter.v1.ModelVersion
+	(*StageChange)(nil),               // 11: spotter.v1.StageChange
+	(*RegisterModelRequest)(nil),      // 12: spotter.v1.RegisterModelRequest
+	(*RegisterModelResponse)(nil),     // 13: spotter.v1.RegisterModelResponse
+	(*GetModelRequest)(nil),           // 14: spotter.v1.GetModelRequest
+	(*GetModelResponse)(nil),          // 15: spotter.v1.GetModelResponse
+	(*RegisterVersionRequest)(nil),    // 16: spotter.v1.RegisterVersionRequest
+	(*RegisterVersionResponse)(nil),   // 17: spotter.v1.RegisterVersionResponse
+	(*ListVersionsRequest)(nil),       // 18: spotter.v1.ListVersionsRequest
+	(*ListVersionsResponse)(nil),      // 19: spotter.v1.ListVersionsResponse
+	(*GetVersionRequest)(nil),         // 20: spotter.v1.GetVersionRequest
+	(*GetVersionResponse)(nil),        // 21: spotter.v1.GetVersionResponse
+	(*TransitionVersionRequest)(nil),  // 22: spotter.v1.TransitionVersionRequest
+	(*TransitionVersionResponse)(nil), // 23: spotter.v1.TransitionVersionResponse
+	(*GetVersionHistoryRequest)(nil),  // 24: spotter.v1.GetVersionHistoryRequest
+	(*GetVersionHistoryResponse)(nil), // 25: spotter.v1.GetVersionHistoryResponse
+	nil,                               // 26: spotter.v1.ModelVersion.MetricsEntry
+	nil,                               // 27: spotter.v1.RegisterVersionRequest.MetricsEntry
+	(*timestamppb.Timestamp)(nil),     // 28: google.protobuf.Timestamp
+	(ModelVersionStage)(0),            // 29: spotter.v1.ModelVersionStage
 }
 var file_spotter_v1_registry_proto_depIdxs = []int32{
-	19, // 0: spotter.v1.Model.created_at:type_name -> google.protobuf.Timestamp
-	17, // 1: spotter.v1.ModelVersion.metrics:type_name -> spotter.v1.ModelVersion.MetricsEntry
-	20, // 2: spotter.v1.ModelVersion.stage:type_name -> spotter.v1.ModelVersionStage
-	19, // 3: spotter.v1.ModelVersion.created_at:type_name -> google.protobuf.Timestamp
-	19, // 4: spotter.v1.ModelVersion.updated_at:type_name -> google.protobuf.Timestamp
-	20, // 5: spotter.v1.StageChange.from_stage:type_name -> spotter.v1.ModelVersionStage
-	20, // 6: spotter.v1.StageChange.to_stage:type_name -> spotter.v1.ModelVersionStage
-	19, // 7: spotter.v1.StageChange.changed_at:type_name -> google.protobuf.Timestamp
-	0,  // 8: spotter.v1.RegisterModelResponse.model:type_name -> spotter.v1.Model
-	0,  // 9: spotter.v1.GetModelResponse.model:type_name -> spotter.v1.Model
-	18, // 10: spotter.v1.RegisterVersionRequest.metrics:type_name -> spotter.v1.RegisterVersionRequest.MetricsEntry
-	1,  // 11: spotter.v1.RegisterVersionResponse.version:type_name -> spotter.v1.ModelVersion
-	1,  // 12: spotter.v1.ListVersionsResponse.versions:type_name -> spotter.v1.ModelVersion
-	1,  // 13: spotter.v1.GetVersionResponse.version:type_name -> spotter.v1.ModelVersion
-	20, // 14: spotter.v1.TransitionVersionRequest.to_stage:type_name -> spotter.v1.ModelVersionStage
-	1,  // 15: spotter.v1.TransitionVersionResponse.version:type_name -> spotter.v1.ModelVersion
-	2,  // 16: spotter.v1.GetVersionHistoryResponse.changes:type_name -> spotter.v1.StageChange
-	3,  // 17: spotter.v1.RegistryService.RegisterModel:input_type -> spotter.v1.RegisterModelRequest
-	5,  // 18: spotter.v1.RegistryService.GetModel:input_type -> spotter.v1.GetModelRequest
-	7,  // 19: spotter.v1.RegistryService.RegisterVersion:input_type -> spotter.v1.RegisterVersionRequest
-	9,  // 20: spotter.v1.RegistryService.ListVersions:input_type -> spotter.v1.ListVersionsRequest
-	11, // 21: spotter.v1.RegistryService.GetVersion:input_type -> spotter.v1.GetVersionRequest
-	13, // 22: spotter.v1.RegistryService.TransitionVersion:input_type -> spotter.v1.TransitionVersionRequest
-	15, // 23: spotter.v1.RegistryService.GetVersionHistory:input_type -> spotter.v1.GetVersionHistoryRequest
-	4,  // 24: spotter.v1.RegistryService.RegisterModel:output_type -> spotter.v1.RegisterModelResponse
-	6,  // 25: spotter.v1.RegistryService.GetModel:output_type -> spotter.v1.GetModelResponse
-	8,  // 26: spotter.v1.RegistryService.RegisterVersion:output_type -> spotter.v1.RegisterVersionResponse
-	10, // 27: spotter.v1.RegistryService.ListVersions:output_type -> spotter.v1.ListVersionsResponse
-	12, // 28: spotter.v1.RegistryService.GetVersion:output_type -> spotter.v1.GetVersionResponse
-	14, // 29: spotter.v1.RegistryService.TransitionVersion:output_type -> spotter.v1.TransitionVersionResponse
-	16, // 30: spotter.v1.RegistryService.GetVersionHistory:output_type -> spotter.v1.GetVersionHistoryResponse
-	24, // [24:31] is the sub-list for method output_type
-	17, // [17:24] is the sub-list for method input_type
-	17, // [17:17] is the sub-list for extension type_name
-	17, // [17:17] is the sub-list for extension extendee
-	0,  // [0:17] is the sub-list for field type_name
+	28, // 0: spotter.v1.ApproveVersionResponse.approved_at:type_name -> google.protobuf.Timestamp
+	0,  // 1: spotter.v1.GetPromotionGatesResponse.gates:type_name -> spotter.v1.Gate
+	10, // 2: spotter.v1.PromoteVersionResponse.promoted:type_name -> spotter.v1.ModelVersion
+	10, // 3: spotter.v1.PromoteVersionResponse.retired:type_name -> spotter.v1.ModelVersion
+	10, // 4: spotter.v1.RollbackModelResponse.restored:type_name -> spotter.v1.ModelVersion
+	10, // 5: spotter.v1.RollbackModelResponse.rolled_back:type_name -> spotter.v1.ModelVersion
+	28, // 6: spotter.v1.Model.created_at:type_name -> google.protobuf.Timestamp
+	26, // 7: spotter.v1.ModelVersion.metrics:type_name -> spotter.v1.ModelVersion.MetricsEntry
+	29, // 8: spotter.v1.ModelVersion.stage:type_name -> spotter.v1.ModelVersionStage
+	28, // 9: spotter.v1.ModelVersion.created_at:type_name -> google.protobuf.Timestamp
+	28, // 10: spotter.v1.ModelVersion.updated_at:type_name -> google.protobuf.Timestamp
+	29, // 11: spotter.v1.StageChange.from_stage:type_name -> spotter.v1.ModelVersionStage
+	29, // 12: spotter.v1.StageChange.to_stage:type_name -> spotter.v1.ModelVersionStage
+	28, // 13: spotter.v1.StageChange.changed_at:type_name -> google.protobuf.Timestamp
+	9,  // 14: spotter.v1.RegisterModelResponse.model:type_name -> spotter.v1.Model
+	9,  // 15: spotter.v1.GetModelResponse.model:type_name -> spotter.v1.Model
+	27, // 16: spotter.v1.RegisterVersionRequest.metrics:type_name -> spotter.v1.RegisterVersionRequest.MetricsEntry
+	10, // 17: spotter.v1.RegisterVersionResponse.version:type_name -> spotter.v1.ModelVersion
+	10, // 18: spotter.v1.ListVersionsResponse.versions:type_name -> spotter.v1.ModelVersion
+	10, // 19: spotter.v1.GetVersionResponse.version:type_name -> spotter.v1.ModelVersion
+	29, // 20: spotter.v1.TransitionVersionRequest.to_stage:type_name -> spotter.v1.ModelVersionStage
+	10, // 21: spotter.v1.TransitionVersionResponse.version:type_name -> spotter.v1.ModelVersion
+	11, // 22: spotter.v1.GetVersionHistoryResponse.changes:type_name -> spotter.v1.StageChange
+	12, // 23: spotter.v1.RegistryService.RegisterModel:input_type -> spotter.v1.RegisterModelRequest
+	14, // 24: spotter.v1.RegistryService.GetModel:input_type -> spotter.v1.GetModelRequest
+	16, // 25: spotter.v1.RegistryService.RegisterVersion:input_type -> spotter.v1.RegisterVersionRequest
+	18, // 26: spotter.v1.RegistryService.ListVersions:input_type -> spotter.v1.ListVersionsRequest
+	20, // 27: spotter.v1.RegistryService.GetVersion:input_type -> spotter.v1.GetVersionRequest
+	22, // 28: spotter.v1.RegistryService.TransitionVersion:input_type -> spotter.v1.TransitionVersionRequest
+	24, // 29: spotter.v1.RegistryService.GetVersionHistory:input_type -> spotter.v1.GetVersionHistoryRequest
+	1,  // 30: spotter.v1.RegistryService.ApproveVersion:input_type -> spotter.v1.ApproveVersionRequest
+	3,  // 31: spotter.v1.RegistryService.GetPromotionGates:input_type -> spotter.v1.GetPromotionGatesRequest
+	5,  // 32: spotter.v1.RegistryService.PromoteVersion:input_type -> spotter.v1.PromoteVersionRequest
+	7,  // 33: spotter.v1.RegistryService.RollbackModel:input_type -> spotter.v1.RollbackModelRequest
+	13, // 34: spotter.v1.RegistryService.RegisterModel:output_type -> spotter.v1.RegisterModelResponse
+	15, // 35: spotter.v1.RegistryService.GetModel:output_type -> spotter.v1.GetModelResponse
+	17, // 36: spotter.v1.RegistryService.RegisterVersion:output_type -> spotter.v1.RegisterVersionResponse
+	19, // 37: spotter.v1.RegistryService.ListVersions:output_type -> spotter.v1.ListVersionsResponse
+	21, // 38: spotter.v1.RegistryService.GetVersion:output_type -> spotter.v1.GetVersionResponse
+	23, // 39: spotter.v1.RegistryService.TransitionVersion:output_type -> spotter.v1.TransitionVersionResponse
+	25, // 40: spotter.v1.RegistryService.GetVersionHistory:output_type -> spotter.v1.GetVersionHistoryResponse
+	2,  // 41: spotter.v1.RegistryService.ApproveVersion:output_type -> spotter.v1.ApproveVersionResponse
+	4,  // 42: spotter.v1.RegistryService.GetPromotionGates:output_type -> spotter.v1.GetPromotionGatesResponse
+	6,  // 43: spotter.v1.RegistryService.PromoteVersion:output_type -> spotter.v1.PromoteVersionResponse
+	8,  // 44: spotter.v1.RegistryService.RollbackModel:output_type -> spotter.v1.RollbackModelResponse
+	34, // [34:45] is the sub-list for method output_type
+	23, // [23:34] is the sub-list for method input_type
+	23, // [23:23] is the sub-list for extension type_name
+	23, // [23:23] is the sub-list for extension extendee
+	0,  // [0:23] is the sub-list for field type_name
 }
 
 func init() { file_spotter_v1_registry_proto_init() }
@@ -1159,7 +1709,7 @@ func file_spotter_v1_registry_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_spotter_v1_registry_proto_rawDesc), len(file_spotter_v1_registry_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   19,
+			NumMessages:   28,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

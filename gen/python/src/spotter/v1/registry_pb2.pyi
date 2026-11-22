@@ -11,6 +11,82 @@ from typing import ClassVar as _ClassVar, Optional as _Optional, Union as _Union
 
 DESCRIPTOR: _descriptor.FileDescriptor
 
+class Gate(_message.Message):
+    __slots__ = ("name", "passed", "detail")
+    NAME_FIELD_NUMBER: _ClassVar[int]
+    PASSED_FIELD_NUMBER: _ClassVar[int]
+    DETAIL_FIELD_NUMBER: _ClassVar[int]
+    name: str
+    passed: bool
+    detail: str
+    def __init__(self, name: _Optional[str] = ..., passed: _Optional[bool] = ..., detail: _Optional[str] = ...) -> None: ...
+
+class ApproveVersionRequest(_message.Message):
+    __slots__ = ("version_id", "approver", "reason")
+    VERSION_ID_FIELD_NUMBER: _ClassVar[int]
+    APPROVER_FIELD_NUMBER: _ClassVar[int]
+    REASON_FIELD_NUMBER: _ClassVar[int]
+    version_id: str
+    approver: str
+    reason: str
+    def __init__(self, version_id: _Optional[str] = ..., approver: _Optional[str] = ..., reason: _Optional[str] = ...) -> None: ...
+
+class ApproveVersionResponse(_message.Message):
+    __slots__ = ("version_id", "approver", "approved_at")
+    VERSION_ID_FIELD_NUMBER: _ClassVar[int]
+    APPROVER_FIELD_NUMBER: _ClassVar[int]
+    APPROVED_AT_FIELD_NUMBER: _ClassVar[int]
+    version_id: str
+    approver: str
+    approved_at: _timestamp_pb2.Timestamp
+    def __init__(self, version_id: _Optional[str] = ..., approver: _Optional[str] = ..., approved_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ...) -> None: ...
+
+class GetPromotionGatesRequest(_message.Message):
+    __slots__ = ("version_id",)
+    VERSION_ID_FIELD_NUMBER: _ClassVar[int]
+    version_id: str
+    def __init__(self, version_id: _Optional[str] = ...) -> None: ...
+
+class GetPromotionGatesResponse(_message.Message):
+    __slots__ = ("gates", "all_passed")
+    GATES_FIELD_NUMBER: _ClassVar[int]
+    ALL_PASSED_FIELD_NUMBER: _ClassVar[int]
+    gates: _containers.RepeatedCompositeFieldContainer[Gate]
+    all_passed: bool
+    def __init__(self, gates: _Optional[_Iterable[_Union[Gate, _Mapping]]] = ..., all_passed: _Optional[bool] = ...) -> None: ...
+
+class PromoteVersionRequest(_message.Message):
+    __slots__ = ("version_id", "reason")
+    VERSION_ID_FIELD_NUMBER: _ClassVar[int]
+    REASON_FIELD_NUMBER: _ClassVar[int]
+    version_id: str
+    reason: str
+    def __init__(self, version_id: _Optional[str] = ..., reason: _Optional[str] = ...) -> None: ...
+
+class PromoteVersionResponse(_message.Message):
+    __slots__ = ("promoted", "retired")
+    PROMOTED_FIELD_NUMBER: _ClassVar[int]
+    RETIRED_FIELD_NUMBER: _ClassVar[int]
+    promoted: ModelVersion
+    retired: ModelVersion
+    def __init__(self, promoted: _Optional[_Union[ModelVersion, _Mapping]] = ..., retired: _Optional[_Union[ModelVersion, _Mapping]] = ...) -> None: ...
+
+class RollbackModelRequest(_message.Message):
+    __slots__ = ("model_name", "reason")
+    MODEL_NAME_FIELD_NUMBER: _ClassVar[int]
+    REASON_FIELD_NUMBER: _ClassVar[int]
+    model_name: str
+    reason: str
+    def __init__(self, model_name: _Optional[str] = ..., reason: _Optional[str] = ...) -> None: ...
+
+class RollbackModelResponse(_message.Message):
+    __slots__ = ("restored", "rolled_back")
+    RESTORED_FIELD_NUMBER: _ClassVar[int]
+    ROLLED_BACK_FIELD_NUMBER: _ClassVar[int]
+    restored: ModelVersion
+    rolled_back: ModelVersion
+    def __init__(self, restored: _Optional[_Union[ModelVersion, _Mapping]] = ..., rolled_back: _Optional[_Union[ModelVersion, _Mapping]] = ...) -> None: ...
+
 class Model(_message.Message):
     __slots__ = ("id", "name", "description", "created_at")
     ID_FIELD_NUMBER: _ClassVar[int]

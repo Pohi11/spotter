@@ -26,6 +26,10 @@ const (
 	RegistryService_GetVersion_FullMethodName        = "/spotter.v1.RegistryService/GetVersion"
 	RegistryService_TransitionVersion_FullMethodName = "/spotter.v1.RegistryService/TransitionVersion"
 	RegistryService_GetVersionHistory_FullMethodName = "/spotter.v1.RegistryService/GetVersionHistory"
+	RegistryService_ApproveVersion_FullMethodName    = "/spotter.v1.RegistryService/ApproveVersion"
+	RegistryService_GetPromotionGates_FullMethodName = "/spotter.v1.RegistryService/GetPromotionGates"
+	RegistryService_PromoteVersion_FullMethodName    = "/spotter.v1.RegistryService/PromoteVersion"
+	RegistryService_RollbackModel_FullMethodName     = "/spotter.v1.RegistryService/RollbackModel"
 )
 
 // RegistryServiceClient is the client API for RegistryService service.
@@ -49,6 +53,15 @@ type RegistryServiceClient interface {
 	TransitionVersion(ctx context.Context, in *TransitionVersionRequest, opts ...grpc.CallOption) (*TransitionVersionResponse, error)
 	// Lists a version's stage changes, oldest first.
 	GetVersionHistory(ctx context.Context, in *GetVersionHistoryRequest, opts ...grpc.CallOption) (*GetVersionHistoryResponse, error)
+	// Records a person's approval of a shadow version.
+	ApproveVersion(ctx context.Context, in *ApproveVersionRequest, opts ...grpc.CallOption) (*ApproveVersionResponse, error)
+	// Evaluates the promotion gates for a shadow version without changing anything.
+	GetPromotionGates(ctx context.Context, in *GetPromotionGatesRequest, opts ...grpc.CallOption) (*GetPromotionGatesResponse, error)
+	// Promotes a shadow version whose gates all pass, retiring the current production
+	// version in the same transaction.
+	PromoteVersion(ctx context.Context, in *PromoteVersionRequest, opts ...grpc.CallOption) (*PromoteVersionResponse, error)
+	// Marks the production version rolled back and restores the previous one atomically.
+	RollbackModel(ctx context.Context, in *RollbackModelRequest, opts ...grpc.CallOption) (*RollbackModelResponse, error)
 }
 
 type registryServiceClient struct {
@@ -129,6 +142,46 @@ func (c *registryServiceClient) GetVersionHistory(ctx context.Context, in *GetVe
 	return out, nil
 }
 
+func (c *registryServiceClient) ApproveVersion(ctx context.Context, in *ApproveVersionRequest, opts ...grpc.CallOption) (*ApproveVersionResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ApproveVersionResponse)
+	err := c.cc.Invoke(ctx, RegistryService_ApproveVersion_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *registryServiceClient) GetPromotionGates(ctx context.Context, in *GetPromotionGatesRequest, opts ...grpc.CallOption) (*GetPromotionGatesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetPromotionGatesResponse)
+	err := c.cc.Invoke(ctx, RegistryService_GetPromotionGates_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *registryServiceClient) PromoteVersion(ctx context.Context, in *PromoteVersionRequest, opts ...grpc.CallOption) (*PromoteVersionResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PromoteVersionResponse)
+	err := c.cc.Invoke(ctx, RegistryService_PromoteVersion_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *registryServiceClient) RollbackModel(ctx context.Context, in *RollbackModelRequest, opts ...grpc.CallOption) (*RollbackModelResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RollbackModelResponse)
+	err := c.cc.Invoke(ctx, RegistryService_RollbackModel_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // RegistryServiceServer is the server API for RegistryService service.
 // All implementations must embed UnimplementedRegistryServiceServer
 // for forward compatibility.
@@ -150,6 +203,15 @@ type RegistryServiceServer interface {
 	TransitionVersion(context.Context, *TransitionVersionRequest) (*TransitionVersionResponse, error)
 	// Lists a version's stage changes, oldest first.
 	GetVersionHistory(context.Context, *GetVersionHistoryRequest) (*GetVersionHistoryResponse, error)
+	// Records a person's approval of a shadow version.
+	ApproveVersion(context.Context, *ApproveVersionRequest) (*ApproveVersionResponse, error)
+	// Evaluates the promotion gates for a shadow version without changing anything.
+	GetPromotionGates(context.Context, *GetPromotionGatesRequest) (*GetPromotionGatesResponse, error)
+	// Promotes a shadow version whose gates all pass, retiring the current production
+	// version in the same transaction.
+	PromoteVersion(context.Context, *PromoteVersionRequest) (*PromoteVersionResponse, error)
+	// Marks the production version rolled back and restores the previous one atomically.
+	RollbackModel(context.Context, *RollbackModelRequest) (*RollbackModelResponse, error)
 	mustEmbedUnimplementedRegistryServiceServer()
 }
 
@@ -180,6 +242,18 @@ func (UnimplementedRegistryServiceServer) TransitionVersion(context.Context, *Tr
 }
 func (UnimplementedRegistryServiceServer) GetVersionHistory(context.Context, *GetVersionHistoryRequest) (*GetVersionHistoryResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetVersionHistory not implemented")
+}
+func (UnimplementedRegistryServiceServer) ApproveVersion(context.Context, *ApproveVersionRequest) (*ApproveVersionResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ApproveVersion not implemented")
+}
+func (UnimplementedRegistryServiceServer) GetPromotionGates(context.Context, *GetPromotionGatesRequest) (*GetPromotionGatesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetPromotionGates not implemented")
+}
+func (UnimplementedRegistryServiceServer) PromoteVersion(context.Context, *PromoteVersionRequest) (*PromoteVersionResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method PromoteVersion not implemented")
+}
+func (UnimplementedRegistryServiceServer) RollbackModel(context.Context, *RollbackModelRequest) (*RollbackModelResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RollbackModel not implemented")
 }
 func (UnimplementedRegistryServiceServer) mustEmbedUnimplementedRegistryServiceServer() {}
 func (UnimplementedRegistryServiceServer) testEmbeddedByValue()                         {}
@@ -328,6 +402,78 @@ func _RegistryService_GetVersionHistory_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _RegistryService_ApproveVersion_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ApproveVersionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RegistryServiceServer).ApproveVersion(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RegistryService_ApproveVersion_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RegistryServiceServer).ApproveVersion(ctx, req.(*ApproveVersionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RegistryService_GetPromotionGates_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPromotionGatesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RegistryServiceServer).GetPromotionGates(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RegistryService_GetPromotionGates_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RegistryServiceServer).GetPromotionGates(ctx, req.(*GetPromotionGatesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RegistryService_PromoteVersion_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PromoteVersionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RegistryServiceServer).PromoteVersion(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RegistryService_PromoteVersion_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RegistryServiceServer).PromoteVersion(ctx, req.(*PromoteVersionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RegistryService_RollbackModel_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RollbackModelRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RegistryServiceServer).RollbackModel(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RegistryService_RollbackModel_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RegistryServiceServer).RollbackModel(ctx, req.(*RollbackModelRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // RegistryService_ServiceDesc is the grpc.ServiceDesc for RegistryService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -362,6 +508,22 @@ var RegistryService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetVersionHistory",
 			Handler:    _RegistryService_GetVersionHistory_Handler,
+		},
+		{
+			MethodName: "ApproveVersion",
+			Handler:    _RegistryService_ApproveVersion_Handler,
+		},
+		{
+			MethodName: "GetPromotionGates",
+			Handler:    _RegistryService_GetPromotionGates_Handler,
+		},
+		{
+			MethodName: "PromoteVersion",
+			Handler:    _RegistryService_PromoteVersion_Handler,
+		},
+		{
+			MethodName: "RollbackModel",
+			Handler:    _RegistryService_RollbackModel_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

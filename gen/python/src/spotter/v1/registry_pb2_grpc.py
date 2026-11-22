@@ -51,6 +51,26 @@ class RegistryServiceStub:
                 request_serializer=spotter_dot_v1_dot_registry__pb2.GetVersionHistoryRequest.SerializeToString,
                 response_deserializer=spotter_dot_v1_dot_registry__pb2.GetVersionHistoryResponse.FromString,
                 _registered_method=True)
+        self.ApproveVersion = channel.unary_unary(
+                '/spotter.v1.RegistryService/ApproveVersion',
+                request_serializer=spotter_dot_v1_dot_registry__pb2.ApproveVersionRequest.SerializeToString,
+                response_deserializer=spotter_dot_v1_dot_registry__pb2.ApproveVersionResponse.FromString,
+                _registered_method=True)
+        self.GetPromotionGates = channel.unary_unary(
+                '/spotter.v1.RegistryService/GetPromotionGates',
+                request_serializer=spotter_dot_v1_dot_registry__pb2.GetPromotionGatesRequest.SerializeToString,
+                response_deserializer=spotter_dot_v1_dot_registry__pb2.GetPromotionGatesResponse.FromString,
+                _registered_method=True)
+        self.PromoteVersion = channel.unary_unary(
+                '/spotter.v1.RegistryService/PromoteVersion',
+                request_serializer=spotter_dot_v1_dot_registry__pb2.PromoteVersionRequest.SerializeToString,
+                response_deserializer=spotter_dot_v1_dot_registry__pb2.PromoteVersionResponse.FromString,
+                _registered_method=True)
+        self.RollbackModel = channel.unary_unary(
+                '/spotter.v1.RegistryService/RollbackModel',
+                request_serializer=spotter_dot_v1_dot_registry__pb2.RollbackModelRequest.SerializeToString,
+                response_deserializer=spotter_dot_v1_dot_registry__pb2.RollbackModelResponse.FromString,
+                _registered_method=True)
 
 
 class RegistryServiceServicer:
@@ -107,6 +127,35 @@ class RegistryServiceServicer:
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def ApproveVersion(self, request, context):
+        """Records a person's approval of a shadow version.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetPromotionGates(self, request, context):
+        """Evaluates the promotion gates for a shadow version without changing anything.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def PromoteVersion(self, request, context):
+        """Promotes a shadow version whose gates all pass, retiring the current production
+        version in the same transaction.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def RollbackModel(self, request, context):
+        """Marks the production version rolled back and restores the previous one atomically.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_RegistryServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -144,6 +193,26 @@ def add_RegistryServiceServicer_to_server(servicer, server):
                     servicer.GetVersionHistory,
                     request_deserializer=spotter_dot_v1_dot_registry__pb2.GetVersionHistoryRequest.FromString,
                     response_serializer=spotter_dot_v1_dot_registry__pb2.GetVersionHistoryResponse.SerializeToString,
+            ),
+            'ApproveVersion': grpc.unary_unary_rpc_method_handler(
+                    servicer.ApproveVersion,
+                    request_deserializer=spotter_dot_v1_dot_registry__pb2.ApproveVersionRequest.FromString,
+                    response_serializer=spotter_dot_v1_dot_registry__pb2.ApproveVersionResponse.SerializeToString,
+            ),
+            'GetPromotionGates': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetPromotionGates,
+                    request_deserializer=spotter_dot_v1_dot_registry__pb2.GetPromotionGatesRequest.FromString,
+                    response_serializer=spotter_dot_v1_dot_registry__pb2.GetPromotionGatesResponse.SerializeToString,
+            ),
+            'PromoteVersion': grpc.unary_unary_rpc_method_handler(
+                    servicer.PromoteVersion,
+                    request_deserializer=spotter_dot_v1_dot_registry__pb2.PromoteVersionRequest.FromString,
+                    response_serializer=spotter_dot_v1_dot_registry__pb2.PromoteVersionResponse.SerializeToString,
+            ),
+            'RollbackModel': grpc.unary_unary_rpc_method_handler(
+                    servicer.RollbackModel,
+                    request_deserializer=spotter_dot_v1_dot_registry__pb2.RollbackModelRequest.FromString,
+                    response_serializer=spotter_dot_v1_dot_registry__pb2.RollbackModelResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -337,6 +406,114 @@ class RegistryService:
             '/spotter.v1.RegistryService/GetVersionHistory',
             spotter_dot_v1_dot_registry__pb2.GetVersionHistoryRequest.SerializeToString,
             spotter_dot_v1_dot_registry__pb2.GetVersionHistoryResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def ApproveVersion(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/spotter.v1.RegistryService/ApproveVersion',
+            spotter_dot_v1_dot_registry__pb2.ApproveVersionRequest.SerializeToString,
+            spotter_dot_v1_dot_registry__pb2.ApproveVersionResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetPromotionGates(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/spotter.v1.RegistryService/GetPromotionGates',
+            spotter_dot_v1_dot_registry__pb2.GetPromotionGatesRequest.SerializeToString,
+            spotter_dot_v1_dot_registry__pb2.GetPromotionGatesResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def PromoteVersion(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/spotter.v1.RegistryService/PromoteVersion',
+            spotter_dot_v1_dot_registry__pb2.PromoteVersionRequest.SerializeToString,
+            spotter_dot_v1_dot_registry__pb2.PromoteVersionResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def RollbackModel(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/spotter.v1.RegistryService/RollbackModel',
+            spotter_dot_v1_dot_registry__pb2.RollbackModelRequest.SerializeToString,
+            spotter_dot_v1_dot_registry__pb2.RollbackModelResponse.FromString,
             options,
             channel_credentials,
             insecure,

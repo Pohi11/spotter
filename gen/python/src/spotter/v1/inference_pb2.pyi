@@ -130,6 +130,30 @@ class InferenceCompleted(_message.Message):
     completed_at: _timestamp_pb2.Timestamp
     def __init__(self, job_id: _Optional[str] = ..., model_name: _Optional[str] = ..., prediction: _Optional[_Union[Prediction, _Mapping]] = ..., input_stats: _Optional[_Union[InputStats, _Mapping]] = ..., inference_ms: _Optional[float] = ..., completed_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ...) -> None: ...
 
+class ShadowCompared(_message.Message):
+    __slots__ = ("job_id", "model_name", "production_version_id", "shadow_version_id", "production_label", "shadow_label", "agree", "production_ms", "shadow_ms", "compared_at")
+    JOB_ID_FIELD_NUMBER: _ClassVar[int]
+    MODEL_NAME_FIELD_NUMBER: _ClassVar[int]
+    PRODUCTION_VERSION_ID_FIELD_NUMBER: _ClassVar[int]
+    SHADOW_VERSION_ID_FIELD_NUMBER: _ClassVar[int]
+    PRODUCTION_LABEL_FIELD_NUMBER: _ClassVar[int]
+    SHADOW_LABEL_FIELD_NUMBER: _ClassVar[int]
+    AGREE_FIELD_NUMBER: _ClassVar[int]
+    PRODUCTION_MS_FIELD_NUMBER: _ClassVar[int]
+    SHADOW_MS_FIELD_NUMBER: _ClassVar[int]
+    COMPARED_AT_FIELD_NUMBER: _ClassVar[int]
+    job_id: str
+    model_name: str
+    production_version_id: str
+    shadow_version_id: str
+    production_label: str
+    shadow_label: str
+    agree: bool
+    production_ms: float
+    shadow_ms: float
+    compared_at: _timestamp_pb2.Timestamp
+    def __init__(self, job_id: _Optional[str] = ..., model_name: _Optional[str] = ..., production_version_id: _Optional[str] = ..., shadow_version_id: _Optional[str] = ..., production_label: _Optional[str] = ..., shadow_label: _Optional[str] = ..., agree: _Optional[bool] = ..., production_ms: _Optional[float] = ..., shadow_ms: _Optional[float] = ..., compared_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ...) -> None: ...
+
 class InferenceFailed(_message.Message):
     __slots__ = ("job_id", "model_name", "reason", "deliveries", "failed_at")
     JOB_ID_FIELD_NUMBER: _ClassVar[int]
