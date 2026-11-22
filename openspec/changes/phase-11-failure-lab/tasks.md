@@ -7,8 +7,8 @@
 
 ## 2. Chaos runner
 
-- [ ] 2.1 `internal/chaos`: schedule, report arithmetic (`chaos_test.go`: fault and heal calls, lost and duplicate counts, recovery, never recovers).
-- [ ] 2.2 `cmd/spotterchaos`: worker process control, Docker faults, async and sync drivers, JSON report.
+- [x] 2.1 `internal/chaos`: schedule, report arithmetic (`chaos_test.go`: fault and heal calls, lost and duplicate counts, recovery, never recovers).
+- [x] 2.2 `cmd/spotterchaos`: worker process control, Docker faults, async and sync drivers, JSON report.
 
 ## 3. Measurements
 
