@@ -80,8 +80,19 @@ worker:
 
 trainer:
   # A one-off Job that trains, publishes, and registers a version (downloads EuroSAT, ~94 MB).
+  # command: spotter-train (from scratch) or spotter-retrain (fine-tune for drift, to shadow).
   enabled: false
+  command: spotter-train
   backoffLimit: 0
+  dataSizeLimit: 2Gi
+  resources:
+    requests: { cpu: "1", memory: 2Gi }
+    limits: { cpu: "4", memory: 4Gi }
+
+retrainer:
+  # Watches for DriftDetected and runs one retraining per event, taking the result to shadow
+  # (decision record 0018). Holds the decoded dataset in memory while it trains.
+  enabled: false
   dataSizeLimit: 2Gi
   resources:
     requests: { cpu: "1", memory: 2Gi }
