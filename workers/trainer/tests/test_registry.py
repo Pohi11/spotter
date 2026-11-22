@@ -45,6 +45,12 @@ class FakeRegistry(rpc.RegistryServiceServicer):
 
     def TransitionVersion(self, request, context):
         self.transitions.append(request)
+        for vs in self.versions.values():
+            for v in vs:
+                if v.id == request.version_id:
+                    v.stage = request.to_stage
+                    v.revision += 1
+                    return pb.TransitionVersionResponse(version=v)
         return pb.TransitionVersionResponse()
 
 

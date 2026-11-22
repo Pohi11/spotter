@@ -412,3 +412,36 @@ func TestUpgradeKeepsCredentials(t *testing.T) {
 		t.Fatal("upgrade changed the generated credentials")
 	}
 }
+
+func TestRetrainingJobAndWatcher(t *testing.T) {
+	spectest.Verifies(t, "model-retraining", "The chart runs retraining on demand or on drift")
+	if find(render(t), "Deployment", "spotter-retrainer") != nil {
+		t.Fatal("retrainer rendered by default")
+	}
+	jobs := ofKind(render(t, "trainer.enabled=true", "trainer.command=spotter-retrain"), "Job")
+	if len(jobs) != 1 {
+		t.Fatalf("%d Jobs, want 1", len(jobs))
+	}
+	if cmd := list(containers(jobs[0])[0], "command"); len(cmd) != 1 || cmd[0] != "spotter-retrain" {
+		t.Errorf("Job command %v, want [spotter-retrain]", cmd)
+	}
+
+	d := find(render(t, "retrainer.enabled=true"), "Deployment", "spotter-retrainer")
+	if d == nil {
+		t.Fatal("no retrainer Deployment")
+	}
+	if r, _ := get(d, "spec", "replicas").(int); r != 1 {
+		t.Errorf("replicas %v, want 1", get(d, "spec", "replicas"))
+	}
+	c := containers(d)[0]
+	if cmd := list(c, "command"); len(cmd) != 2 || cmd[0] != "spotter-retrain" || cmd[1] != "--watch" {
+		t.Errorf("command %v", cmd)
+	}
+	env := map[string]string{}
+	for _, e := range list(c, "env") {
+		env[str(e, "name")] = str(e, "value")
+	}
+	if env["NATS_URL"] == "" || env["REGISTRY_ADDR"] == "" {
+		t.Errorf("env %v lacks NATS_URL or REGISTRY_ADDR", env)
+	}
+}

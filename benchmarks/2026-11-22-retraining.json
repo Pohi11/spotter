@@ -1,0 +1,21 @@
+{
+  "date": "2026-11-22",
+  "model": "eurosat-classifier",
+  "report": "2026-11-22-retraining.md",
+  "method": "Live stack on one laptop (22 logical cores). spotter-retrain --watch running; 6 s of fully hazed holdout tiles from spotterload (4 clients), then clean traffic. Times from the MONITOR stream, the retrainer's log, the registry's stage history, and the worker's log.",
+  "trigger": { "drifted_version": 3, "features": { "mean_r": 0.22, "mean_g": 0.43, "mean_b": 0.39 } },
+  "timeline_utc": {
+    "hazed_traffic_started": "2026-11-22T22:48:15Z",
+    "drift_detected": "2026-11-22T22:48:18.374Z",
+    "retraining_started": "2026-11-22T22:48:21.940Z",
+    "version_in_shadow": "2026-11-22T22:55:18.632Z",
+    "worker_shadowing": "2026-11-22T22:55:19.123Z"
+  },
+  "retraining": { "parent_version": 1, "new_version": 4, "epochs": 3, "learning_rate": 0.0005, "degrade_p": 0.5, "training_seconds": 308.5, "best_val_accuracy": 0.9437 },
+  "holdout_tiles": 4050,
+  "accuracy": {
+    "parent": { "clean": 0.9657, "haze": 0.2232, "darken": 0.3128, "blur": 0.2454, "noise": 0.1114 },
+    "retrained": { "clean": 0.9558, "haze": 0.878, "darken": 0.8886, "blur": 0.7519, "noise": 0.6447 }
+  },
+  "gates_after_clean_traffic": { "comparisons": 592, "agreement": 0.985, "mean_shadow_ms": 7.6, "accuracy_vs_production": "0.9558 vs 0.9654, tolerance 0.01" }
+}

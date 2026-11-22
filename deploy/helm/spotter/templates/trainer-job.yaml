@@ -1,4 +1,4 @@
-{{- /* One-off training run: train, publish, register, validate (change phase-03-model-training). */ -}}
+{{- /* One-off run: spotter-train (change phase-03-model-training) or spotter-retrain (change retrain-on-drift), set by trainer.command. */ -}}
 {{- if .Values.trainer.enabled }}
 {{- $c := dict "root" . "component" "trainer" }}
 apiVersion: batch/v1
@@ -24,7 +24,7 @@ spec:
         - name: trainer
           image: {{ include "spotter.pythonImage" . }}
           imagePullPolicy: {{ .Values.images.pullPolicy }}
-          command: ["spotter-train"]
+          command: [{{ .Values.trainer.command | quote }}]
           env:
             - name: REGISTRY_ADDR
               value: {{ include "spotter.registryAddr" . }}
