@@ -7,5 +7,5 @@
 
 ## 2. Pages
 
-- [ ] 2.1 `/build`, `/build/specs`, `/build/decisions` (Playwright: timeline and totals, requirement anchor, decision anchor).
-- [ ] 2.2 Generate and commit `walkthrough.json` from a full test run.
+- [x] 2.1 `/build`, `/build/specs`, `/build/decisions` (Playwright: timeline and totals, requirement anchor, decision anchor).
+- [x] 2.2 Generate and commit `walkthrough.json` from a full test run.

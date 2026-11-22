@@ -291,6 +291,7 @@ func humanize(slug string) string {
 		for from, to := range map[string]string{"api": "API", "ci": "CI", "cd": "CD"} {
 			w = regexp.MustCompile(`\b`+from+`\b`).ReplaceAllString(w, to)
 		}
+		w = strings.ReplaceAll(w, "event driven", "event-driven")
 		return strings.ToUpper(w[:1]) + w[1:]
 	}
 	if m := phaseSlug.FindStringSubmatch(slug); m != nil {
