@@ -3,6 +3,7 @@ module github.com/Pohi11/spotter
 go 1.27.1
 
 require (
+	github.com/google/uuid v1.6.0
 	github.com/nats-io/nats-server/v2 v2.15.3
 	github.com/nats-io/nats.go v1.56.0
 	google.golang.org/protobuf v1.36.12
@@ -11,7 +12,6 @@ require (
 require (
 	github.com/antithesishq/antithesis-sdk-go v0.9.0-default-no-op // indirect
 	github.com/google/go-tpm v0.9.8 // indirect
-	github.com/google/uuid v1.6.0 // indirect
 	github.com/klauspost/compress v1.20.4 // indirect
 	github.com/minio/highwayhash v1.0.4 // indirect
 	github.com/nats-io/jwt/v2 v2.8.3 // indirect

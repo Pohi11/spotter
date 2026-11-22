@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+package spotter.v1;
+
+import "google/protobuf/timestamp.proto";
+
+// Lifecycle stage of a model version. Mirrors the registry's transition table.
+enum ModelVersionStage {
+  MODEL_VERSION_STAGE_UNSPECIFIED = 0;
+  MODEL_VERSION_STAGE_REGISTERED = 1;
+  MODEL_VERSION_STAGE_VALIDATED = 2;
+  MODEL_VERSION_STAGE_SHADOW = 3;
+  MODEL_VERSION_STAGE_PRODUCTION = 4;
+  MODEL_VERSION_STAGE_RETIRED = 5;
+  MODEL_VERSION_STAGE_REJECTED = 6;
+  MODEL_VERSION_STAGE_ROLLED_BACK = 7;
+}
+
+// Emitted by the registry when a new model version is stored.
+message ModelVersionRegistered {
+  // Unique per event; used as the message id for de-duplication.
+  string event_id = 1;
+  string model_id = 2;
+  string model_name = 3;
+  string version_id = 4;
+  int32 version = 5;
+  string artifact_uri = 6;
+  string artifact_sha256 = 7;
+  // "pytorch" or "onnx".
+  string framework = 8;
+  map<string, double> metrics = 9;
+  google.protobuf.Timestamp occurred_at = 10;
+}
+
+// Emitted by the registry when a model version moves to another stage.
+message ModelVersionStageChanged {
+  // Unique per event; used as the message id for de-duplication.
+  string event_id = 1;
+  string model_id = 2;
+  string model_name = 3;
+  string version_id = 4;
+  int32 version = 5;
+  ModelVersionStage from_stage = 6;
+  ModelVersionStage to_stage = 7;
+  string reason = 8;
+  // The version's revision after the change.
+  int64 revision = 9;
+  google.protobuf.Timestamp occurred_at = 10;
+}
