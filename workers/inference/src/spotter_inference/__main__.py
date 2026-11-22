@@ -3,7 +3,8 @@
 Configuration from environment variables: NATS_URL, REGISTRY_ADDR (localhost:9090),
 MODEL_NAME (eurosat-classifier), S3_ENDPOINT, S3_ACCESS_KEY, S3_SECRET_KEY,
 S3_REGION (us-east-1), ACK_WAIT (30), MAX_DELIVER (5), RETRY_DELAY (5),
-METRICS_PORT (9464), MODEL_THREADS (1), OTEL_EXPORTER_OTLP_ENDPOINT (unset: no export).
+METRICS_PORT (9464), MODEL_THREADS (1), OTEL_EXPORTER_OTLP_ENDPOINT (unset: no export),
+GRPC_PORT (unset: no synchronous classifier), SHADOW (on; off ignores shadow versions).
 """
 
 import asyncio
@@ -24,6 +25,7 @@ from spotter.v1 import registry_events_pb2 as events
 from spotter.v1 import registry_pb2_grpc as rpc
 
 from spotter_inference import metrics, telemetry
+from spotter_inference.classifier import serve_classifier
 from spotter_inference.models import ChecksumMismatch, ModelHolder, configure_threads
 from spotter_inference.ping import RESPONDER, SUBJECT, handle_ping
 from spotter_inference.processor import Processor
@@ -48,6 +50,8 @@ class Config:
     retry_delay: float
     metrics_port: int
     model_threads: int
+    grpc_port: int | None = None
+    shadow: bool = True
 
     @property
     def consumer(self) -> str:
@@ -69,6 +73,8 @@ class Config:
             retry_delay=float(e("RETRY_DELAY", "5")),
             metrics_port=int(e("METRICS_PORT", "9464")),
             model_threads=int(e("MODEL_THREADS", "1")),
+            grpc_port=int(e("GRPC_PORT")) if e("GRPC_PORT") else None,
+            shadow=e("SHADOW", "on").lower() not in ("off", "false", "0"),
         )
 
 
@@ -180,17 +186,23 @@ async def serve(cfg: Config, stop: asyncio.Event) -> None:
         kv=kv,
         s3=s3,
         model=lambda: holder.current,
-        shadow=lambda: holder.shadow,
+        shadow=(lambda: holder.shadow) if cfg.shadow else (lambda: None),
         max_deliver=cfg.max_deliver,
         retry_delay=cfg.retry_delay,
     )
     log.info("worker for %s listening (consumer %s)", cfg.model_name, cfg.consumer)
+    classifier = None
+    if cfg.grpc_port is not None:
+        classifier = await serve_classifier(cfg.grpc_port, lambda: holder.current)
+        log.info("synchronous classifier on port %d", classifier.bound_port)
 
     async def before_fetch() -> None:
         if holder.current is None:
             await reload()  # e.g. the registry was down at startup
 
     await consume(psub, processor, stop, before_fetch=before_fetch)
+    if classifier is not None:
+        await classifier.stop(grace=5)
     await nc.drain()
     channel.close()
     log.info("stopped")

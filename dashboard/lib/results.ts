@@ -71,12 +71,38 @@ export interface PromotionReport {
   rollback_under_load: { submitted: number; failed: number; lost: number };
 }
 
+export interface FailureRun {
+  file: string;
+  date: string;
+  mode: "async" | "sync";
+  fault: string;
+  config: { concurrency: number; duration_s: number; fault_at_s: number; heal_at_s: number };
+  events: { injected_at_s: number; healed_at_s: number; inject_error?: string; heal_error?: string };
+  report: {
+    requests: number;
+    rejected: number;
+    completed: number;
+    lost: number;
+    duplicates: number;
+    p50_ms: number;
+    p99_ms: number;
+    max_ms: number;
+    baseline_per_second: number;
+    recovery_seconds: number | null;
+    completed_per_second: number[];
+    rejected_per_second: number[];
+  };
+}
+
+export const FAULTS = ["none", "worker-kill", "nats-restart", "postgres-pause", "objectstore-pause"] as const;
+
 export interface Results {
   variants: VariantsReport;
   load: LoadReport[];
   drift: DriftReport;
   promotion: PromotionReport;
   spike: { autoscaled: LoadReport; oneWorker: LoadReport };
+  failureLab: FailureRun[]; // empty until the failure lab has run
 }
 
 /** What each load run was; the file name is the key, the numbers come from the file. */
@@ -105,6 +131,18 @@ function latest(files: string[], suffix: string): string {
 /** The run key of a report file: its name without the date and extension. */
 export const runKey = (file: string) => file.replace(/^\d{4}-\d{2}-\d{2}-/, "").replace(/\.json$/, "");
 
+/** The newest run of each mode and fault, in FAULTS order, async before sync. */
+function failureLab(dir: string, files: string[]): FailureRun[] {
+  const out: FailureRun[] = [];
+  for (const fault of FAULTS) {
+    for (const mode of ["async", "sync"] as const) {
+      const match = files.filter((f) => f.endsWith(`-failure-lab-${mode}-${fault}.json`)).sort();
+      if (match.length) out.push({ ...read<FailureRun>(dir, match[match.length - 1]), file: match[match.length - 1] });
+    }
+  }
+  return out;
+}
+
 export function loadResults(dir = REPORTS_DIR): Results {
   const files = readdirSync(/*turbopackIgnore: true*/ dir);
   const load = Object.keys(LOAD_RUNS).map((key) => ({ ...read<LoadReport>(dir, latest(files, key)), file: latest(files, key) }));
@@ -117,6 +155,7 @@ export function loadResults(dir = REPORTS_DIR): Results {
       autoscaled: { ...read<LoadReport>(dir, latest(files, "k8s-spike-autoscaled")), file: latest(files, "k8s-spike-autoscaled") },
       oneWorker: { ...read<LoadReport>(dir, latest(files, "k8s-spike-one-worker")), file: latest(files, "k8s-spike-one-worker") },
     },
+    failureLab: failureLab(dir, files),
   };
 }
 

@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package spotter.v1;
+
+import "spotter/v1/inference.proto";
+
+// Served by an inference worker when GRPC_PORT is set: classifies one image with the
+// worker's production version. Only the gateway's ClassifySync calls it (change
+// phase-11-failure-lab).
+service ClassifierService {
+  rpc Classify(ClassifyRequest) returns (ClassifyResponse);
+}
+
+message ClassifyRequest {
+  string model_name = 1;
+  bytes image = 2;
+}
+
+message ClassifyResponse {
+  Prediction prediction = 1;
+  InputStats input_stats = 2;
+  float inference_ms = 3;
+}

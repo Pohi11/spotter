@@ -19,6 +19,7 @@ type Service struct {
 	models ports.ModelCatalog
 	ids    ports.IDGenerator
 	clock  ports.Clock
+	sync   ports.Classifier // nil unless synchronous classification is configured
 }
 
 // Deps are the ports a Service needs.
@@ -29,10 +30,12 @@ type Deps struct {
 	Models ports.ModelCatalog
 	IDs    ports.IDGenerator
 	Clock  ports.Clock
+	// Classifier is optional: without it, ClassifySync answers ErrNotConfigured.
+	Classifier ports.Classifier
 }
 
 func NewService(d Deps) *Service {
-	return &Service{images: d.Images, jobs: d.Jobs, pub: d.Pub, models: d.Models, ids: d.IDs, clock: d.Clock}
+	return &Service{images: d.Images, jobs: d.Jobs, pub: d.Pub, models: d.Models, ids: d.IDs, clock: d.Clock, sync: d.Classifier}
 }
 
 // Submit validates the request, stores the image, records a pending job, and publishes
@@ -69,4 +72,27 @@ func (s *Service) Submit(ctx context.Context, modelName string, image []byte) (d
 // Get returns a job's current status and result.
 func (s *Service) Get(ctx context.Context, id uuid.UUID) (domain.Job, error) {
 	return s.jobs.Get(ctx, id)
+}
+
+// ClassifySync validates the request, checks the model, and asks the worker directly,
+// storing nothing and publishing nothing (the failure lab's synchronous baseline).
+func (s *Service) ClassifySync(ctx context.Context, modelName string, image []byte) (domain.Prediction, error) {
+	if err := domain.ValidateSubmission(modelName, image); err != nil {
+		return domain.Prediction{}, err
+	}
+	if s.sync == nil {
+		return domain.Prediction{}, fmt.Errorf("synchronous classification: %w", domain.ErrNotConfigured)
+	}
+	exists, err := s.models.ModelExists(ctx, modelName)
+	if err != nil {
+		return domain.Prediction{}, fmt.Errorf("look up model %q: %w: %w", modelName, domain.ErrUnavailable, err)
+	}
+	if !exists {
+		return domain.Prediction{}, fmt.Errorf("model %q: %w", modelName, domain.ErrNotFound)
+	}
+	p, err := s.sync.Classify(ctx, modelName, image)
+	if err != nil {
+		return domain.Prediction{}, fmt.Errorf("classify: %w", err)
+	}
+	return p, nil
 }

@@ -50,3 +50,9 @@ type EventSource interface {
 	// resources and closes the channel.
 	Events(ctx context.Context, since time.Duration, streams []string) (<-chan domain.Event, error)
 }
+
+// Classifier classifies one image right away (the worker's ClassifierService), for
+// synchronous classification. Errors reaching it wrap domain.ErrUnavailable.
+type Classifier interface {
+	Classify(ctx context.Context, modelName string, image []byte) (domain.Prediction, error)
+}

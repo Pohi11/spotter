@@ -274,6 +274,10 @@ function Measured({ results }: { results: ReturnType<typeof loadResults> }) {
   const b1 = (v: typeof fp32) => v.latency.find((l) => l.batch === 1)!.p50_ms;
   const e2e = results.load.find((l) => l.file.includes("closed-loop-onnx-int8.json"))!;
   const { autoscaled, oneWorker } = results.spike;
+  const kill = {
+    bus: results.failureLab.find((x) => x.fault === "worker-kill" && x.mode === "async"),
+    direct: results.failureLab.find((x) => x.fault === "worker-kill" && x.mode === "sync"),
+  };
   return (
     <Section
       id="measured"
@@ -293,6 +297,18 @@ function Measured({ results }: { results: ReturnType<typeof loadResults> }) {
         <Figure label="False drift alarms on clean traffic" value={`${results.drift.false_alarms} of ${results.drift.clean_events.toLocaleString()}`} note="events, with PSI thresholds of 0.2 to raise and 0.1 to clear" />
         <Figure label="Rollback to the worker serving the old version" value={fmtMs(results.promotion.rollback_to_serving_ms)} note={`${results.promotion.rollback_under_load.lost} jobs lost when done under load`} />
         <Figure label="Load spike on Kubernetes, KEDA from 1 to 3 workers" value={`${autoscaled.report.completed_per_second.toFixed(0)} jobs/s`} note={`against ${oneWorker.report.completed_per_second.toFixed(0)} jobs/s with one fixed worker`} />
+        {kill.bus && kill.direct && (
+          <Figure
+            label="Worker killed for 10 seconds, requests that failed"
+            value={`${kill.bus.report.rejected} on the bus`}
+            note={
+              <>
+                against {kill.direct.report.rejected.toLocaleString()} with a direct gRPC call; {kill.bus.report.lost} jobs lost, {kill.bus.report.duplicates} duplicated (
+                <Link href="/results#failure-lab" className={link}>failure lab</Link>)
+              </>
+            }
+          />
+        )}
       </dl>
     </Section>
   );

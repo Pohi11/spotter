@@ -21,6 +21,7 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	InferenceService_SubmitInference_FullMethodName = "/spotter.v1.InferenceService/SubmitInference"
 	InferenceService_GetInference_FullMethodName    = "/spotter.v1.InferenceService/GetInference"
+	InferenceService_ClassifySync_FullMethodName    = "/spotter.v1.InferenceService/ClassifySync"
 )
 
 // InferenceServiceClient is the client API for InferenceService service.
@@ -34,6 +35,10 @@ type InferenceServiceClient interface {
 	SubmitInference(ctx context.Context, in *SubmitInferenceRequest, opts ...grpc.CallOption) (*SubmitInferenceResponse, error)
 	// Returns a job's status and, once it has finished, its result.
 	GetInference(ctx context.Context, in *GetInferenceRequest, opts ...grpc.CallOption) (*GetInferenceResponse, error)
+	// Classifies an image in the same call by asking the worker directly: no stored image,
+	// no job, no event. The synchronous baseline for the failure lab (change
+	// phase-11-failure-lab); UNIMPLEMENTED unless the gateway has WORKER_ADDR.
+	ClassifySync(ctx context.Context, in *ClassifySyncRequest, opts ...grpc.CallOption) (*ClassifySyncResponse, error)
 }
 
 type inferenceServiceClient struct {
@@ -64,6 +69,16 @@ func (c *inferenceServiceClient) GetInference(ctx context.Context, in *GetInfere
 	return out, nil
 }
 
+func (c *inferenceServiceClient) ClassifySync(ctx context.Context, in *ClassifySyncRequest, opts ...grpc.CallOption) (*ClassifySyncResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ClassifySyncResponse)
+	err := c.cc.Invoke(ctx, InferenceService_ClassifySync_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // InferenceServiceServer is the server API for InferenceService service.
 // All implementations must embed UnimplementedInferenceServiceServer
 // for forward compatibility.
@@ -75,6 +90,10 @@ type InferenceServiceServer interface {
 	SubmitInference(context.Context, *SubmitInferenceRequest) (*SubmitInferenceResponse, error)
 	// Returns a job's status and, once it has finished, its result.
 	GetInference(context.Context, *GetInferenceRequest) (*GetInferenceResponse, error)
+	// Classifies an image in the same call by asking the worker directly: no stored image,
+	// no job, no event. The synchronous baseline for the failure lab (change
+	// phase-11-failure-lab); UNIMPLEMENTED unless the gateway has WORKER_ADDR.
+	ClassifySync(context.Context, *ClassifySyncRequest) (*ClassifySyncResponse, error)
 	mustEmbedUnimplementedInferenceServiceServer()
 }
 
@@ -90,6 +109,9 @@ func (UnimplementedInferenceServiceServer) SubmitInference(context.Context, *Sub
 }
 func (UnimplementedInferenceServiceServer) GetInference(context.Context, *GetInferenceRequest) (*GetInferenceResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetInference not implemented")
+}
+func (UnimplementedInferenceServiceServer) ClassifySync(context.Context, *ClassifySyncRequest) (*ClassifySyncResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ClassifySync not implemented")
 }
 func (UnimplementedInferenceServiceServer) mustEmbedUnimplementedInferenceServiceServer() {}
 func (UnimplementedInferenceServiceServer) testEmbeddedByValue()                          {}
@@ -148,6 +170,24 @@ func _InferenceService_GetInference_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _InferenceService_ClassifySync_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ClassifySyncRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(InferenceServiceServer).ClassifySync(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: InferenceService_ClassifySync_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(InferenceServiceServer).ClassifySync(ctx, req.(*ClassifySyncRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // InferenceService_ServiceDesc is the grpc.ServiceDesc for InferenceService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -162,6 +202,10 @@ var InferenceService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetInference",
 			Handler:    _InferenceService_GetInference_Handler,
+		},
+		{
+			MethodName: "ClassifySync",
+			Handler:    _InferenceService_ClassifySync_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -5,6 +5,7 @@ package grpcapi
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 
 	"github.com/google/uuid"
@@ -47,6 +48,14 @@ func (s *Server) GetInference(ctx context.Context, req *spotterv1.GetInferenceRe
 	return &spotterv1.GetInferenceResponse{Job: natsjobs.ToProto(job)}, nil
 }
 
+func (s *Server) ClassifySync(ctx context.Context, req *spotterv1.ClassifySyncRequest) (*spotterv1.ClassifySyncResponse, error) {
+	p, err := s.svc.ClassifySync(ctx, req.GetModelName(), req.GetImage())
+	if err != nil {
+		return nil, s.toStatus(err)
+	}
+	return &spotterv1.ClassifySyncResponse{Prediction: natsjobs.PredictionToProto(p)}, nil
+}
+
 func (s *Server) toStatus(err error) error {
 	var ve *domain.ValidationError
 	switch {
@@ -58,6 +67,8 @@ func (s *Server) toStatus(err error) error {
 		return st.Err()
 	case errors.Is(err, domain.ErrNotFound):
 		return status.Error(codes.NotFound, err.Error())
+	case errors.Is(err, domain.ErrNotConfigured):
+		return status.Error(codes.Unimplemented, "synchronous classification is not configured on this gateway (WORKER_ADDR)")
 	case errors.Is(err, domain.ErrUnavailable):
 		s.logger.Warn("inference request failed", "error", err)
 		return status.Error(codes.Unavailable, "a dependency is unavailable; retry later")
@@ -82,4 +93,17 @@ func (c Catalog) ModelExists(ctx context.Context, name string) (bool, error) {
 	default:
 		return false, err
 	}
+}
+
+// Worker implements ports.Classifier with the worker's ClassifierService.
+type Worker struct {
+	Client spotterv1.ClassifierServiceClient
+}
+
+func (w Worker) Classify(ctx context.Context, modelName string, image []byte) (domain.Prediction, error) {
+	resp, err := w.Client.Classify(ctx, &spotterv1.ClassifyRequest{ModelName: modelName, Image: image})
+	if err != nil {
+		return domain.Prediction{}, fmt.Errorf("worker: %w: %w", domain.ErrUnavailable, err)
+	}
+	return natsjobs.PredictionFromProto(resp.GetPrediction()), nil
 }
