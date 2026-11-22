@@ -53,8 +53,18 @@ jobs:
         run: go mod tidy && git diff --exit-code -- go.mod go.sum
       - name: Vet
         run: go vet ./...
+      # Postgres tests start their own container with testcontainers (decision record 0005).
       - name: Test (race detector)
-        run: go test -race -count=1 ./...
+        run: go run gotest.tools/gotestsum@v1.13.0 --format testname --jsonfile go-test.json -- -race -count=1 ./...
+      - name: Every requirement has a passing test
+        if: ${{ !cancelled() }}
+        run: go run ./tools/speccheck -openspec openspec -go go-test.json
+      - name: Upload test report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: go-test-report
+          path: go-test.json
 
   python:
     name: Python

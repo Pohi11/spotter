@@ -55,3 +55,6 @@ docs/private/
 .claude/
 .mcp.json
 skills-lock.json
+
+# Test reports
+go-test.json
