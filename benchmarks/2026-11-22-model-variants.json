@@ -1,0 +1,120 @@
+{
+  "date": "2026-11-22",
+  "model": "eurosat-classifier",
+  "source_version": 1,
+  "source_version_id": "01a2047e-e022-76cb-b185-554c9c616cc5",
+  "split_fingerprint": "0f4c63a0ecca940cf11cebd853cc87e70585a15c7c635e6d586d1cf1cfcfc45f",
+  "holdout_tiles": 4050,
+  "code_commit": "3dca8732ccdb24a824e1a2614d409c1ce3c70847",
+  "environment": {
+    "cpu": "Intel64 Family 6 Model 170 Stepping 4, GenuineIntel",
+    "logical_cores": 22,
+    "threads": 4,
+    "python": "3.13.14",
+    "torch": "2.15.0+cpu",
+    "onnxruntime": "1.32.0",
+    "platform": "Windows-11-10.0.26200-SP0"
+  },
+  "parity": {
+    "max_abs_diff": 1.2516975402832031e-06,
+    "disagreements": 0
+  },
+  "variants": [
+    {
+      "name": "pytorch-fp32",
+      "size_bytes": 1170865,
+      "accuracy": 0.9657,
+      "macro_f1": 0.9644,
+      "latency": [
+        {
+          "batch": 1,
+          "iterations": 200,
+          "p50_ms": 1.975650004169438,
+          "p95_ms": 2.832674999081063,
+          "p99_ms": 3.189166995434789,
+          "images_per_s": 475.7120459398654
+        },
+        {
+          "batch": 8,
+          "iterations": 100,
+          "p50_ms": 13.879349993658252,
+          "p95_ms": 27.50166500263731,
+          "p99_ms": 31.73875099979341,
+          "images_per_s": 517.9690924252982
+        },
+        {
+          "batch": 32,
+          "iterations": 50,
+          "p50_ms": 48.49679999460932,
+          "p95_ms": 61.62055499808048,
+          "p99_ms": 65.17953199407201,
+          "images_per_s": 645.3221524770298
+        }
+      ]
+    },
+    {
+      "name": "onnx-fp32",
+      "size_bytes": 1184998,
+      "accuracy": 0.9657,
+      "macro_f1": 0.9644,
+      "latency": [
+        {
+          "batch": 1,
+          "iterations": 200,
+          "p50_ms": 0.8148499910021201,
+          "p95_ms": 1.0178149939747527,
+          "p99_ms": 1.1780959907628128,
+          "images_per_s": 1189.8196649970444
+        },
+        {
+          "batch": 8,
+          "iterations": 100,
+          "p50_ms": 6.570000005012844,
+          "p95_ms": 12.347005004266975,
+          "p99_ms": 13.412588001810947,
+          "images_per_s": 1064.1682834523622
+        },
+        {
+          "batch": 32,
+          "iterations": 50,
+          "p50_ms": 24.23274999455316,
+          "p95_ms": 28.818334998504724,
+          "p99_ms": 29.76209599437425,
+          "images_per_s": 1281.9049106369591
+        }
+      ]
+    },
+    {
+      "name": "onnx-int8",
+      "size_bytes": 327397,
+      "accuracy": 0.9654,
+      "macro_f1": 0.964,
+      "latency": [
+        {
+          "batch": 1,
+          "iterations": 200,
+          "p50_ms": 0.42764999670907855,
+          "p95_ms": 0.5987000004097351,
+          "p99_ms": 0.6909100075426977,
+          "images_per_s": 2238.583779235925
+        },
+        {
+          "batch": 8,
+          "iterations": 100,
+          "p50_ms": 2.680750003491994,
+          "p95_ms": 3.2975550107948948,
+          "p99_ms": 3.7673060005181482,
+          "images_per_s": 2903.841820602204
+        },
+        {
+          "batch": 32,
+          "iterations": 50,
+          "p50_ms": 10.206699997070245,
+          "p95_ms": 13.889825000660494,
+          "p99_ms": 16.128338994749353,
+          "images_per_s": 3011.4302600735277
+        }
+      ]
+    }
+  ]
+}
