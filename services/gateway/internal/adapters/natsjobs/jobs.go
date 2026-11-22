@@ -11,11 +11,16 @@ import (
 	"github.com/google/uuid"
 	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	spotterv1 "github.com/Pohi11/spotter/gen/go/spotter/v1"
 	"github.com/Pohi11/spotter/internal/natsjs"
+	"github.com/Pohi11/spotter/internal/natstrace"
 	"github.com/Pohi11/spotter/services/gateway/internal/domain"
 )
 
@@ -92,12 +97,28 @@ func (s *Store) PublishRequested(ctx context.Context, job domain.Job) error {
 	if err != nil {
 		return err
 	}
-	msg := &nats.Msg{Subject: natsjs.InferenceRequestedSubject(job.ModelName), Data: data, Header: nats.Header{}}
+	subject := natsjs.InferenceRequestedSubject(job.ModelName)
+	ctx, span := tracer.Start(ctx, "publish "+subject, trace.WithSpanKind(trace.SpanKindProducer),
+		trace.WithAttributes(
+			attribute.String("messaging.system", "nats"),
+			attribute.String("messaging.destination.name", subject),
+			attribute.String("spotter.job_id", job.ID.String()),
+			attribute.String("spotter.model", job.ModelName),
+		))
+	defer span.End()
+
+	msg := &nats.Msg{Subject: subject, Data: data, Header: nats.Header{}}
 	msg.Header.Set(jetstream.MsgIDHeader, RequestedMsgID(job.ID))
 	msg.Header.Set(natsjs.EventTypeHeader, "spotter.v1.InferenceRequested")
-	_, err = s.js.PublishMsg(ctx, msg)
+	natstrace.Inject(ctx, msg) // the worker continues this trace
+	if _, err = s.js.PublishMsg(ctx, msg); err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "publish failed")
+	}
 	return err
 }
+
+var tracer = otel.Tracer("github.com/Pohi11/spotter/services/gateway/internal/adapters/natsjobs")
 
 var statusToProto = map[domain.Status]spotterv1.JobStatus{
 	domain.StatusPending:   spotterv1.JobStatus_JOB_STATUS_PENDING,

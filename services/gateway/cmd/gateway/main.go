@@ -19,6 +19,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/health"
@@ -28,6 +30,7 @@ import (
 	spotterv1 "github.com/Pohi11/spotter/gen/go/spotter/v1"
 	"github.com/Pohi11/spotter/internal/natsjs"
 	"github.com/Pohi11/spotter/internal/svc"
+	"github.com/Pohi11/spotter/internal/telemetry"
 	"github.com/Pohi11/spotter/services/gateway/internal/adapters/grpcapi"
 	"github.com/Pohi11/spotter/services/gateway/internal/adapters/natsjobs"
 	"github.com/Pohi11/spotter/services/gateway/internal/adapters/s3images"
@@ -82,9 +85,15 @@ func run(ctx context.Context, getenv func(string) string, logger *slog.Logger, o
 	if err != nil {
 		return err
 	}
+	tel, err := telemetry.Setup(ctx, "gateway")
+	if err != nil {
+		return fmt.Errorf("telemetry: %w", err)
+	}
+	defer func() { _ = tel.Shutdown(context.Background()) }()
 	// NewClient connects lazily: the gateway starts even if the registry isn't up yet,
 	// and /readyz reports it until it is.
-	registryConn, err := grpc.NewClient(cfg.RegistryAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	registryConn, err := grpc.NewClient(cfg.RegistryAddr, grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithStatsHandler(otelgrpc.NewClientHandler())) // passes trace context to the registry
 	if err != nil {
 		return fmt.Errorf("REGISTRY_ADDR: %w", err)
 	}
@@ -118,7 +127,7 @@ func run(ctx context.Context, getenv func(string) string, logger *slog.Logger, o
 	})
 	inference := grpcapi.New(service, logger)
 
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(grpc.StatsHandler(otelgrpc.NewServerHandler()))
 	spotterv1.RegisterInferenceServiceServer(grpcServer, inference)
 	healthServer := health.NewServer()
 	healthServer.SetServingStatus(spotterv1.InferenceService_ServiceDesc.ServiceName, healthpb.HealthCheckResponse_SERVING)
@@ -130,13 +139,13 @@ func run(ctx context.Context, getenv func(string) string, logger *slog.Logger, o
 		return err
 	}
 	return svc.Run(ctx, svc.Options{Logger: logger, ShutdownTimeout: cfg.ShutdownTimeout, OnListening: onListening, BeforeShutdown: healthServer.Shutdown},
-		svc.Listener{Name: "http", Addr: cfg.HTTPAddr, Server: svc.HTTP(routes(api, healthpb.NewHealthClient(registryConn), nc))},
+		svc.Listener{Name: "http", Addr: cfg.HTTPAddr, Server: svc.HTTP(routes(otelhttp.NewHandler(api, "gateway"), tel.Metrics, healthpb.NewHealthClient(registryConn), nc))},
 		svc.Listener{Name: "grpc", Addr: cfg.GRPCAddr, Server: svc.GRPC(grpcServer)},
 	)
 }
 
 // routes adds liveness and readiness in front of the API.
-func routes(api http.Handler, registryHealth healthpb.HealthClient, nc *nats.Conn) http.Handler {
+func routes(api, metrics http.Handler, registryHealth healthpb.HealthClient, nc *nats.Conn) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /livez", func(w http.ResponseWriter, _ *http.Request) {
 		_, _ = w.Write([]byte("ok\n"))
@@ -156,6 +165,7 @@ func routes(api http.Handler, registryHealth healthpb.HealthClient, nc *nats.Con
 		}
 		_, _ = w.Write([]byte("ok\n"))
 	})
+	mux.Handle("GET /metrics", metrics)
 	mux.Handle("/", api)
 	return mux
 }

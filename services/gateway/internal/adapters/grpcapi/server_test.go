@@ -11,6 +11,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/nats-io/nats.go/jetstream"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -79,7 +80,7 @@ func setup(t *testing.T) env {
 
 	svc := app.NewService(app.Deps{Images: images, Jobs: jobs, Pub: jobs, Models: grpcapi.Catalog{Registry: registry}, IDs: uuidV7{}, Clock: clock{}})
 	lis := bufconn.Listen(1 << 20)
-	srv := grpc.NewServer()
+	srv := grpc.NewServer(grpc.StatsHandler(otelgrpc.NewServerHandler()))
 	spotterv1.RegisterInferenceServiceServer(srv, grpcapi.New(svc, slog.New(slog.NewTextHandler(io.Discard, nil))))
 	go func() { _ = srv.Serve(lis) }()
 	t.Cleanup(srv.Stop)

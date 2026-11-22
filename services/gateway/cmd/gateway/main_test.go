@@ -12,6 +12,8 @@ import (
 	"testing"
 	"time"
 
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 
 	spotterv1 "github.com/Pohi11/spotter/gen/go/spotter/v1"
@@ -57,7 +59,7 @@ func TestMissingNATSURL(t *testing.T) {
 }
 
 // started runs the gateway with vars and returns its HTTP address and a stop func.
-func started(t *testing.T, vars map[string]string) (string, func() error) {
+func started(t *testing.T, vars map[string]string) (map[string]string, func() error) {
 	t.Helper()
 	ctx, cancel := context.WithCancel(context.Background())
 	var mu sync.Mutex
@@ -97,7 +99,7 @@ func started(t *testing.T, vars map[string]string) (string, func() error) {
 		return stopErr
 	}
 	t.Cleanup(func() { _ = stop() })
-	return addrs["http"], stop
+	return addrs, stop
 }
 
 func status(t *testing.T, url string) int {
@@ -125,7 +127,8 @@ func TestReadinessFollowsTheRegistry(t *testing.T) {
 	spectest.Verifies(t, capability, "The gateway process is configured from the environment and stops gracefully")
 	reg, regAddr := fakeRegistry(t)
 	vars, _ := baseEnv(t, regAddr)
-	addr, _ := started(t, vars)
+	a, _ := started(t, vars)
+	addr := a["http"]
 
 	if code := status(t, "http://"+addr+"/readyz"); code != http.StatusOK {
 		t.Fatalf("/readyz with registry SERVING = %d, want 200", code)
@@ -147,7 +150,8 @@ func TestReadinessFollowsNATS(t *testing.T) {
 	spectest.Verifies(t, capability, "The gateway process is configured from the environment and stops gracefully")
 	_, regAddr := fakeRegistry(t)
 	vars, ns := baseEnv(t, regAddr)
-	addr, _ := started(t, vars)
+	a, _ := started(t, vars)
+	addr := a["http"]
 	if code := status(t, "http://"+addr+"/readyz"); code != http.StatusOK {
 		t.Fatalf("/readyz = %d, want 200", code)
 	}
@@ -165,7 +169,8 @@ func TestStopSignal(t *testing.T) {
 	spectest.Verifies(t, capability, "The gateway process is configured from the environment and stops gracefully")
 	_, regAddr := fakeRegistry(t)
 	vars, _ := baseEnv(t, regAddr)
-	addr, stop := started(t, vars)
+	a, stop := started(t, vars)
+	addr := a["http"]
 	if err := stop(); err != nil {
 		t.Fatalf("run returned %v, want nil", err)
 	}
@@ -179,7 +184,8 @@ func TestRESTThroughTheProcess(t *testing.T) {
 	spectest.Verifies(t, capability, "Registry operations are available over REST")
 	_, regAddr := fakeRegistry(t)
 	vars, _ := baseEnv(t, regAddr)
-	addr, _ := started(t, vars)
+	a, _ := started(t, vars)
+	addr := a["http"]
 	resp, err := http.Post("http://"+addr+"/v1/models", "application/json", strings.NewReader(`{"name":"eurosat-classifier"}`))
 	if err != nil {
 		t.Fatal(err)
@@ -196,5 +202,38 @@ func TestRESTThroughTheProcess(t *testing.T) {
 	resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("POST inferences through the gateway process = %d", resp.StatusCode)
+	}
+}
+
+func TestMetricsAfterGRPCCalls(t *testing.T) {
+	spectest.Verifies(t, "observability", "Services expose Prometheus metrics")
+	_, regAddr := fakeRegistry(t)
+	vars, _ := baseEnv(t, regAddr)
+	a, _ := started(t, vars)
+
+	conn, err := grpc.NewClient(a["grpc"], grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer conn.Close()
+	client := spotterv1.NewInferenceServiceClient(conn)
+	for range 3 { // unknown jobs: NOT_FOUND still counts as a served call
+		_, _ = client.GetInference(context.Background(), &spotterv1.GetInferenceRequest{JobId: "00000000-0000-0000-0000-000000000000"})
+	}
+
+	resp, err := http.Get("http://" + a["http"] + "/metrics")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+	body, _ := io.ReadAll(resp.Body)
+	var count string
+	for _, line := range strings.Split(string(body), "\n") {
+		if strings.HasPrefix(line, "rpc_server_call_duration_seconds_count") && strings.Contains(line, "GetInference") {
+			count = line[strings.LastIndex(line, " ")+1:]
+		}
+	}
+	if count == "" || count == "0" {
+		t.Fatalf("no non-zero gRPC server duration count for GetInference in /metrics:\n%.2000s", body)
 	}
 }
