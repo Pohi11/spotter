@@ -22,7 +22,7 @@ conftest.py                           pytest `spec` marker → JUnit properties
 ## Decisions
 
 ### D1. A small CNN trained from scratch
-Three convolution blocks (32, 64, 128 channels, each conv-BN-ReLU-pool) and a small classifier head, about 0.4 M parameters, for 64×64 RGB tiles. It trains on a CPU in minutes and needs no pretrained-weight download. A fine-tuned ResNet-18 would likely score a few points higher; the point here is a real, honestly measured model that later changes optimize, monitor, and replace.
+Three convolution blocks (32, 64, 128 channels, each conv-BN-ReLU-pool) and a small classifier head (288,746 parameters) for 64×64 RGB tiles. It trains on a CPU in minutes and needs no pretrained-weight download. A fine-tuned ResNet-18 would likely score a few points higher; the point here is a real, honestly measured model that later changes optimize, monitor, and replace.
 
 ### D2. Images are decoded once into memory
 27,000 tiles × 3 × 64 × 64 bytes is about 330 MB as `uint8`. The trainer decodes every JPEG once into one tensor and normalizes per batch. This removes DataLoader worker processes, which are slow to start on Windows, and makes epochs CPU-bound on the model rather than on JPEG decoding.
@@ -37,13 +37,13 @@ Three convolution blocks (32, 64, 128 channels, each conv-BN-ReLU-pool) and a sm
 Per-channel mean and standard deviation were measured once on the training split (seed 42) and fixed in `spotter_model`. Serving uses the same constants without needing the training data.
 
 ### D6. Content-addressed publishing
-See decision record [0008](../../../docs/decisions/0008-content-addressed-model-artifacts.md). The trainer serializes the `state_dict` with `torch.save`, hashes the bytes, and uploads `model.pt` and `metadata.json` under `<model-name>/<sha256>/`. The bucket is created if missing.
+See decision record [0008](../../../../docs/decisions/0008-content-addressed-model-artifacts.md). The trainer serializes the `state_dict` with `torch.save`, hashes the bytes, and uploads `model.pt` and `metadata.json` under `<model-name>/<sha256>/`. The bucket is created if missing.
 
 ### D7. Registration and the validation gate are plain code
 The trainer calls `RegisterModel` (ignoring `ALREADY_EXISTS`), `RegisterVersion` with the holdout metrics, and, if `accuracy >= MIN_ACCURACY`, `TransitionVersion` to `validated` with revision 1. The floor is configuration, never a model output.
 
 ### D8. Python tests name their requirements
-`@pytest.mark.spec("<capability>", "<requirement>")`, copied into JUnit XML properties by a root `conftest.py` hook (as decision record [0001](../../../docs/decisions/0001-adopt-openspec-with-cross-language-traceability.md) planned). `speccheck` gains a `-junit` flag, and CI runs it in a separate job after the Go and Python jobs upload their reports.
+`@pytest.mark.spec("<capability>", "<requirement>")`, copied into JUnit XML properties by a root `conftest.py` hook (as decision record [0001](../../../../docs/decisions/0001-adopt-openspec-with-cross-language-traceability.md) planned). `speccheck` gains a `-junit` flag, and CI runs it in a separate job after the Go and Python jobs upload their reports.
 
 ## Risks and trade-offs
 

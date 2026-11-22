@@ -17,7 +17,7 @@ import torch
 from spotter_model import CLASSES, EuroSATNet
 
 from spotter_trainer import data
-from spotter_trainer.publish import artifact_bytes, build_metadata, publish
+from spotter_trainer.publish import artifact_bytes, build_metadata, code_commit, publish
 from spotter_trainer.registry import RegistryClient
 from spotter_trainer.splits import split
 from spotter_trainer.train import Hyperparams, ImageSet, evaluate_holdout, train
@@ -36,6 +36,8 @@ def _image_set(images_dir: Path, paths: tuple[str, ...]) -> ImageSet:
 
 
 def main() -> None:
+    # Read the commit now: files edited while training runs must not change what is recorded.
+    commit = code_commit()
     hp = Hyperparams(epochs=int(_env("EPOCHS", "12")), seed=int(_env("SEED", "42")))
     model_name = _env("MODEL_NAME", "eurosat-classifier")
     floor = float(_env("MIN_ACCURACY", "0.85"))
@@ -98,6 +100,7 @@ def main() -> None:
             hyperparams=hp.as_dict() | {"best_epoch": result.best_epoch},
             classes=CLASSES,
             training_seconds=result.seconds,
+            commit=commit,
             metrics=metrics,
         ),
     )

@@ -2,7 +2,7 @@
 
 A small, cloud-neutral platform for deploying and monitoring computer-vision models on overhead imagery. Register a model version, serve it behind REST and gRPC, run inference through an event bus, watch live traffic for drift, retrain, shadow-test the new version, and promote it through code-checked gates and a human approval, with rollback.
 
-Status: the model registry and its gRPC/REST API are built. The sections below grow as each part is built.
+Status: the registry, its API, and a trained EuroSAT model are built. The sections below grow as each part is built.
 
 ## Model registry
 
@@ -50,6 +50,24 @@ flowchart LR
 
 Specs: [registry-api](openspec/specs/registry-api/spec.md), [gateway-http](openspec/specs/gateway-http/spec.md).
 
+## The model
+
+A small CNN (three conv blocks, about 0.3 M parameters) trained from scratch on EuroSAT RGB (27,000 64×64 Sentinel-2 tiles, 10 land-use classes), on a laptop CPU.
+
+| Measured (one run, seed 42) | Result |
+|---|---|
+| Holdout accuracy (4,050 tiles never seen in training) | **96.57%** |
+| Holdout macro F1 | 0.964 |
+| Weakest classes (recall) | PermanentCrop 93.3%, River 93.6%, Pasture 94.0% |
+| Most common confusion | PermanentCrop predicted as HerbaceousVegetation (13 of 375) |
+| Training time (12 epochs, CPU, PyTorch 2.15) | 18 min |
+
+- **Splits are deterministic and stratified** (70/15/15 per class); the split's fingerprint is recorded with the model. The holdout set is read once, after training; a test checks nothing reads it earlier.
+- **Artifacts are content-addressed:** `s3://models/<model>/<sha256>/model.pt`, with a `metadata.json` beside it (split fingerprint, seed, hyperparameters, commit, library versions, metrics) ([0008](docs/decisions/0008-content-addressed-model-artifacts.md)).
+- **Registration and validation are code:** the trainer registers the version over gRPC with its holdout metrics and moves it to `validated` only if accuracy meets a configured floor (0.85).
+
+Specs: [training-data](openspec/specs/training-data/spec.md), [model-evaluation](openspec/specs/model-evaluation/spec.md), [model-publishing](openspec/specs/model-publishing/spec.md).
+
 ## Architecture
 
 - **Go services:** registry (model versions and their lifecycle), gateway (REST and gRPC front door), monitor (drift detection). Each is hexagonal: domain and use-case code depend only on ports, and Postgres, NATS, and S3 sit behind adapters.
@@ -91,6 +109,13 @@ REGISTRY_ADDR=localhost:9090 go run ./services/gateway/cmd/gateway
 
 curl -X POST localhost:8080/v1/models -d '{"name":"eurosat-classifier"}'
 curl localhost:8080/v1/models/eurosat-classifier/versions
+```
+
+Train a model and register it (downloads EuroSAT, about 94 MB, into `data/`):
+
+```bash
+set -a; . ./.env; set +a
+REGISTRY_ADDR=localhost:9090 uv run spotter-train
 ```
 
 ## Test
