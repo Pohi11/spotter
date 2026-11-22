@@ -271,7 +271,12 @@ function Lifecycle() {
     <Section
       id="lifecycle"
       title="A version's lifecycle"
-      intro="A version's stage is a state machine in code (services/registry/internal/domain/lifecycle.go) and in the database. Every move not drawn here is refused, and every move is recorded with its reason."
+      intro={
+        <>
+          A version&apos;s stage is a state machine in code (<Code>services/registry/internal/domain/lifecycle.go</Code>) and
+          in the database. Every move not drawn here is refused, and every move is recorded with its reason.
+        </>
+      }
     >
       <Diagram
         id={id}

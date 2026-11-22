@@ -46,7 +46,8 @@ export default function DriftPage() {
           </>
         }
       >
-        <table className="mt-8 w-full max-w-3xl border-t border-ink text-left text-sm">
+        <div className="mt-8 max-w-3xl overflow-x-auto">
+        <table className="w-full min-w-[36rem] border-t border-ink text-left text-sm">
           <thead>
             <tr className="text-xs text-faint">
               <th scope="col" className="py-3 pr-4 font-medium">Degradation</th>
@@ -82,6 +83,7 @@ export default function DriftPage() {
             ))}
           </tbody>
         </table>
+        </div>
         <p className="mt-5 max-w-2xl leading-relaxed text-muted">
           Missed within {drift.cap.toLocaleString()} jobs:{" "}
           {drift.conditions

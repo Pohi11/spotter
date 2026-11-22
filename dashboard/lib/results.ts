@@ -92,7 +92,7 @@ export const LOAD_RUNS: Record<string, string> = {
 };
 
 function read<T>(dir: string, file: string): T {
-  return JSON.parse(readFileSync(join(dir, file), "utf-8")) as T;
+  return JSON.parse(readFileSync(/*turbopackIgnore: true*/ join(dir, file), "utf-8")) as T;
 }
 
 /** The newest report whose name ends with `suffix`. */
@@ -106,7 +106,7 @@ function latest(files: string[], suffix: string): string {
 export const runKey = (file: string) => file.replace(/^\d{4}-\d{2}-\d{2}-/, "").replace(/\.json$/, "");
 
 export function loadResults(dir = REPORTS_DIR): Results {
-  const files = readdirSync(dir);
+  const files = readdirSync(/*turbopackIgnore: true*/ dir);
   const load = Object.keys(LOAD_RUNS).map((key) => ({ ...read<LoadReport>(dir, latest(files, key)), file: latest(files, key) }));
   return {
     variants: read<VariantsReport>(dir, latest(files, "model-variants")),

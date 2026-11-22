@@ -142,8 +142,10 @@ async function fixtures() {
       gates: await json(`/v1/versions/${v.id}/gates`),
     };
   }
-  const job = await submit(manifest.samples[0].variants[0].file);
-  const feed = await events("30m", 4);
+  const forest = manifest.samples.find((s) => s.true_class === "Forest");
+  const job = await submit(forest.variants[0].file);
+  // Only this model's events: tests elsewhere publish to the same streams under other names.
+  const feed = (await events("30m", 4)).filter((e) => e.subject.endsWith(`.${MODEL}`) || e.stream === "REGISTRY");
   const keep = [];
   const seen = {};
   for (const e of feed.reverse()) {

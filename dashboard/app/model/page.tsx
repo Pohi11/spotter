@@ -124,7 +124,7 @@ export default async function ModelPage() {
       </section>
 
       <div className="mt-16 grid gap-14 lg:grid-cols-2">
-        <section aria-labelledby="promote-heading">
+        <section aria-labelledby="promote-heading" className="min-w-0">
           <h2 id="promote-heading" className="text-2xl font-semibold">
             Promotion
           </h2>
@@ -150,7 +150,7 @@ export default async function ModelPage() {
           )}
         </section>
 
-        <section aria-labelledby="rollback-heading">
+        <section aria-labelledby="rollback-heading" className="min-w-0">
           <h2 id="rollback-heading" className="text-2xl font-semibold">
             Rollback
           </h2>

@@ -43,7 +43,7 @@ export function StageChip({ stage }: { stage: Stage }) {
 }
 
 export function Code({ children }: { children: ReactNode }) {
-  return <code className="rounded bg-wash px-1 py-0.5 font-mono text-[0.85em] text-ink ring-1 ring-rule">{children}</code>;
+  return <code className="rounded bg-wash px-1 py-0.5 font-mono text-[0.85em] text-ink ring-1 ring-rule [overflow-wrap:anywhere]">{children}</code>;
 }
 
 export function PageTitle({ title, children }: { title: string; children: ReactNode }) {
