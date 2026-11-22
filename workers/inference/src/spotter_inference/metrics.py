@@ -16,3 +16,8 @@ CONSUMER_PENDING = Gauge(
     "spotter_inference_consumer_pending",
     "Messages waiting for this worker's JetStream consumer.",
 )
+SHADOW = Counter(
+    "spotter_inference_shadow_comparisons_total",
+    "Shadow comparisons, by outcome (agree, disagree, error).",
+    ["outcome"],
+)

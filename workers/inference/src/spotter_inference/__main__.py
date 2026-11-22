@@ -177,6 +177,7 @@ async def serve(cfg: Config, stop: asyncio.Event) -> None:
         kv=kv,
         s3=s3,
         model=lambda: holder.current,
+        shadow=lambda: holder.shadow,
         max_deliver=cfg.max_deliver,
         retry_delay=cfg.retry_delay,
     )

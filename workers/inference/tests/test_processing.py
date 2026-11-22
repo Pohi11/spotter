@@ -7,7 +7,7 @@ from nats.errors import TimeoutError as NatsTimeout
 from nats.js.api import DeliverPolicy
 from spotter.v1 import inference_pb2 as ipb
 from spotter.v1 import registry_events_pb2 as events
-from spotter_inference.models import ChecksumMismatch
+from spotter_inference.models import ChecksumMismatch, LoadedModel
 from spotter_inference.processor import Processor
 
 from .conftest import jpeg
@@ -217,3 +217,93 @@ async def test_onnx_production_version(infra):
     job, _ = await infra.job(job_id)
     assert job.status == ipb.JOB_STATUS_SUCCEEDED and job.prediction.model_version == 4
     assert abs(sum(s.score for s in job.prediction.scores) - 1) < 1e-4
+
+
+SHADOW_RUNS = ("shadow-inference", "The worker runs the shadow version without affecting results")
+SHADOW_EVENT = ("shadow-inference", "Comparisons are published once per job")
+
+
+async def shadowed_holder(infra):
+    """Production version 3, shadow versions 2 and 1: the newest shadow (2) is loaded."""
+    prod = infra.publish_version(3)
+    shadows = [infra.publish_version(n) for n in (2, 1)]
+    for v in shadows:
+        v.stage = events.MODEL_VERSION_STAGE_SHADOW
+    infra.registry.versions = [prod, *shadows]
+    holder = infra.holder()
+    await holder.reload()
+    return holder
+
+
+@pytest.mark.spec(*SHADOW_RUNS)
+@pytest.mark.spec(*SHADOW_EVENT)
+async def test_shadow_loaded(infra):
+    holder = await shadowed_holder(infra)
+    assert holder.current.version == 3 and holder.shadow.version == 2
+    sub = await infra.consumer()
+    job_id = await infra.submit(jpeg())
+
+    p = processor(infra, holder, shadow=lambda: holder.shadow)
+    assert await p.handle(await fetch_one(sub)) == "succeeded"
+
+    job, _ = await infra.job(job_id)
+    assert job.prediction.model_version_id == "version-3"
+    completed = ipb.InferenceCompleted.FromString(
+        (await infra.messages(f"inference.completed.{infra.model}"))[0].data
+    )
+    assert completed.prediction.model_version_id == "version-3"
+    (msg,) = await infra.messages(f"inference.shadow.{infra.model}")
+    assert msg.headers["Nats-Msg-Id"] == f"shadow-{job_id}"
+    event = ipb.ShadowCompared.FromString(msg.data)
+    assert event.job_id == job_id and event.model_name == infra.model
+    assert (event.production_version_id, event.shadow_version_id) == ("version-3", "version-2")
+    assert event.production_label == job.prediction.label and event.shadow_label
+    assert event.agree == (event.production_label == event.shadow_label)
+    assert event.production_ms > 0 and event.shadow_ms > 0
+
+
+@pytest.mark.spec(*SHADOW_RUNS)
+async def test_shadow_fails(infra):
+    holder = await loaded_holder(infra, number=3)
+
+    def broken(x):
+        raise RuntimeError("shadow exploded")
+
+    bad = LoadedModel(version_id="version-9", version=9, framework="pytorch", predict=broken)
+    sub = await infra.consumer()
+    job_id = await infra.submit(jpeg())
+
+    outcome = await processor(infra, holder, shadow=lambda: bad).handle(await fetch_one(sub))
+
+    assert outcome == "succeeded"
+    job, _ = await infra.job(job_id)
+    assert job.status == ipb.JOB_STATUS_SUCCEEDED and job.prediction.model_version == 3
+    assert await infra.count(f"inference.shadow.{infra.model}") == 0
+
+
+@pytest.mark.spec(*SHADOW_RUNS)
+async def test_shadow_with_bad_checksum_is_skipped(infra):
+    prod = infra.publish_version(3)
+    shadow = infra.publish_version(4, corrupt_checksum=True)
+    shadow.stage = events.MODEL_VERSION_STAGE_SHADOW
+    infra.registry.versions = [shadow, prod]
+    holder = infra.holder()
+    await holder.reload()  # must not raise: production is fine
+    assert holder.current.version == 3 and holder.shadow is None
+
+
+@pytest.mark.spec(*SHADOW_RUNS)
+async def test_worker_follows_shadow_changes(infra):
+    holder = infra.holder()
+    entered = events.ModelVersionStageChanged(
+        model_name=infra.model,
+        from_stage=events.MODEL_VERSION_STAGE_VALIDATED,
+        to_stage=events.MODEL_VERSION_STAGE_SHADOW,
+    )
+    assert holder.follows(entered)
+    other = events.ModelVersionStageChanged(
+        model_name=infra.model,
+        from_stage=events.MODEL_VERSION_STAGE_REGISTERED,
+        to_stage=events.MODEL_VERSION_STAGE_VALIDATED,
+    )
+    assert not holder.follows(other)
