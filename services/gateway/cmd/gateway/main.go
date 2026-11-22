@@ -32,6 +32,7 @@ import (
 	"github.com/Pohi11/spotter/internal/svc"
 	"github.com/Pohi11/spotter/internal/telemetry"
 	"github.com/Pohi11/spotter/services/gateway/internal/adapters/grpcapi"
+	"github.com/Pohi11/spotter/services/gateway/internal/adapters/natsevents"
 	"github.com/Pohi11/spotter/services/gateway/internal/adapters/natsjobs"
 	"github.com/Pohi11/spotter/services/gateway/internal/adapters/s3images"
 	"github.com/Pohi11/spotter/services/gateway/internal/app"
@@ -139,13 +140,14 @@ func run(ctx context.Context, getenv func(string) string, logger *slog.Logger, o
 		return err
 	}
 	return svc.Run(ctx, svc.Options{Logger: logger, ShutdownTimeout: cfg.ShutdownTimeout, OnListening: onListening, BeforeShutdown: healthServer.Shutdown},
-		svc.Listener{Name: "http", Addr: cfg.HTTPAddr, Server: svc.HTTP(routes(otelhttp.NewHandler(api, "gateway"), tel.Metrics, healthpb.NewHealthClient(registryConn), nc))},
+		svc.Listener{Name: "http", Addr: cfg.HTTPAddr, Server: svc.HTTP(routes(otelhttp.NewHandler(api, "gateway"), restapi.Events(natsevents.New(js), restapi.KeepAlive), tel.Metrics, healthpb.NewHealthClient(registryConn), nc))},
 		svc.Listener{Name: "grpc", Addr: cfg.GRPCAddr, Server: svc.GRPC(grpcServer)},
 	)
 }
 
-// routes adds liveness and readiness in front of the API.
-func routes(api, metrics http.Handler, registryHealth healthpb.HealthClient, nc *nats.Conn) http.Handler {
+// routes adds liveness, readiness, metrics, and the event feed in front of the API. The
+// feed sits outside the tracing wrapper so a long-lived stream isn't one span.
+func routes(api, events, metrics http.Handler, registryHealth healthpb.HealthClient, nc *nats.Conn) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /livez", func(w http.ResponseWriter, _ *http.Request) {
 		_, _ = w.Write([]byte("ok\n"))
@@ -166,6 +168,7 @@ func routes(api, metrics http.Handler, registryHealth healthpb.HealthClient, nc 
 		_, _ = w.Write([]byte("ok\n"))
 	})
 	mux.Handle("GET /metrics", metrics)
+	mux.Handle("GET /v1/events", events)
 	mux.Handle("/", api)
 	return mux
 }

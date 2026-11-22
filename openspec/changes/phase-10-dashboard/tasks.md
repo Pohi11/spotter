@@ -7,7 +7,7 @@
 ## 2. Platform
 
 - [x] 2.1 `DriftEvaluated` in `monitor.proto`; the monitor publishes it at every evaluation (`app` tests with fakes).
-- [ ] 2.2 Gateway event feed: `domain.Event`, `ports.EventSource`, `adapters/natsevents`, `GET /v1/events` handler (tests against embedded JetStream: live, unknown type, replay, bad window, disconnect, keep-alive).
+- [x] 2.2 Gateway event feed: `domain.Event`, `ports.EventSource`, `adapters/natsevents`, `GET /v1/events` handler (tests against embedded JetStream: live, unknown type, replay, bad window, disconnect, keep-alive).
 
 ## 3. Dashboard
 

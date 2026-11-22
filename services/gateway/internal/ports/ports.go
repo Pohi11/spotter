@@ -40,3 +40,11 @@ type IDGenerator interface{ NewID() uuid.UUID }
 
 // Clock tells the time.
 type Clock interface{ Now() time.Time }
+
+// EventSource reads the platform's event streams.
+type EventSource interface {
+	// Events sends the events published in the last `since`, in stream order per stream,
+	// then live ones, until ctx is done; then it releases its resources and closes the
+	// channel.
+	Events(ctx context.Context, since time.Duration) (<-chan domain.Event, error)
+}
