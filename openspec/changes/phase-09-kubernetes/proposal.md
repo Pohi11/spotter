@@ -19,10 +19,11 @@ The platform runs only as processes on a laptop next to Docker Compose. The targ
 - `platform-deployment`: How the platform is packaged and installed on Kubernetes, how it handles credentials, health, shutdown, and scaling, and how an install is verified.
 
 ### Modified Capabilities
-None.
+- `model-promotion`: with no production version, the shadow gates pass and say why, so a model's first version can be promoted on approval (found while installing into an empty cluster).
 
 ## Impact
 
 - **New:** `deploy/docker/`, `deploy/helm/spotter/`, `deploy/k3d/`, `Tiltfile`, `spotterctl smoke`, a CI job.
-- **Unchanged:** service behaviour. The services already read configuration from the environment, migrate at startup, expose `/livez` and `/readyz`, and shut down on SIGTERM.
+- **Registry:** gate evaluation for a model's first version (decision record 0015).
+- **Otherwise unchanged:** service behaviour. The services already read configuration from the environment, migrate at startup, expose `/livez` and `/readyz`, and shut down on SIGTERM.
 - **Out of scope:** publishing images to a registry, multi-node Postgres or NATS, ingress and TLS, running Jaeger and Prometheus in the cluster.

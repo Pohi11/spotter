@@ -12,7 +12,11 @@
 
 - [ ] 3.1 `spotterctl smoke` and the Helm test Pod. k3d cluster file and Tiltfile; `tilt up` from an empty cluster.
 
-## 4. CI and real run
+## 4. First promotion
 
-- [ ] 4.1 CI job: kind, KEDA, chart install, `helm test`, upgrade check, report into spec coverage.
-- [ ] 4.2 Measure a load spike scaling workers up and back down.
+- [ ] 4.1 Decision record 0015; shadow gates pass without a production version; tests.
+
+## 5. CI and real run
+
+- [ ] 5.1 CI job: kind, KEDA, chart install, `helm test`, upgrade check, report into spec coverage.
+- [ ] 5.2 Measure a load spike scaling workers up and back down.
