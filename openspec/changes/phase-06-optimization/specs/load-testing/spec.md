@@ -20,3 +20,10 @@ The load generator SHALL submit images through the gateway from a configured num
 #### Scenario: Submission errors
 - **WHEN** the gateway rejects some submissions
 - **THEN** the report counts them as failed submissions
+
+### Requirement: Closed-loop mode bounds outstanding jobs
+In closed-loop mode each client SHALL wait for its job's completion (or the timeout) before submitting its next image, so that no more jobs than clients are outstanding at any time. Open-loop mode (submit as fast as accepted) SHALL remain available for overload testing.
+
+#### Scenario: At most one job per client
+- **WHEN** the load generator runs closed-loop with 4 clients
+- **THEN** no more than 4 jobs are outstanding at any moment

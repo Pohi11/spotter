@@ -41,6 +41,8 @@ func New(ctx context.Context, js jetstream.JetStream) (*Store, error) {
 
 // Create stores a new pending job. The key is the job id.
 func (s *Store) Create(ctx context.Context, job domain.Job) error {
+	ctx, span := tracer.Start(ctx, "record job", trace.WithAttributes(attribute.String("spotter.job_id", job.ID.String())))
+	defer span.End()
 	data, err := proto.Marshal(ToProto(job))
 	if err != nil {
 		return err

@@ -25,8 +25,11 @@ type Completion struct {
 type Config struct {
 	Concurrency int           // concurrent clients
 	Duration    time.Duration // how long clients keep submitting
-	Timeout     time.Duration // how long to wait for outstanding completions afterwards
+	Timeout     time.Duration // how long to wait for a completion (closed loop) or for stragglers
 	Images      [][]byte      // submitted round-robin
+	// ClosedLoop makes each client wait for its job's completion before submitting the next,
+	// so at most Concurrency jobs are outstanding. Open loop submits as fast as accepted.
+	ClosedLoop bool
 }
 
 // Report is what a run measured.
@@ -41,6 +44,7 @@ type Report struct {
 	P95ms             float64 `json:"p95_ms"`
 	P99ms             float64 `json:"p99_ms"`
 	MaxMs             float64 `json:"max_ms"`
+	MaxOutstanding    int     `json:"max_outstanding"`
 }
 
 // Run submits from cfg.Concurrency goroutines for cfg.Duration, then waits up to
@@ -50,6 +54,7 @@ func Run(ctx context.Context, cfg Config, sub Submitter, completions <-chan Comp
 	var mu sync.Mutex
 	started := map[string]time.Time{} // submitted, not yet completed
 	early := map[string]time.Time{}   // completed before Submit returned
+	waiters := map[string]chan struct{}{}
 	var latencies []float64
 	rep := Report{}
 
@@ -69,6 +74,10 @@ func Run(ctx context.Context, cfg Config, sub Submitter, completions <-chan Comp
 					record(start, c.At)
 					delete(started, c.JobID)
 					rep.Completed++
+					if w, ok := waiters[c.JobID]; ok {
+						close(w)
+						delete(waiters, c.JobID)
+					}
 				} else {
 					early[c.JobID] = c.At
 				}
@@ -88,6 +97,7 @@ func Run(ctx context.Context, cfg Config, sub Submitter, completions <-chan Comp
 				image := cfg.Images[i%len(cfg.Images)]
 				start := time.Now()
 				id, err := sub.Submit(ctx, image)
+				var wait chan struct{}
 				mu.Lock()
 				rep.Submitted++
 				switch {
@@ -100,9 +110,24 @@ func Run(ctx context.Context, cfg Config, sub Submitter, completions <-chan Comp
 						rep.Completed++
 					} else {
 						started[id] = start
+						rep.MaxOutstanding = max(rep.MaxOutstanding, len(started))
+						if cfg.ClosedLoop {
+							wait = make(chan struct{})
+							waiters[id] = wait
+						}
 					}
 				}
 				mu.Unlock()
+				if wait != nil {
+					select {
+					case <-wait:
+					case <-time.After(cfg.Timeout): // stays in `started`: counted as lost
+						mu.Lock()
+						delete(waiters, id)
+						mu.Unlock()
+					case <-ctx.Done():
+					}
+				}
 			}
 		})
 	}

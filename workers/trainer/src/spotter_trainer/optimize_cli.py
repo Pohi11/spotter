@@ -202,49 +202,83 @@ def main() -> None:
         (variants[1], fp32, "fp32"),
         (variants[2], int8, "int8-static"),
     ):
-        lat1 = next(r for r in variant["latency"] if r["batch"] == 1)
-        metrics = {
-            "accuracy": variant["accuracy"],
-            "macro_f1": variant["macro_f1"],
-            "p50_ms_batch1": round(lat1["p50_ms"], 3),
-        }
-        meta = {
-            **{k: parent_meta[k] for k in ("split_fingerprint", "seed", "classes")},
-            "parent_version": source.version,
-            "parent_version_id": source.id,
-            "optimization": optimization,
-            "metrics": metrics,
-            "code_commit": commit,
-            "environment": environment(),
-        }
-        published = publish(s3, bucket, model_name, model_bytes, meta)
-        version = stub.RegisterVersion(
-            pb.RegisterVersionRequest(
-                model_name=model_name,
-                artifact_uri=published.uri,
-                artifact_sha256=published.sha256,
-                framework="onnx",
-                metrics=metrics,
-            ),
-            timeout=10,
-        ).version
-        ok, reason = validate_variant(parent_acc, variant["accuracy"], tolerance, floor)
-        if ok:
-            stub.TransitionVersion(
-                pb.TransitionVersionRequest(
-                    version_id=version.id,
-                    to_stage=events.MODEL_VERSION_STAGE_VALIDATED,
-                    reason=reason,
-                    expected_revision=version.revision,
-                ),
-                timeout=10,
-            )
+        version, ok, reason = register_variant(
+            s3,
+            bucket,
+            stub,
+            model_name,
+            model_bytes,
+            optimization,
+            variant,
+            source,
+            parent_meta,
+            parent_acc,
+            tolerance,
+            floor,
+            commit,
+        )
         print(
             f"registered {variant['name']} as version {version.version}: "
             f"{'validated' if ok else 'registered'} ({reason})",
             flush=True,
         )
     channel.close()
+
+
+def register_variant(
+    s3,
+    bucket: str,
+    stub,
+    model_name: str,
+    model_bytes: bytes,
+    optimization: str,
+    variant: dict,
+    source: pb.ModelVersion,
+    parent_meta: dict,
+    parent_accuracy: float,
+    tolerance: float,
+    floor: float,
+    commit: str,
+) -> tuple[pb.ModelVersion, bool, str]:
+    """Publish one variant with lineage metadata, register it, and validate it if it passes."""
+    lat1 = next(r for r in variant["latency"] if r["batch"] == 1)
+    metrics = {
+        "accuracy": variant["accuracy"],
+        "macro_f1": variant["macro_f1"],
+        "p50_ms_batch1": round(lat1["p50_ms"], 3),
+    }
+    meta = {
+        **{k: parent_meta[k] for k in ("split_fingerprint", "seed", "classes")},
+        "parent_version": source.version,
+        "parent_version_id": source.id,
+        "optimization": optimization,
+        "metrics": metrics,
+        "code_commit": commit,
+        "environment": environment(),
+    }
+    published = publish(s3, bucket, model_name, model_bytes, meta)
+    version = stub.RegisterVersion(
+        pb.RegisterVersionRequest(
+            model_name=model_name,
+            artifact_uri=published.uri,
+            artifact_sha256=published.sha256,
+            framework="onnx",
+            metrics=metrics,
+        ),
+        timeout=10,
+    ).version
+    ok, reason = validate_variant(parent_accuracy, variant["accuracy"], tolerance, floor)
+    if ok:
+        stub.TransitionVersion(
+            pb.TransitionVersionRequest(
+                version_id=version.id,
+                to_stage=events.MODEL_VERSION_STAGE_VALIDATED,
+                reason=reason,
+                expected_revision=version.revision,
+            ),
+            timeout=10,
+        )
+    return version, ok, reason
 
 
 if __name__ == "__main__":

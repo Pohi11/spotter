@@ -49,6 +49,7 @@ func run() error {
 	model := flag.String("model", "eurosat-classifier", "model name")
 	dir := flag.String("images", "", "directory of .jpg images to submit")
 	concurrency := flag.Int("concurrency", 8, "concurrent clients")
+	closed := flag.Bool("closed", true, "closed loop: each client waits for its result before the next submission")
 	duration := flag.Duration("duration", 30*time.Second, "how long to submit")
 	timeout := flag.Duration("timeout", 30*time.Second, "how long to wait for outstanding completions")
 	out := flag.String("out", "", "write the report as JSON to this file")
@@ -92,7 +93,7 @@ func run() error {
 	defer conn.Close()
 
 	fmt.Printf("submitting %d images from %d clients for %s...\n", len(images), *concurrency, *duration)
-	rep := loadgen.Run(context.Background(), loadgen.Config{Concurrency: *concurrency, Duration: *duration, Timeout: *timeout, Images: images},
+	rep := loadgen.Run(context.Background(), loadgen.Config{Concurrency: *concurrency, Duration: *duration, Timeout: *timeout, Images: images, ClosedLoop: *closed},
 		submitter{client: spotterv1.NewInferenceServiceClient(conn), model: *model}, completions)
 
 	fmt.Printf("submitted %d, failed %d, completed %d, lost %d in %.1fs\n", rep.Submitted, rep.FailedSubmissions, rep.Completed, rep.Lost, rep.Seconds)
@@ -100,7 +101,7 @@ func run() error {
 	if *out != "" {
 		data, _ := json.MarshalIndent(map[string]any{
 			"date": time.Now().UTC().Format(time.RFC3339), "model": *model, "concurrency": *concurrency,
-			"duration_s": duration.Seconds(), "images": len(images), "report": rep,
+			"duration_s": duration.Seconds(), "images": len(images), "closed_loop": *closed, "report": rep,
 		}, "", "  ")
 		return os.WriteFile(*out, data, 0o644)
 	}

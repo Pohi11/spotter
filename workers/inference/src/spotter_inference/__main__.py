@@ -2,7 +2,7 @@
 
 Configuration from environment variables: NATS_URL, REGISTRY_ADDR (localhost:9090),
 MODEL_NAME (eurosat-classifier), S3_ENDPOINT, S3_ACCESS_KEY, S3_SECRET_KEY,
-S3_REGION (us-east-1), BATCH (8), ACK_WAIT (30), MAX_DELIVER (5), RETRY_DELAY (5),
+S3_REGION (us-east-1), ACK_WAIT (30), MAX_DELIVER (5), RETRY_DELAY (5),
 METRICS_PORT (9464), OTEL_EXPORTER_OTLP_ENDPOINT (unset: no export).
 """
 
@@ -43,7 +43,6 @@ class Config:
     s3_access_key: str
     s3_secret_key: str
     s3_region: str
-    batch: int
     ack_wait: float
     max_deliver: int
     retry_delay: float
@@ -64,7 +63,6 @@ class Config:
             s3_access_key=e("S3_ACCESS_KEY", ""),
             s3_secret_key=e("S3_SECRET_KEY", ""),
             s3_region=e("S3_REGION", "us-east-1"),
-            batch=int(e("BATCH", "8")),
             ack_wait=float(e("ACK_WAIT", "30")),
             max_deliver=int(e("MAX_DELIVER", "5")),
             retry_delay=float(e("RETRY_DELAY", "5")),
@@ -105,6 +103,30 @@ async def wait_for_jetstream(js, stop: asyncio.Event):
             log.info("waiting for JetStream streams and bucket: %s", e)
             await asyncio.sleep(1)
     return None
+
+
+async def consume(psub, processor: Processor, stop: asyncio.Event, before_fetch=None) -> None:
+    """Fetch and process one message at a time until stop is set.
+
+    One at a time because it measured better: in a closed-loop load test with two workers
+    sharing the consumer, fetching batches of 8 gave a p99 latency of 973 ms and fetching
+    one gave 169 ms (benchmarks/2026-11-22-load-*.json). The worker classifies one image at
+    a time anyway, so batching the fetch gained nothing.
+    """
+    while not stop.is_set():
+        if before_fetch:
+            await before_fetch()
+        try:
+            with contextlib.suppress(Exception):  # the gauge is best effort
+                metrics.CONSUMER_PENDING.set((await psub.consumer_info()).num_pending)
+            msgs = await psub.fetch(1, timeout=1)
+        except NatsTimeout:
+            continue
+        for msg in msgs:
+            try:
+                await processor.handle(msg)
+            except Exception:  # noqa: BLE001 - never let one job kill the worker
+                log.exception("job processing crashed; it will be redelivered")
 
 
 async def serve(cfg: Config, stop: asyncio.Event) -> None:
@@ -160,21 +182,11 @@ async def serve(cfg: Config, stop: asyncio.Event) -> None:
     )
     log.info("worker for %s listening (consumer %s)", cfg.model_name, cfg.consumer)
 
-    while not stop.is_set():
+    async def before_fetch() -> None:
         if holder.current is None:
             await reload()  # e.g. the registry was down at startup
-        try:
-            with contextlib.suppress(Exception):  # the gauge is best effort
-                metrics.CONSUMER_PENDING.set((await psub.consumer_info()).num_pending)
-            msgs = await psub.fetch(cfg.batch, timeout=1)
-        except NatsTimeout:
-            continue
-        for msg in msgs:
-            try:
-                await processor.handle(msg)
-            except Exception:  # noqa: BLE001 - never let one job kill the worker
-                log.exception("job processing crashed; it will be redelivered")
 
+    await consume(psub, processor, stop, before_fetch=before_fetch)
     await nc.drain()
     channel.close()
     log.info("stopped")

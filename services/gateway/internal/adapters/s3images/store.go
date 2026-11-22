@@ -11,6 +11,9 @@ import (
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // Config locates the store. The AWS SDK is used only as a generic S3 protocol client.
@@ -48,6 +51,9 @@ func (s *Store) EnsureBucket(ctx context.Context) error {
 
 // Put stores data under key and returns its s3:// URI.
 func (s *Store) Put(ctx context.Context, key string, data []byte) (string, error) {
+	ctx, span := otel.Tracer("github.com/Pohi11/spotter/services/gateway/internal/adapters/s3images").Start(ctx, "store image",
+		trace.WithAttributes(attribute.Int("spotter.image_bytes", len(data))))
+	defer span.End()
 	if _, err := s.client.PutObject(ctx, &s3.PutObjectInput{
 		Bucket: aws.String(s.bucket),
 		Key:    aws.String(key),

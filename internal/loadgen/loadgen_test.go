@@ -105,3 +105,25 @@ func TestPercentileInterpolates(t *testing.T) {
 		}
 	}
 }
+
+func TestClosedLoopBoundsOutstandingJobs(t *testing.T) {
+	spectest.Verifies(t, "load-testing", "Closed-loop mode bounds outstanding jobs")
+	f := &fakeSystem{delay: 15 * time.Millisecond, completions: make(chan loadgen.Completion, 10000)}
+	r := loadgen.Run(context.Background(), loadgen.Config{
+		Concurrency: 4, Duration: 200 * time.Millisecond, Timeout: time.Second, Images: [][]byte{{1}}, ClosedLoop: true,
+	}, f, f.completions)
+	if r.MaxOutstanding > 4 || r.MaxOutstanding == 0 {
+		t.Fatalf("max outstanding = %d, want 1..4", r.MaxOutstanding)
+	}
+	if r.Completed != r.Submitted || r.Lost != 0 {
+		t.Fatalf("report = %+v", r)
+	}
+}
+
+func TestOpenLoopCanExceedTheClientCount(t *testing.T) {
+	f := &fakeSystem{delay: 50 * time.Millisecond, completions: make(chan loadgen.Completion, 10000)}
+	r := run(f)
+	if r.MaxOutstanding <= 4 {
+		t.Fatalf("open loop max outstanding = %d; expected a queue to build", r.MaxOutstanding)
+	}
+}
