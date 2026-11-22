@@ -17,7 +17,9 @@ import torch
 from spotter_model import CLASSES, EuroSATNet
 
 from spotter_trainer import data
+from spotter_trainer.optimize import torch_predictor
 from spotter_trainer.publish import artifact_bytes, build_metadata, code_commit, publish
+from spotter_trainer.reference import build_reference, write_reference
 from spotter_trainer.registry import RegistryClient
 from spotter_trainer.splits import split
 from spotter_trainer.train import Hyperparams, ImageSet, evaluate_holdout, train
@@ -113,6 +115,9 @@ def main() -> None:
             model_name, published.uri, published.sha256, "pytorch", metrics
         )
         validated = registry.validate_if_accurate(version, report.accuracy, floor)
+    # The reference the drift monitor compares live traffic with (decision record 0012).
+    ref = build_reference(torch_predictor(model), val_set.images, version.id)
+    print(f"reference {write_reference(s3, published.uri, ref)}", flush=True)
     stage = "validated" if validated else "registered (below the accuracy floor)"
     print(f"registered {model_name} version {version.version}: {stage}", flush=True)
 

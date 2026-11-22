@@ -19,6 +19,7 @@ dependencies = [
 [project.scripts]
 spotter-train = "spotter_trainer.cli:main"
 spotter-optimize = "spotter_trainer.optimize_cli:main"
+spotter-reference = "spotter_trainer.reference_cli:main"
 
 [tool.uv.sources]
 spotter-model = { workspace = true }

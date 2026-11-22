@@ -40,6 +40,7 @@ from spotter_trainer.optimize import (
     validate_variant,
 )
 from spotter_trainer.publish import code_commit, publish
+from spotter_trainer.reference import build_reference, write_reference
 from spotter_trainer.splits import split
 
 CALIBRATION_TILES = 512
@@ -147,6 +148,7 @@ def main() -> None:
     holdout = normalized(data.load_images(images_dir, list(s.holdout)))
     labels = np.array([CLASSES.index(p.split("/", 1)[0]) for p in s.holdout])
     calibration = normalized(data.load_images(images_dir, list(s.train[:CALIBRATION_TILES])))
+    val_images = data.load_images(images_dir, list(s.val))
     print(f"source version {source.version}; holdout {len(labels)} tiles", flush=True)
 
     torch.set_num_threads(4)
@@ -217,6 +219,8 @@ def main() -> None:
             floor,
             commit,
         )
+        ref = build_reference(onnx_predictor(model_bytes), val_images, version.id)
+        write_reference(s3, version.artifact_uri, ref)
         print(
             f"registered {variant['name']} as version {version.version}: "
             f"{'validated' if ok else 'registered'} ({reason})",
