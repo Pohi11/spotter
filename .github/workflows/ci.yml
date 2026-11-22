@@ -95,7 +95,7 @@ jobs:
 
   spec-coverage:
     name: Every requirement has a passing test
-    needs: [go, python]
+    needs: [go, python, kubernetes]
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     steps:
@@ -107,8 +107,8 @@ jobs:
         with:
           pattern: "*-test-report"
           merge-multiple: true
-      - name: Check spec coverage across Go and Python
-        run: go run ./tools/speccheck -openspec openspec -go go-test.json -junit python-test.xml
+      - name: Check spec coverage across Go, Kubernetes, and Python
+        run: go run ./tools/speccheck -openspec openspec -go go-test.json,go-kube-test.json -junit python-test.xml
 
   end-to-end:
     name: Go to Python over NATS
@@ -132,6 +132,52 @@ jobs:
           for _ in $(seq 1 40); do ./spotterctl ping && ok=1 && break; sleep 0.5; done
           cat worker.log
           test "${ok:-}" = 1
+
+  kubernetes:
+    name: Helm chart on kind
+    needs: [go]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+      - uses: azure/setup-helm@v4
+        with:
+          version: v4.2.3
+      - name: Create a kind cluster
+        uses: helm/kind-action@v1
+        with:
+          version: v0.33.0
+          cluster_name: spotter
+      - name: Build images
+        run: |
+          docker build -f deploy/docker/go.Dockerfile -t spotter-go:dev .
+          docker build -f deploy/docker/python.Dockerfile -t spotter-python:dev .
+      - name: Load images into kind
+        run: kind load docker-image spotter-go:dev spotter-python:dev --name spotter
+      - name: Install KEDA
+        run: |
+          helm repo add kedacore https://kedacore.github.io/charts
+          helm install keda kedacore/keda --version 2.21.1 -n keda --create-namespace --wait --timeout 5m
+      - name: Install Spotter into the empty namespace
+        run: helm install spotter deploy/helm/spotter -n spotter --create-namespace -f deploy/helm/values-ci.yaml --wait --timeout 10m
+      - name: Smoke test and upgrade (helm test, credentials kept)
+        env:
+          SPOTTER_KUBE_CONTEXT: kind-spotter
+        run: go run gotest.tools/gotestsum@v1.13.0 --format testname --jsonfile go-kube-test.json -- -count=1 -run 'TestFreshInstall|TestUpgradeKeepsCredentials' ./deploy/helm
+      - name: Show cluster state on failure
+        if: ${{ failure() }}
+        run: |
+          kubectl get pods -A -o wide
+          kubectl -n spotter describe pods
+          kubectl -n spotter logs -l app.kubernetes.io/part-of=spotter --all-containers --tail=100
+      - name: Upload test report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: kube-test-report
+          path: go-kube-test.json
 
   secrets:
     name: Secret scan
