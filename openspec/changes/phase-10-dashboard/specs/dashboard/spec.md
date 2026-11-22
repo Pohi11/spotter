@@ -54,7 +54,7 @@ The live page SHALL connect to the event feed and show the newest events first w
 - **THEN** the page says it is reconnecting until events flow again
 
 ### Requirement: The model page shows every version and its stage
-The model page SHALL list the model's versions with their number, stage, framework, holdout accuracy, parent version, and when each was registered, and mark the production version.
+The model page SHALL list the model's versions with their number, stage, framework, holdout accuracy, and when each was registered, show each version's stage history with the recorded reasons, and mark the production version.
 
 #### Scenario: Versions listed
 - **WHEN** the model has versions 1 to 3 with version 3 in production

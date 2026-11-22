@@ -1,0 +1,100 @@
+@import "tailwindcss";
+
+/*
+ * Spotter tokens. Color carries meaning, never decoration, borrowed from map conventions:
+ *   water blue   Go services and code
+ *   teal         the event bus (NATS JetStream)
+ *   violet       the model and the Python worker
+ *   green        production, passed, done
+ *   amber        shadow, pending, waiting
+ *   orange       a person decides
+ *   red          drift, failure, rollback
+ */
+@theme {
+  --color-paper: #e9eef1;
+  --color-surface: #ffffff;
+  --color-wash: #f3f6f8;
+  --color-ink: #14213d;
+  --color-muted: #52606f;
+  --color-faint: #7d8a99;
+  --color-rule: #d0d9e0;
+
+  --color-code: #1f5fa8;
+  --color-code-soft: #dde8f5;
+  --color-bus: #0f7579;
+  --color-bus-soft: #d5eeee;
+  --color-model: #5b45b8;
+  --color-model-soft: #e7e3f7;
+  --color-pass: #2e7d3a;
+  --color-pass-soft: #ddf0df;
+  --color-wait: #8a6100;
+  --color-wait-soft: #f5ebcd;
+  --color-human: #c2531a;
+  --color-human-soft: #fbe4d6;
+  --color-fail: #b8322a;
+  --color-fail-soft: #f7dedb;
+
+  --font-sans: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, "Cascadia Code", "SFMono-Regular", Menlo, monospace;
+}
+
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-feature-settings: "tnum" 1, "lnum" 1;
+}
+
+h1,
+h2,
+h3 {
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-code);
+  outline-offset: 2px;
+}
+
+@media (hover: none) and (pointer: coarse) {
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible {
+    outline: none;
+  }
+}
+
+/* The one orchestrated moment: the contact sheet's tiles develop in, row by row. */
+@keyframes develop {
+  from {
+    opacity: 0;
+    filter: saturate(0) brightness(1.4);
+  }
+  to {
+    opacity: 1;
+    filter: none;
+  }
+}
+
+.develop {
+  animation: develop 700ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

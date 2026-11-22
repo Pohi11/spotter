@@ -1,0 +1,4 @@
+/test-results/
+/playwright-report/
+/content/benchmarks/
+next-env.d.ts
