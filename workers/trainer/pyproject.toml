@@ -20,6 +20,7 @@ dependencies = [
 spotter-train = "spotter_trainer.cli:main"
 spotter-optimize = "spotter_trainer.optimize_cli:main"
 spotter-reference = "spotter_trainer.reference_cli:main"
+spotter-drift-experiment = "spotter_trainer.drift_experiment:main"
 
 [tool.uv.sources]
 spotter-model = { workspace = true }
