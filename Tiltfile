@@ -3,8 +3,8 @@
 #   k3d cluster create --config deploy/k3d/cluster.yaml
 #   tilt up
 #
-# Builds both images, installs KEDA and the Spotter chart, and port-forwards the gateway
-# (REST 8080, gRPC 9091) and NATS (4222). Source edits rebuild the affected image and roll
+# Builds the images, installs KEDA and the Spotter chart, and port-forwards the gateway
+# (REST 8080, gRPC 9091), the dashboard (3000), and NATS (4222). Source edits rebuild the affected image and roll
 # the workloads that use it.
 
 load('ext://helm_resource', 'helm_resource', 'helm_repo')
@@ -29,6 +29,14 @@ docker_build(
     ignore=['**/__pycache__', 'workers/*/tests'],
 )
 
+# The dashboard reads the dated benchmark reports at build time; copy them into its context.
+local('node dashboard/scripts/sync-content.mjs')
+docker_build(
+    'spotter-dashboard', 'dashboard',
+    dockerfile='deploy/docker/dashboard.Dockerfile',
+    ignore=['node_modules', '.next', '.next-e2e', 'test-results', 'e2e'],
+)
+
 helm_repo('kedacore', 'https://kedacore.github.io/charts', labels=['infra'])
 helm_resource(
     'keda', 'kedacore/keda',
@@ -45,8 +53,12 @@ helm_resource(
     namespace='spotter',
     # --wait: the resource is ready only when every workload is.
     flags=['--create-namespace', '--values', 'deploy/helm/values-dev.yaml', '--wait', '--timeout', '10m'],
-    image_deps=['spotter-go', 'spotter-python'],
-    image_keys=[('images.go.repository', 'images.go.tag'), ('images.python.repository', 'images.python.tag')],
+    image_deps=['spotter-go', 'spotter-python', 'spotter-dashboard'],
+    image_keys=[
+        ('images.go.repository', 'images.go.tag'),
+        ('images.python.repository', 'images.python.tag'),
+        ('images.dashboard.repository', 'images.dashboard.tag'),
+    ],
     resource_deps=['keda'],
     labels=['spotter'],
 )
@@ -54,6 +66,12 @@ helm_resource(
 local_resource(
     'port-forwards',
     serve_cmd='kubectl -n spotter port-forward svc/spotter-gateway 8080:8080 9091:9091',
+    resource_deps=['spotter'],
+    labels=['spotter'],
+)
+local_resource(
+    'dashboard-port-forward',
+    serve_cmd='kubectl -n spotter port-forward svc/spotter-dashboard 3000:3000',
     resource_deps=['spotter'],
     labels=['spotter'],
 )

@@ -1,0 +1,60 @@
+{{- /* The operator dashboard (change phase-10-dashboard, decision record 0016). It reaches the platform only through the gateway. */ -}}
+{{- if .Values.dashboard.enabled }}
+{{- $c := dict "root" . "component" "dashboard" }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "spotter.name" $c }}
+  labels:
+    {{- include "spotter.labels" $c | nindent 4 }}
+spec:
+  replicas: {{ .Values.dashboard.replicas }}
+  selector:
+    matchLabels:
+      {{- include "spotter.selector" $c | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "spotter.labels" $c | nindent 8 }}
+    spec:
+      securityContext:
+        {{- include "spotter.restrictedPod" . | nindent 8 }}
+      containers:
+        - name: dashboard
+          image: {{ .Values.images.dashboard.repository }}:{{ .Values.images.dashboard.tag }}
+          imagePullPolicy: {{ .Values.images.pullPolicy }}
+          env:
+            - name: GATEWAY_URL
+              value: http://{{ include "spotter.name" (dict "root" . "component" "gateway") }}:8080
+            - name: MODEL_NAME
+              value: {{ .Values.model | quote }}
+          ports:
+            - { name: http, containerPort: 3000 }
+          livenessProbe:
+            tcpSocket: { port: http }
+            periodSeconds: 10
+          readinessProbe:
+            httpGet: { path: /, port: http }
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.dashboard.resources | nindent 12 }}
+          securityContext:
+            {{- include "spotter.restrictedContainer" . | nindent 12 }}
+          volumeMounts:
+            - { name: cache, mountPath: /app/.next/cache }
+      volumes:
+        - name: cache
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "spotter.name" $c }}
+  labels:
+    {{- include "spotter.labels" $c | nindent 4 }}
+spec:
+  selector:
+    {{- include "spotter.selector" $c | nindent 4 }}
+  ports:
+    - { name: http, port: 3000, targetPort: http }
+{{- end }}
