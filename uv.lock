@@ -550,14 +550,27 @@ name = "spotter-inference"
 version = "0.1.0"
 source = { editable = "workers/inference" }
 dependencies = [
+    { name = "boto3" },
+    { name = "grpcio" },
     { name = "nats-py" },
+    { name = "numpy" },
+    { name = "pillow" },
+    { name = "spotter-model" },
     { name = "spotter-proto" },
+    { name = "torch", version = "2.15.0", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform == 'darwin'" },
+    { name = "torch", version = "2.15.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform != 'darwin'" },
 ]
 
 [package.metadata]
 requires-dist = [
+    { name = "boto3", specifier = ">=1.40" },
+    { name = "grpcio", specifier = ">=1.85" },
     { name = "nats-py", specifier = ">=2.17" },
+    { name = "numpy", specifier = ">=2.1" },
+    { name = "pillow", specifier = ">=11" },
+    { name = "spotter-model", editable = "workers/model" },
     { name = "spotter-proto", editable = "gen/python" },
+    { name = "torch", specifier = ">=2.9", index = "https://download.pytorch.org/whl/cpu" },
 ]
 
 [[package]]

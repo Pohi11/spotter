@@ -3,13 +3,14 @@ name = "spotter-inference"
 version = "0.1.0"
 description = "Spotter inference worker"
 requires-python = ">=3.13"
-dependencies = ["nats-py>=2.17", "spotter-proto"]
+dependencies = ["nats-py>=2.17", "spotter-proto", "spotter-model", "torch>=2.9", "numpy>=2.1", "pillow>=11", "boto3>=1.40", "grpcio>=1.85"]
 
 [project.scripts]
 spotter-inference = "spotter_inference.__main__:run"
 
 [tool.uv.sources]
 spotter-proto = { workspace = true }
+spotter-model = { workspace = true }
 
 [build-system]
 requires = ["hatchling>=1.27"]

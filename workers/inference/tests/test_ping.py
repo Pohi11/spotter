@@ -5,7 +5,7 @@ from datetime import UTC, datetime
 import nats
 import pytest
 from spotter.v1 import ping_pb2
-from spotter_inference.__main__ import serve
+from spotter_inference.__main__ import start_ping_responder
 from spotter_inference.ping import RESPONDER, SUBJECT, handle_ping
 
 
@@ -35,20 +35,19 @@ async def test_worker_answers_ping_over_real_nats():
     if not url:
         pytest.skip("NATS_URL not set")
 
-    stop = asyncio.Event()
-    worker = asyncio.create_task(serve(url, stop))
+    worker = await nats.connect(url)
     client = await nats.connect(url)
     try:
+        await start_ping_responder(worker)
         request = ping_pb2.PingRequest(id="it-1", sender="pytest")
-        # Retry briefly: the worker subscribes asynchronously after connecting.
-        for _ in range(20):
+        for _ in range(20):  # the subscription reaches the server asynchronously
             try:
                 msg = await client.request(SUBJECT, request.SerializeToString(), timeout=0.5)
                 break
             except nats.errors.NoRespondersError:
                 await asyncio.sleep(0.05)
         else:
-            pytest.fail("worker never subscribed")
+            pytest.fail("responder never subscribed")
 
         reply = ping_pb2.PingReply()
         reply.ParseFromString(msg.data)
@@ -56,5 +55,4 @@ async def test_worker_answers_ping_over_real_nats():
         assert reply.responder == RESPONDER
     finally:
         await client.close()
-        stop.set()
-        await asyncio.wait_for(worker, timeout=5)
+        await worker.close()
