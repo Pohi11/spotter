@@ -5,5 +5,4 @@ worker:
     minReplicas: 1
     maxReplicas: 4
     lagThreshold: 20
-    cooldownSeconds: 30
     scaleDownStabilizationSeconds: 30

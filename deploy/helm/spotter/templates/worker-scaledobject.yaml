@@ -13,8 +13,11 @@ spec:
     name: {{ include "spotter.name" $c }}
   minReplicaCount: {{ $a.minReplicas }}
   maxReplicaCount: {{ $a.maxReplicas }}
+  {{- if eq (int $a.minReplicas) 0 }}
+  # Only used when scaling to and from zero; above zero the HPA polls KEDA's metrics.
   pollingInterval: {{ $a.pollingIntervalSeconds }}
   cooldownPeriod: {{ $a.cooldownSeconds }}
+  {{- end }}
   advanced:
     horizontalPodAutoscalerConfig:
       behavior:
