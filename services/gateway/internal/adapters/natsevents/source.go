@@ -22,14 +22,17 @@ import (
 // source deletes them when its context ends, and the server removes any left behind by
 // a crash after InactiveThreshold.
 type Source struct {
-	JS      jetstream.JetStream
-	Streams []string
+	JS        jetstream.JetStream
+	AllStream []string
 }
 
 // New returns a source over the inference, registry, and monitor streams.
 func New(js jetstream.JetStream) Source {
-	return Source{JS: js, Streams: []string{natsjs.InferenceStream, natsjs.RegistryStream, natsjs.MonitorStream}}
+	return Source{JS: js, AllStream: []string{natsjs.InferenceStream, natsjs.RegistryStream, natsjs.MonitorStream}}
 }
+
+// Streams lists the streams the source can read.
+func (s Source) Streams() []string { return s.AllStream }
 
 // InactiveThreshold is how long the server keeps a consumer nobody reads.
 const InactiveThreshold = 30 * time.Second
@@ -42,7 +45,7 @@ type running struct {
 	cc     jetstream.ConsumeContext
 }
 
-func (s Source) Events(ctx context.Context, since time.Duration) (<-chan domain.Event, error) {
+func (s Source) Events(ctx context.Context, since time.Duration, streams []string) (<-chan domain.Event, error) {
 	start := time.Now().Add(-since)
 	out := make(chan domain.Event, 256)
 	var all []running
@@ -58,7 +61,7 @@ func (s Source) Events(ctx context.Context, since time.Duration) (<-chan domain.
 			}
 		}
 	}
-	for _, stream := range s.Streams {
+	for _, stream := range streams {
 		cons, err := s.JS.OrderedConsumer(ctx, stream, jetstream.OrderedConsumerConfig{
 			DeliverPolicy: jetstream.DeliverByStartTimePolicy, OptStartTime: &start, InactiveThreshold: InactiveThreshold,
 		})

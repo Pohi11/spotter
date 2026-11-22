@@ -35,7 +35,7 @@ export function Dot({ tone, className = "" }: { tone: Tone; className?: string }
 }
 
 export function Chip({ tone, children }: { tone: Tone; children: ReactNode }) {
-  return <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${CHIP[tone]}`}>{children}</span>;
+  return <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium whitespace-nowrap ${CHIP[tone]}`}>{children}</span>;
 }
 
 export function StageChip({ stage }: { stage: Stage }) {

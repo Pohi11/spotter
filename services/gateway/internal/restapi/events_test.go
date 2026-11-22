@@ -240,3 +240,34 @@ func TestIdleConnectionGetsKeepAlive(t *testing.T) {
 		}
 	}
 }
+
+func TestStreamsLimitTheFeed(t *testing.T) {
+	spectest.Verifies(t, feedCapability, "A client can follow only some streams")
+	url, js := feed(t, time.Minute)
+	events, _, _ := stream(t, url+"?streams=MONITOR")
+	publish(t, js, "inference.requested.eurosat-classifier", "spotter.v1.InferenceRequested", &spotterv1.InferenceRequested{JobId: "a"})
+	publish(t, js, "monitor.drift.evaluated.eurosat-classifier", "spotter.v1.DriftEvaluated", &spotterv1.DriftEvaluated{VersionId: "v3", Drifting: true})
+	ev := next(t, events)
+	if ev.Stream != natsjs.MonitorStream || ev.Type != "spotter.v1.DriftEvaluated" {
+		t.Fatalf("first event = %+v, want the monitor event only", ev)
+	}
+	select {
+	case extra := <-events:
+		t.Fatalf("unexpected event %+v", extra)
+	case <-time.After(300 * time.Millisecond):
+	}
+}
+
+func TestUnknownStreamIsRejected(t *testing.T) {
+	spectest.Verifies(t, feedCapability, "A client can follow only some streams")
+	url, _ := feed(t, time.Minute)
+	resp, err := http.Get(url + "?streams=ORDERS")
+	if err != nil {
+		t.Fatal(err)
+	}
+	body, _ := io.ReadAll(resp.Body)
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusBadRequest || !strings.Contains(string(body), "streams") {
+		t.Fatalf("status %d body %q; want 400 naming streams", resp.StatusCode, body)
+	}
+}

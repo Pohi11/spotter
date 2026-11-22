@@ -17,6 +17,17 @@ Defines how the gateway exposes the platform's events (inference, registry, and 
 - **WHEN** a message has no `Spotter-Event-Type` header or names a type the gateway doesn't know
 - **THEN** the client receives the event with its stream, subject, sequence, and time, and a null payload
 
+### Requirement: A client can follow only some streams
+The `streams` query parameter SHALL limit the feed to a comma-separated subset of `INFERENCE`, `REGISTRY`, and `MONITOR`; without it the feed SHALL include all three. An unknown stream name SHALL be answered with 400 before any event is sent.
+
+#### Scenario: Monitor only
+- **WHEN** a client connects with `streams=MONITOR` and an inference event and a monitor event are published
+- **THEN** the client receives only the monitor event
+
+#### Scenario: Unknown stream
+- **WHEN** a client asks for `streams=ORDERS`
+- **THEN** the response is 400 and names the `streams` parameter
+
 ### Requirement: A new client receives the recent past first
 On connect the feed SHALL first send the messages published in the last `since` (a Go duration query parameter, default `10m`, at most `24h`), in stream order per stream, then live messages. An invalid or out-of-range `since` SHALL be answered with 400 before any event is sent.
 

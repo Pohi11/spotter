@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/Pohi11/spotter/services/gateway/internal/domain"
@@ -35,12 +36,27 @@ func Events(src ports.EventSource, keepAlive time.Duration) http.Handler {
 			}
 			since = d
 		}
+		streams := src.Streams()
+		if v := r.URL.Query().Get("streams"); v != "" {
+			known := map[string]bool{}
+			for _, s := range streams {
+				known[s] = true
+			}
+			streams = nil
+			for _, name := range strings.Split(v, ",") {
+				if !known[name] {
+					http.Error(w, fmt.Sprintf("streams: unknown stream %q; want a comma-separated subset of %s", name, strings.Join(src.Streams(), ",")), http.StatusBadRequest)
+					return
+				}
+				streams = append(streams, name)
+			}
+		}
 		flusher, ok := w.(http.Flusher)
 		if !ok {
 			http.Error(w, "streaming unsupported", http.StatusInternalServerError)
 			return
 		}
-		events, err := src.Events(r.Context(), since)
+		events, err := src.Events(r.Context(), since, streams)
 		if err != nil {
 			http.Error(w, "event streams unavailable", http.StatusServiceUnavailable)
 			return

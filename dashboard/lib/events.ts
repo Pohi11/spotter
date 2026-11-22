@@ -1,6 +1,7 @@
 // One-line summaries of feed events for the live page (spec: dashboard "The live page shows
 // events as they arrive").
 
+import { className } from "@/lib/classes";
 import { stageName } from "@/lib/model";
 import type { FeedEvent, Stage } from "@/lib/types";
 
@@ -26,7 +27,7 @@ export function summarize(ev: FeedEvent): Summary {
     case "spotter.v1.InferenceCompleted":
       return {
         title: "Job completed",
-        detail: `job …${short(p.jobId)}: ${pred.label} at ${pct(pred.confidence)} by version ${pred.modelVersion}`,
+        detail: `job …${short(p.jobId)}: ${className(pred.label as string)} at ${pct(pred.confidence)} by version ${pred.modelVersion}`,
         tone: "model",
       };
     case "spotter.v1.InferenceFailed":
@@ -34,7 +35,7 @@ export function summarize(ev: FeedEvent): Summary {
     case "spotter.v1.ShadowCompared":
       return {
         title: "Shadow compared",
-        detail: `job …${short(p.jobId)}: shadow said ${p.shadowLabel}, production ${p.productionLabel}`,
+        detail: `job …${short(p.jobId)}: shadow said ${className(p.shadowLabel as string)}, production ${className(p.productionLabel as string)}`,
         tone: p.agree ? "wait" : "fail",
       };
     case "spotter.v1.ModelVersionRegistered":
