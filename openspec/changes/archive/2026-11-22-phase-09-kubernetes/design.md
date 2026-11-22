@@ -2,7 +2,7 @@
 
 ## Context
 
-Every service already behaves the way Kubernetes expects: configuration from environment variables, migrations at startup, `/livez` and `/readyz`, graceful shutdown on SIGTERM (changes `phase-02-registry-api` through `phase-07-drift-monitor`). This change packages them. The packaging choices are recorded in decision record [0014](../../../docs/decisions/0014-helm-umbrella-chart-keda-scaling.md).
+Every service already behaves the way Kubernetes expects: configuration from environment variables, migrations at startup, `/livez` and `/readyz`, graceful shutdown on SIGTERM (changes `phase-02-registry-api` through `phase-07-drift-monitor`). This change packages them. The packaging choices are recorded in decision record [0014](../../../../docs/decisions/0014-helm-umbrella-chart-keda-scaling.md).
 
 ## Decisions
 
@@ -31,7 +31,7 @@ Go services probe `/livez` (liveness) and `/readyz` (readiness) on their HTTP po
 `deploy/k3d/cluster.yaml` defines a one-node k3d cluster with a local image registry. The `Tiltfile` builds both images, installs KEDA from its chart, installs the Spotter chart with `values-dev.yaml`, and port-forwards the gateway (8080 REST, 9091 gRPC) and NATS (4222). `tilt up` on an empty cluster brings up everything.
 
 ### D9. First promotion in an empty cluster
-An empty cluster has no production version, so the worker can't shadow and the first version could never meet the 200-comparison gate. With no production version, `shadow_agreement` and `shadow_latency` now pass with a stated reason, as `accuracy` already did; the approval still decides. Recorded in decision record [0015](../../../docs/decisions/0015-first-promotion-without-shadow-evidence.md).
+An empty cluster has no production version, so the worker can't shadow and the first version could never meet the 200-comparison gate. With no production version, `shadow_agreement` and `shadow_latency` now pass with a stated reason, as `accuracy` already did; the approval still decides. Recorded in decision record [0015](../../../../docs/decisions/0015-first-promotion-without-shadow-evidence.md).
 
 ## Risks and trade-offs
 

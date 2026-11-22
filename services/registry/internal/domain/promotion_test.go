@@ -57,7 +57,7 @@ func TestNoApproval(t *testing.T) {
 }
 
 func TestFirstVersionNeedsAnApprovalButNoShadowEvidence(t *testing.T) {
-	spectest.Verifies(t, promotion, "Promotion gates are evaluated as code")
+	spectest.Verifies(t, promotion, "A model's first version is promoted on approval")
 	none := domain.ShadowStats{}
 	gates := domain.EvaluateGates(withAccuracy(domain.StageShadow, 0.97), nil, none, 0, domain.DefaultGates)
 	if ok, failed := domain.AllPassed(gates); ok || len(failed) != 1 || failed[0] != "approval" {
