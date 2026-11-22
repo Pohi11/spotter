@@ -15,6 +15,12 @@ spec:
   maxReplicaCount: {{ $a.maxReplicas }}
   pollingInterval: {{ $a.pollingIntervalSeconds }}
   cooldownPeriod: {{ $a.cooldownSeconds }}
+  advanced:
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleDown:
+          # How long the backlog must stay low before replicas are removed.
+          stabilizationWindowSeconds: {{ $a.scaleDownStabilizationSeconds }}
   triggers:
     - type: nats-jetstream
       metadata:

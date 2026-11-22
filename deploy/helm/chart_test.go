@@ -1,7 +1,8 @@
 // Package helm_test checks the Spotter Helm chart (change phase-09-kubernetes, design D7).
 //
 // Render tests run `helm template` and inspect the objects; they skip when helm isn't on
-// PATH. The install tests act on a real cluster and run only with SPOTTER_KUBE_TEST=1.
+// PATH. The install tests act on a real cluster and run only when SPOTTER_KUBE_CONTEXT names
+// the kube context to use; they never fall back to the current context.
 package helm_test
 
 import (
@@ -303,6 +304,9 @@ func TestAutoscalingOn(t *testing.T) {
 		!strings.HasPrefix(str(trig, "metadata", "natsServerMonitoringEndpoint"), "spotter-nats.spotter.svc") {
 		t.Fatalf("trigger %v", trig)
 	}
+	if w := get(so, "spec", "advanced", "horizontalPodAutoscalerConfig", "behavior", "scaleDown", "stabilizationWindowSeconds"); w != 120 {
+		t.Errorf("scale-down stabilization %v, want the default 120", w)
+	}
 	if r := get(find(objs, "Deployment", "spotter-worker"), "spec", "replicas"); r != nil {
 		t.Fatalf("worker Deployment sets replicas %v under KEDA", r)
 	}
@@ -344,19 +348,32 @@ func TestTrainerJob(t *testing.T) {
 
 // ---- against a real cluster (CI's kind job, or k3d locally) ----
 
-func kube(t *testing.T) (release, namespace string) {
+type cluster struct{ context, release, namespace string }
+
+func kube(t *testing.T) cluster {
 	t.Helper()
-	if os.Getenv("SPOTTER_KUBE_TEST") != "1" {
-		t.Skip("set SPOTTER_KUBE_TEST=1 to run against the current cluster")
+	ctx := os.Getenv("SPOTTER_KUBE_CONTEXT")
+	if ctx == "" {
+		t.Skip("set SPOTTER_KUBE_CONTEXT to the kube context of a cluster with the chart installed")
 	}
-	release, namespace = os.Getenv("SPOTTER_RELEASE"), os.Getenv("SPOTTER_NAMESPACE")
+	release, namespace := os.Getenv("SPOTTER_RELEASE"), os.Getenv("SPOTTER_NAMESPACE")
 	if release == "" {
 		release = "spotter"
 	}
 	if namespace == "" {
 		namespace = "spotter"
 	}
-	return release, namespace
+	return cluster{context: ctx, release: release, namespace: namespace}
+}
+
+func (c cluster) kubectl(t *testing.T, args ...string) string {
+	t.Helper()
+	return run(t, "kubectl", append([]string{"--context", c.context, "-n", c.namespace}, args...)...)
+}
+
+func (c cluster) helm(t *testing.T, args ...string) string {
+	t.Helper()
+	return run(t, "helm", append([]string{"--kube-context", c.context, "-n", c.namespace}, args...)...)
 }
 
 func run(t *testing.T, name string, args ...string) string {
@@ -370,12 +387,12 @@ func run(t *testing.T, name string, args ...string) string {
 
 func TestFreshInstall(t *testing.T) {
 	spectest.Verifies(t, capability, "The platform installs into an empty cluster")
-	release, ns := kube(t)
-	for _, kind := range []string{"deployment", "statefulset"} {
-		run(t, "kubectl", "-n", ns, "wait", kind, "-l", "app.kubernetes.io/instance="+release,
-			"--for=jsonpath={.status.readyReplicas}=1", "--timeout=5m")
-	}
-	out := run(t, "helm", "test", release, "-n", ns, "--logs", "--timeout", "5m")
+	c := kube(t)
+	selector := "app.kubernetes.io/instance=" + c.release
+	// Deployments may run several replicas (KEDA); the StatefulSets are single-instance.
+	c.kubectl(t, "wait", "deployment", "-l", selector, "--for=condition=Available", "--timeout=5m")
+	c.kubectl(t, "wait", "statefulset", "-l", selector, "--for=jsonpath={.status.readyReplicas}=1", "--timeout=5m")
+	out := c.helm(t, "test", c.release, "--logs", "--timeout", "5m")
 	for _, step := range []string{"ok: gateway ready", "ok: registry ready", "through the gateway", "back", "ok: worker answers a NATS ping"} {
 		if !strings.Contains(out, step) {
 			t.Errorf("smoke test output lacks %q:\n%s", step, out)
@@ -385,12 +402,12 @@ func TestFreshInstall(t *testing.T) {
 
 func TestUpgradeKeepsCredentials(t *testing.T) {
 	spectest.Verifies(t, capability, "Credentials come from a generated Secret")
-	release, ns := kube(t)
+	c := kube(t)
 	secret := func() string {
-		return run(t, "kubectl", "-n", ns, "get", "secret", release+"-credentials", "-o", "jsonpath={.data}")
+		return c.kubectl(t, "get", "secret", c.release+"-credentials", "-o", "jsonpath={.data}")
 	}
 	before := secret()
-	run(t, "helm", "upgrade", release, "spotter", "-n", ns, "--reuse-values", "--wait", "--timeout", "5m")
+	c.helm(t, "upgrade", c.release, "spotter", "--reuse-values", "--wait", "--timeout", "5m")
 	if after := secret(); after != before {
 		t.Fatal("upgrade changed the generated credentials")
 	}

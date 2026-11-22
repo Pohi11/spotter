@@ -71,7 +71,10 @@ worker:
     # Target backlog per replica: KEDA adds replicas while lag / replicas exceeds this.
     lagThreshold: 20
     pollingIntervalSeconds: 5
+    # KEDA scales to minReplicas only when minReplicas is 0; above that the HPA's scale-down
+    # stabilization window decides (Kubernetes' default is 300 s).
     cooldownSeconds: 60
+    scaleDownStabilizationSeconds: 120
 
 trainer:
   # A one-off Job that trains, publishes, and registers a version (downloads EuroSAT, ~94 MB).
