@@ -250,3 +250,96 @@ func isUnique(err error, constraint string) bool {
 	var pgErr *pgconn.PgError
 	return errors.As(err, &pgErr) && pgErr.Code == uniqueViolation && pgErr.ConstraintName == constraint
 }
+
+func (r *Repository) ProductionVersion(ctx context.Context, modelID uuid.UUID) (domain.ModelVersion, error) {
+	v, err := scanVersion(r.pool.QueryRow(ctx, `SELECT `+versionColumns+` FROM model_versions WHERE model_id = $1 AND stage = 'production'`, modelID))
+	if errors.Is(err, pgx.ErrNoRows) {
+		return domain.ModelVersion{}, domain.ErrNotFound
+	}
+	return v, err
+}
+
+func (r *Repository) LastRetiredFromProduction(ctx context.Context, modelID uuid.UUID) (domain.ModelVersion, error) {
+	v, err := scanVersion(r.pool.QueryRow(ctx, `
+		SELECT v.id, v.model_id, v.version, v.artifact_uri, v.artifact_sha256, v.framework, v.metrics, v.stage, v.revision, v.created_at, v.updated_at
+		FROM model_versions v JOIN stage_changes c ON c.version_id = v.id
+		WHERE v.model_id = $1 AND v.stage = 'retired' AND c.from_stage = 'production' AND c.to_stage = 'retired'
+		ORDER BY c.changed_at DESC, c.id DESC LIMIT 1`, modelID))
+	if errors.Is(err, pgx.ErrNoRows) {
+		return domain.ModelVersion{}, domain.ErrNotFound
+	}
+	return v, err
+}
+
+func (r *Repository) SwapProduction(ctx context.Context, out *domain.ModelVersion, outExpected int64, in domain.ModelVersion, inExpected int64, changes []domain.StageChange, records []ports.OutboxRecord) error {
+	err := pgx.BeginFunc(ctx, r.pool, func(tx pgx.Tx) error {
+		// Out first, so the one-production index never sees two production rows.
+		moves := []struct {
+			v        domain.ModelVersion
+			expected int64
+		}{}
+		if out != nil {
+			moves = append(moves, struct {
+				v        domain.ModelVersion
+				expected int64
+			}{*out, outExpected})
+		}
+		moves = append(moves, struct {
+			v        domain.ModelVersion
+			expected int64
+		}{in, inExpected})
+		for _, m := range moves {
+			tag, err := tx.Exec(ctx, `UPDATE model_versions SET stage = $1, revision = $2, updated_at = $3 WHERE id = $4 AND revision = $5`,
+				string(m.v.Stage), m.v.Revision, m.v.UpdatedAt, m.v.ID, m.expected)
+			if err != nil {
+				return err
+			}
+			if tag.RowsAffected() == 0 {
+				return domain.ErrConflict
+			}
+		}
+		for _, c := range changes {
+			if _, err := tx.Exec(ctx, `
+				INSERT INTO stage_changes (version_id, from_stage, to_stage, reason, revision, changed_at)
+				VALUES ($1, $2, $3, $4, $5, $6)`,
+				c.VersionID, string(c.From), string(c.To), c.Reason, c.Revision, c.At); err != nil {
+				return err
+			}
+		}
+		return insertOutbox(ctx, tx, records)
+	})
+	switch {
+	case isUnique(err, oneProductionIndex):
+		return domain.ErrProductionOccupied
+	case isUnique(err, versionRevisionKey):
+		return domain.ErrConflict
+	}
+	return err
+}
+
+func (r *Repository) AddApproval(ctx context.Context, a domain.Approval) error {
+	_, err := r.pool.Exec(ctx, `INSERT INTO approvals (version_id, approver, reason, approved_at) VALUES ($1, $2, $3, $4)`,
+		a.VersionID, a.Approver, a.Reason, a.At)
+	return err
+}
+
+func (r *Repository) Approvals(ctx context.Context, versionID uuid.UUID) (int, error) {
+	var n int
+	err := r.pool.QueryRow(ctx, `SELECT count(*) FROM approvals WHERE version_id = $1`, versionID).Scan(&n)
+	return n, err
+}
+
+func (r *Repository) RecordShadowComparison(ctx context.Context, versionID uuid.UUID, jobID string, agree bool, shadowMS float64) error {
+	_, err := r.pool.Exec(ctx, `
+		INSERT INTO shadow_comparisons (version_id, job_id, agree, shadow_ms) VALUES ($1, $2, $3, $4)
+		ON CONFLICT (version_id, job_id) DO NOTHING`, versionID, jobID, agree, shadowMS)
+	return err
+}
+
+func (r *Repository) ShadowStats(ctx context.Context, versionID uuid.UUID) (domain.ShadowStats, error) {
+	var s domain.ShadowStats
+	err := r.pool.QueryRow(ctx, `
+		SELECT count(*), count(*) FILTER (WHERE agree), coalesce(avg(shadow_ms), 0)
+		FROM shadow_comparisons WHERE version_id = $1`, versionID).Scan(&s.Compared, &s.Agreed, &s.MeanShadowMS)
+	return s, err
+}

@@ -58,6 +58,26 @@ type Repository interface {
 	PendingOutbox(ctx context.Context, limit int) ([]OutboxRecord, error)
 	// MarkPublished records outbox records as published so they are not listed again.
 	MarkPublished(ctx context.Context, ids []uuid.UUID, at time.Time) error
+
+	// ProductionVersion returns the model's production version, or domain.ErrNotFound.
+	ProductionVersion(ctx context.Context, modelID uuid.UUID) (domain.ModelVersion, error)
+	// LastRetiredFromProduction returns the version most recently moved from production to
+	// retired, or domain.ErrNotFound.
+	LastRetiredFromProduction(ctx context.Context, modelID uuid.UUID) (domain.ModelVersion, error)
+	// SwapProduction stores, in one transaction, `out` leaving production (nil if there is no
+	// production version) and `in` entering it, each only if its stored revision equals the
+	// expected one, plus the history entries and outbox records. Returns domain.ErrConflict
+	// on a stale revision and domain.ErrProductionOccupied if the swap would leave two.
+	SwapProduction(ctx context.Context, out *domain.ModelVersion, outExpected int64, in domain.ModelVersion, inExpected int64, changes []domain.StageChange, records []OutboxRecord) error
+
+	// AddApproval stores an approval.
+	AddApproval(ctx context.Context, a domain.Approval) error
+	// Approvals counts a version's approvals.
+	Approvals(ctx context.Context, versionID uuid.UUID) (int, error)
+	// RecordShadowComparison stores one comparison; a second one for the same job is ignored.
+	RecordShadowComparison(ctx context.Context, versionID uuid.UUID, jobID string, agree bool, shadowMS float64) error
+	// ShadowStats summarizes a version's comparisons.
+	ShadowStats(ctx context.Context, versionID uuid.UUID) (domain.ShadowStats, error)
 }
 
 // EventPublisher publishes one outbox record to the message bus and returns only after

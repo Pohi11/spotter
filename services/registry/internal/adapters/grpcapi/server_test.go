@@ -3,6 +3,7 @@ package grpcapi_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"log/slog"
 	"net"
@@ -169,7 +170,7 @@ func TestErrorCodes(t *testing.T) {
 	t.Run("illegal transition", func(t *testing.T) {
 		spectest.Verifies(t, capability, "Registry errors map to gRPC status codes")
 		_, err := c.TransitionVersion(ctx, &spotterv1.TransitionVersionRequest{
-			VersionId: v.GetId(), ToStage: spotterv1.ModelVersionStage_MODEL_VERSION_STAGE_PRODUCTION, Reason: "skip", ExpectedRevision: 1,
+			VersionId: v.GetId(), ToStage: spotterv1.ModelVersionStage_MODEL_VERSION_STAGE_SHADOW, Reason: "skip", ExpectedRevision: 1,
 		})
 		wantCode(t, err, codes.FailedPrecondition)
 	})
@@ -182,28 +183,38 @@ func TestErrorCodes(t *testing.T) {
 	})
 }
 
-func TestProductionOccupiedIsFailedPrecondition(t *testing.T) {
-	spectest.Verifies(t, capability, "Registry errors map to gRPC status codes")
+func TestGenericTransitionToProductionRefused(t *testing.T) {
+	spectest.Verifies(t, "model-lifecycle", "Production is entered only through promotion or rollback")
 	c := client(t, memory.New())
-	promote := func(v *spotterv1.ModelVersion, stages ...spotterv1.ModelVersionStage) error {
-		rev := v.GetRevision()
-		for _, s := range stages {
-			resp, err := c.TransitionVersion(ctx, &spotterv1.TransitionVersionRequest{VersionId: v.GetId(), ToStage: s, Reason: "test", ExpectedRevision: rev})
-			if err != nil {
-				return err
-			}
-			rev = resp.GetVersion().GetRevision()
-		}
-		return nil
+	v := registerVersion(t, c)
+	_, err := c.TransitionVersion(ctx, &spotterv1.TransitionVersionRequest{
+		VersionId: v.GetId(), ToStage: spotterv1.ModelVersionStage_MODEL_VERSION_STAGE_PRODUCTION, Reason: "skip", ExpectedRevision: 1,
+	})
+	st := wantCode(t, err, codes.FailedPrecondition)
+	if !strings.Contains(st.Message(), "PromoteVersion") {
+		t.Fatalf("message %q does not name PromoteVersion", st.Message())
 	}
-	path := []spotterv1.ModelVersionStage{
-		spotterv1.ModelVersionStage_MODEL_VERSION_STAGE_VALIDATED, spotterv1.ModelVersionStage_MODEL_VERSION_STAGE_SHADOW,
-		spotterv1.ModelVersionStage_MODEL_VERSION_STAGE_PRODUCTION,
+}
+
+// sentinelRepo fails every model lookup with a fixed domain error.
+type sentinelRepo struct {
+	ports.Repository
+	err error
+}
+
+func (r sentinelRepo) ModelByName(context.Context, string) (domain.Model, error) {
+	return domain.Model{}, r.err
+}
+
+func TestPromotionErrorsAreFailedPrecondition(t *testing.T) {
+	for _, err := range []error{domain.ErrProductionOccupied, domain.ErrGatesFailed, domain.ErrNothingToRollBack, domain.ErrPromotionRequired} {
+		t.Run(err.Error(), func(t *testing.T) {
+			spectest.Verifies(t, capability, "Registry errors map to gRPC status codes")
+			c := client(t, sentinelRepo{Repository: memory.New(), err: err})
+			_, got := c.GetModel(ctx, &spotterv1.GetModelRequest{Name: "eurosat-classifier"})
+			wantCode(t, got, codes.FailedPrecondition)
+		})
 	}
-	if err := promote(registerVersion(t, c), path...); err != nil {
-		t.Fatal(err)
-	}
-	wantCode(t, promote(registerVersion(t, c), path...), codes.FailedPrecondition)
 }
 
 // failingRepo returns an error that must not reach the client.
@@ -244,4 +255,62 @@ func TestInvalidInputNamesTheField(t *testing.T) {
 		_, err := c.GetVersion(ctx, &spotterv1.GetVersionRequest{VersionId: "not-a-uuid"})
 		wantFieldViolation(t, err, "version_id")
 	})
+}
+
+func TestPromotionOverGRPC(t *testing.T) {
+	spectest.Verifies(t, "model-promotion", "Promotion operations are available over gRPC and REST")
+	repo := memory.New()
+	c := client(t, repo)
+	toShadow := func() *spotterv1.ModelVersion {
+		v := registerVersion(t, c)
+		rev := v.GetRevision()
+		for _, s := range []spotterv1.ModelVersionStage{spotterv1.ModelVersionStage_MODEL_VERSION_STAGE_VALIDATED, spotterv1.ModelVersionStage_MODEL_VERSION_STAGE_SHADOW} {
+			resp, err := c.TransitionVersion(ctx, &spotterv1.TransitionVersionRequest{VersionId: v.GetId(), ToStage: s, Reason: "test", ExpectedRevision: rev})
+			if err != nil {
+				t.Fatal(err)
+			}
+			rev = resp.GetVersion().GetRevision()
+		}
+		id := uuid.MustParse(v.GetId())
+		for i := range 250 {
+			if err := repo.RecordShadowComparison(ctx, id, fmt.Sprintf("job-%d", i), true, 3); err != nil {
+				t.Fatal(err)
+			}
+		}
+		return v
+	}
+	promote := func(v *spotterv1.ModelVersion) *spotterv1.PromoteVersionResponse {
+		gates, err := c.GetPromotionGates(ctx, &spotterv1.GetPromotionGatesRequest{VersionId: v.GetId()})
+		if err != nil || gates.GetAllPassed() {
+			t.Fatalf("gates before approval: %v, %v", gates, err)
+		}
+		_, err = c.PromoteVersion(ctx, &spotterv1.PromoteVersionRequest{VersionId: v.GetId()})
+		if st := wantCode(t, err, codes.FailedPrecondition); !strings.Contains(st.Message(), "approval") {
+			t.Fatalf("refusal %q does not name the approval gate", st.Message())
+		}
+		if _, err := c.ApproveVersion(ctx, &spotterv1.ApproveVersionRequest{VersionId: v.GetId(), Approver: "ana", Reason: "agreement 100%"}); err != nil {
+			t.Fatal(err)
+		}
+		resp, err := c.PromoteVersion(ctx, &spotterv1.PromoteVersionRequest{VersionId: v.GetId()})
+		if err != nil {
+			t.Fatal(err)
+		}
+		return resp
+	}
+
+	first := promote(toShadow())
+	if first.GetRetired() != nil || first.GetPromoted().GetStage() != spotterv1.ModelVersionStage_MODEL_VERSION_STAGE_PRODUCTION {
+		t.Fatalf("first promotion: %v", first)
+	}
+	second := promote(toShadow())
+	if second.GetRetired().GetId() != first.GetPromoted().GetId() {
+		t.Fatalf("second promotion retired %v", second.GetRetired())
+	}
+	rb, err := c.RollbackModel(ctx, &spotterv1.RollbackModelRequest{ModelName: "eurosat-classifier", Reason: "regression"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rb.GetRestored().GetId() != first.GetPromoted().GetId() || rb.GetRolledBack().GetStage() != spotterv1.ModelVersionStage_MODEL_VERSION_STAGE_ROLLED_BACK {
+		t.Fatalf("rollback: %v", rb)
+	}
 }
