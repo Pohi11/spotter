@@ -175,6 +175,24 @@ The run also exposed a worker problem: with two ONNX Runtime sessions, the defau
 
 Specs: [model-promotion](openspec/specs/model-promotion/spec.md), [shadow-inference](openspec/specs/shadow-inference/spec.md).
 
+## Retraining on drift
+
+`spotter-retrain` closes the loop: it fine-tunes the newest PyTorch version with the drift experiment's degradations (blur, noise, haze, darken) added to training, measures it on the clean and degraded holdout, and takes it as far as **shadow**, never further ([0018](docs/decisions/0018-retrain-by-fine-tuning-with-synthetic-degradations.md)). `spotter-retrain --watch` runs once per `DriftDetected` event; the chart can run it as a Job or as a watcher Deployment.
+
+Measured on the live stack ([report](benchmarks/2026-11-22-retraining.md)): hazed traffic raised drift on version 3 in 3.4 s, the watcher started retraining 3.6 s later, and version 4 was in shadow 7 minutes after the drift began, with no one involved. Its holdout accuracy:
+
+| Holdout | Version 1 (parent) | Version 4 (retrained) |
+|---|---|---|
+| Clean | 96.57% | 95.58% |
+| Haze | 22.32% | **87.80%** |
+| Darken | 31.28% | **88.86%** |
+| Blur | 24.54% | **75.19%** |
+| Noise | 11.14% | **64.47%** |
+
+After clean traffic every gate passed except the approval (592 comparisons, 98.5% agreement), so a person decides.
+
+Spec: [model-retraining](openspec/specs/model-retraining/spec.md).
+
 ## Kubernetes
 
 One Helm chart, [`deploy/helm/spotter`](deploy/helm/spotter), declares the platform ([0014](docs/decisions/0014-helm-umbrella-chart-keda-scaling.md)): registry, gateway, monitor, and worker Deployments; Postgres and SeaweedFS StatefulSets; NATS with JetStream from the official chart, vendored so installs work offline; and an optional trainer Job.
