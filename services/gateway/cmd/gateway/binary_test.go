@@ -50,7 +50,12 @@ func TestBinaryRendersErrorDetails(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
 	cmd := exec.CommandContext(ctx, bin)
-	cmd.Env = append(cmd.Environ(), "REGISTRY_ADDR="+lis.Addr().String(), "HTTP_ADDR="+httpAddr)
+	vars, _ := baseEnv(t, lis.Addr().String())
+	vars["HTTP_ADDR"] = httpAddr
+	cmd.Env = cmd.Environ()
+	for k, v := range vars {
+		cmd.Env = append(cmd.Env, k+"="+v)
+	}
 	stdout, _ := cmd.StdoutPipe()
 	if err := cmd.Start(); err != nil {
 		t.Fatal(err)

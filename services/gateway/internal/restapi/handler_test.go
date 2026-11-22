@@ -15,6 +15,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/test/bufconn"
 
+	spotterv1 "github.com/Pohi11/spotter/gen/go/spotter/v1"
 	"github.com/Pohi11/spotter/internal/spectest"
 	"github.com/Pohi11/spotter/services/gateway/internal/restapi"
 	"github.com/Pohi11/spotter/services/registry/registryfake"
@@ -40,7 +41,7 @@ func gateway(t *testing.T) *httptest.Server {
 
 func serve(t *testing.T, conn grpc.ClientConnInterface) *httptest.Server {
 	t.Helper()
-	h, err := restapi.New(context.Background(), conn)
+	h, err := restapi.New(context.Background(), conn, spotterv1.UnimplementedInferenceServiceServer{})
 	if err != nil {
 		t.Fatal(err)
 	}

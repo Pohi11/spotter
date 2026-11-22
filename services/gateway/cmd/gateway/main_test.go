@@ -15,6 +15,8 @@ import (
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 
 	spotterv1 "github.com/Pohi11/spotter/gen/go/spotter/v1"
+	"github.com/Pohi11/spotter/internal/natstest"
+	"github.com/Pohi11/spotter/internal/s3test"
 	"github.com/Pohi11/spotter/internal/spectest"
 	"github.com/Pohi11/spotter/services/registry/registryfake"
 )
@@ -25,6 +27,19 @@ var quiet = slog.New(slog.NewTextHandler(io.Discard, nil))
 
 func env(vars map[string]string) func(string) string { return func(k string) string { return vars[k] } }
 
+// baseEnv is a complete configuration pointing at a fresh NATS server and the test S3 store.
+func baseEnv(t *testing.T, registryAddr string) (map[string]string, *natstest.Server) {
+	t.Helper()
+	ns := natstest.Start(t)
+	st := s3test.Start(t)
+	return map[string]string{
+		"REGISTRY_ADDR": registryAddr, "NATS_URL": ns.URL,
+		"S3_ENDPOINT": st.Endpoint, "S3_ACCESS_KEY": st.AccessKey, "S3_SECRET_KEY": st.SecretKey,
+		"IMAGES_BUCKET": s3test.BucketName(),
+		"HTTP_ADDR":     "127.0.0.1:0", "GRPC_ADDR": "127.0.0.1:0", "SHUTDOWN_TIMEOUT": "5s",
+	}, ns
+}
+
 func TestMissingRegistryAddr(t *testing.T) {
 	spectest.Verifies(t, capability, "The gateway process is configured from the environment and stops gracefully")
 	err := run(context.Background(), env(nil), quiet, nil)
@@ -33,22 +48,40 @@ func TestMissingRegistryAddr(t *testing.T) {
 	}
 }
 
-// started runs the gateway against registryAddr and returns its address and a stop func.
-func started(t *testing.T, registryAddr string) (string, func() error) {
+func TestMissingNATSURL(t *testing.T) {
+	spectest.Verifies(t, capability, "The gateway process is configured from the environment and stops gracefully")
+	_, err := loadConfig(env(map[string]string{"REGISTRY_ADDR": "localhost:9090"}))
+	if err == nil || !strings.Contains(err.Error(), "NATS_URL") {
+		t.Fatalf("err = %v, want an error naming NATS_URL", err)
+	}
+}
+
+// started runs the gateway with vars and returns its HTTP address and a stop func.
+func started(t *testing.T, vars map[string]string) (string, func() error) {
 	t.Helper()
 	ctx, cancel := context.WithCancel(context.Background())
-	ready := make(chan string, 1)
+	var mu sync.Mutex
+	addrs := map[string]string{}
+	ready := make(chan struct{})
 	done := make(chan error, 1)
 	go func() {
-		done <- run(ctx, env(map[string]string{"REGISTRY_ADDR": registryAddr, "HTTP_ADDR": "127.0.0.1:0", "SHUTDOWN_TIMEOUT": "5s"}),
-			quiet, func(_, addr string) { ready <- addr })
+		done <- run(ctx, env(vars), quiet, func(name, addr string) {
+			mu.Lock()
+			defer mu.Unlock()
+			addrs[name] = addr
+			if len(addrs) == 2 {
+				close(ready)
+			}
+		})
 	}()
-	var addr string
 	select {
-	case addr = <-ready:
+	case <-ready:
 	case err := <-done:
 		cancel()
 		t.Fatalf("gateway exited during startup: %v", err)
+	case <-time.After(60 * time.Second):
+		cancel()
+		t.Fatal("gateway did not start within 60s")
 	}
 	var once sync.Once
 	var stopErr error
@@ -64,7 +97,7 @@ func started(t *testing.T, registryAddr string) (string, func() error) {
 		return stopErr
 	}
 	t.Cleanup(func() { _ = stop() })
-	return addr, stop
+	return addrs["http"], stop
 }
 
 func status(t *testing.T, url string) int {
@@ -77,14 +110,22 @@ func status(t *testing.T, url string) int {
 	return resp.StatusCode
 }
 
-func TestReadinessFollowsTheRegistry(t *testing.T) {
-	spectest.Verifies(t, capability, "The gateway process is configured from the environment and stops gracefully")
+func fakeRegistry(t *testing.T) (*registryfake.Server, string) {
+	t.Helper()
 	lis, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
 		t.Fatal(err)
 	}
 	reg := registryfake.Serve(lis)
-	addr, _ := started(t, lis.Addr().String())
+	t.Cleanup(reg.GRPC.Stop)
+	return reg, lis.Addr().String()
+}
+
+func TestReadinessFollowsTheRegistry(t *testing.T) {
+	spectest.Verifies(t, capability, "The gateway process is configured from the environment and stops gracefully")
+	reg, regAddr := fakeRegistry(t)
+	vars, _ := baseEnv(t, regAddr)
+	addr, _ := started(t, vars)
 
 	if code := status(t, "http://"+addr+"/readyz"); code != http.StatusOK {
 		t.Fatalf("/readyz with registry SERVING = %d, want 200", code)
@@ -102,9 +143,29 @@ func TestReadinessFollowsTheRegistry(t *testing.T) {
 	}
 }
 
+func TestReadinessFollowsNATS(t *testing.T) {
+	spectest.Verifies(t, capability, "The gateway process is configured from the environment and stops gracefully")
+	_, regAddr := fakeRegistry(t)
+	vars, ns := baseEnv(t, regAddr)
+	addr, _ := started(t, vars)
+	if code := status(t, "http://"+addr+"/readyz"); code != http.StatusOK {
+		t.Fatalf("/readyz = %d, want 200", code)
+	}
+	ns.Shutdown()
+	deadline := time.Now().Add(5 * time.Second)
+	for status(t, "http://"+addr+"/readyz") != http.StatusServiceUnavailable {
+		if time.Now().After(deadline) {
+			t.Fatal("/readyz still 200 with NATS down")
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
+}
+
 func TestStopSignal(t *testing.T) {
 	spectest.Verifies(t, capability, "The gateway process is configured from the environment and stops gracefully")
-	addr, stop := started(t, "127.0.0.1:1")
+	_, regAddr := fakeRegistry(t)
+	vars, _ := baseEnv(t, regAddr)
+	addr, stop := started(t, vars)
 	if err := stop(); err != nil {
 		t.Fatalf("run returned %v, want nil", err)
 	}
@@ -116,13 +177,9 @@ func TestStopSignal(t *testing.T) {
 
 func TestRESTThroughTheProcess(t *testing.T) {
 	spectest.Verifies(t, capability, "Registry operations are available over REST")
-	lis, err := net.Listen("tcp", "127.0.0.1:0")
-	if err != nil {
-		t.Fatal(err)
-	}
-	reg := registryfake.Serve(lis)
-	t.Cleanup(reg.GRPC.Stop)
-	addr, _ := started(t, lis.Addr().String())
+	_, regAddr := fakeRegistry(t)
+	vars, _ := baseEnv(t, regAddr)
+	addr, _ := started(t, vars)
 	resp, err := http.Post("http://"+addr+"/v1/models", "application/json", strings.NewReader(`{"name":"eurosat-classifier"}`))
 	if err != nil {
 		t.Fatal(err)
@@ -130,5 +187,14 @@ func TestRESTThroughTheProcess(t *testing.T) {
 	resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("POST /v1/models through the gateway process = %d", resp.StatusCode)
+	}
+	// The inference REST path is served in process.
+	resp, err = http.Post("http://"+addr+"/v1/models/eurosat-classifier/inferences", "application/json", strings.NewReader(`{"image":"aGVsbG8="}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("POST inferences through the gateway process = %d", resp.StatusCode)
 	}
 }

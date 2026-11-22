@@ -1,7 +1,9 @@
-// Command gateway runs Spotter's public HTTP front door.
+// Command gateway runs Spotter's public front door: REST for the registry and the
+// inference API over gRPC and REST.
 //
-// Configuration comes only from environment variables: REGISTRY_ADDR (required, the
-// registry's gRPC address), HTTP_ADDR (default :8080), SHUTDOWN_TIMEOUT (default 10s).
+// Configuration (environment variables): REGISTRY_ADDR, NATS_URL, S3_ENDPOINT,
+// S3_ACCESS_KEY, S3_SECRET_KEY (required); HTTP_ADDR (:8080), GRPC_ADDR (:9091),
+// S3_REGION (us-east-1), IMAGES_BUCKET (images), SHUTDOWN_TIMEOUT (10s).
 package main
 
 import (
@@ -14,12 +16,22 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/google/uuid"
+	"github.com/nats-io/nats.go"
+	"github.com/nats-io/nats.go/jetstream"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
+	"google.golang.org/grpc/reflection"
 
 	spotterv1 "github.com/Pohi11/spotter/gen/go/spotter/v1"
+	"github.com/Pohi11/spotter/internal/natsjs"
 	"github.com/Pohi11/spotter/internal/svc"
+	"github.com/Pohi11/spotter/services/gateway/internal/adapters/grpcapi"
+	"github.com/Pohi11/spotter/services/gateway/internal/adapters/natsjobs"
+	"github.com/Pohi11/spotter/services/gateway/internal/adapters/s3images"
+	"github.com/Pohi11/spotter/services/gateway/internal/app"
 	"github.com/Pohi11/spotter/services/gateway/internal/restapi"
 )
 
@@ -34,25 +46,37 @@ func main() {
 }
 
 type config struct {
-	RegistryAddr    string
-	HTTPAddr        string
-	ShutdownTimeout time.Duration
+	RegistryAddr, NATSURL, HTTPAddr, GRPCAddr string
+	S3                                        s3images.Config
+	ShutdownTimeout                           time.Duration
 }
 
 func loadConfig(getenv func(string) string) (config, error) {
 	env := svc.Env(getenv)
-	registry, err := env.Required("REGISTRY_ADDR")
-	if err != nil {
+	var c config
+	var err error
+	for _, req := range []struct {
+		key string
+		dst *string
+	}{
+		{"REGISTRY_ADDR", &c.RegistryAddr}, {"NATS_URL", &c.NATSURL},
+		{"S3_ENDPOINT", &c.S3.Endpoint}, {"S3_ACCESS_KEY", &c.S3.AccessKey}, {"S3_SECRET_KEY", &c.S3.SecretKey},
+	} {
+		if *req.dst, err = env.Required(req.key); err != nil {
+			return config{}, err
+		}
+	}
+	if c.ShutdownTimeout, err = env.Duration("SHUTDOWN_TIMEOUT", 10*time.Second); err != nil {
 		return config{}, err
 	}
-	timeout, err := env.Duration("SHUTDOWN_TIMEOUT", 10*time.Second)
-	if err != nil {
-		return config{}, err
-	}
-	return config{RegistryAddr: registry, HTTPAddr: env.Or("HTTP_ADDR", ":8080"), ShutdownTimeout: timeout}, nil
+	c.HTTPAddr = env.Or("HTTP_ADDR", ":8080")
+	c.GRPCAddr = env.Or("GRPC_ADDR", ":9091")
+	c.S3.Region = env.Or("S3_REGION", "us-east-1")
+	c.S3.Bucket = env.Or("IMAGES_BUCKET", "images")
+	return c, nil
 }
 
-// run serves the gateway until ctx is cancelled. onListening receives the bound address.
+// run serves the gateway until ctx is cancelled. onListening receives the bound addresses.
 func run(ctx context.Context, getenv func(string) string, logger *slog.Logger, onListening func(name, addr string)) error {
 	cfg, err := loadConfig(getenv)
 	if err != nil {
@@ -60,28 +84,69 @@ func run(ctx context.Context, getenv func(string) string, logger *slog.Logger, o
 	}
 	// NewClient connects lazily: the gateway starts even if the registry isn't up yet,
 	// and /readyz reports it until it is.
-	conn, err := grpc.NewClient(cfg.RegistryAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	registryConn, err := grpc.NewClient(cfg.RegistryAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return fmt.Errorf("REGISTRY_ADDR: %w", err)
 	}
-	defer conn.Close()
+	defer registryConn.Close()
 
-	api, err := restapi.New(ctx, conn)
+	nc, err := nats.Connect(cfg.NATSURL, nats.Name("gateway"), nats.MaxReconnects(-1))
+	if err != nil {
+		return fmt.Errorf("NATS_URL: %w", err)
+	}
+	defer nc.Close()
+	js, err := jetstream.New(nc)
 	if err != nil {
 		return err
 	}
-	return svc.Run(ctx, svc.Options{Logger: logger, ShutdownTimeout: cfg.ShutdownTimeout, OnListening: onListening},
-		svc.Listener{Name: "http", Addr: cfg.HTTPAddr, Server: svc.HTTP(routes(api, healthpb.NewHealthClient(conn)))})
+	if err := natsjs.Ensure(ctx, js); err != nil {
+		return fmt.Errorf("ensure streams: %w", err)
+	}
+	jobs, err := natsjobs.New(ctx, js)
+	if err != nil {
+		return err
+	}
+	images := s3images.New(cfg.S3)
+	if err := images.EnsureBucket(ctx); err != nil {
+		return fmt.Errorf("S3_ENDPOINT: %w", err)
+	}
+
+	service := app.NewService(app.Deps{
+		Images: images, Jobs: jobs, Pub: jobs,
+		Models: grpcapi.Catalog{Registry: spotterv1.NewRegistryServiceClient(registryConn)},
+		IDs:    uuidV7{}, Clock: systemClock{},
+	})
+	inference := grpcapi.New(service, logger)
+
+	grpcServer := grpc.NewServer()
+	spotterv1.RegisterInferenceServiceServer(grpcServer, inference)
+	healthServer := health.NewServer()
+	healthServer.SetServingStatus(spotterv1.InferenceService_ServiceDesc.ServiceName, healthpb.HealthCheckResponse_SERVING)
+	healthpb.RegisterHealthServer(grpcServer, healthServer)
+	reflection.Register(grpcServer)
+
+	api, err := restapi.New(ctx, registryConn, inference)
+	if err != nil {
+		return err
+	}
+	return svc.Run(ctx, svc.Options{Logger: logger, ShutdownTimeout: cfg.ShutdownTimeout, OnListening: onListening, BeforeShutdown: healthServer.Shutdown},
+		svc.Listener{Name: "http", Addr: cfg.HTTPAddr, Server: svc.HTTP(routes(api, healthpb.NewHealthClient(registryConn), nc))},
+		svc.Listener{Name: "grpc", Addr: cfg.GRPCAddr, Server: svc.GRPC(grpcServer)},
+	)
 }
 
 // routes adds liveness and readiness in front of the API.
-func routes(api http.Handler, registryHealth healthpb.HealthClient) http.Handler {
+func routes(api http.Handler, registryHealth healthpb.HealthClient, nc *nats.Conn) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /livez", func(w http.ResponseWriter, _ *http.Request) {
 		_, _ = w.Write([]byte("ok\n"))
 	})
-	// Ready only when the next hop is: the registry's own health check (design D6).
+	// Ready only when its dependencies are: the registry's health check and NATS.
 	mux.HandleFunc("GET /readyz", func(w http.ResponseWriter, r *http.Request) {
+		if !nc.IsConnected() {
+			http.Error(w, "nats unavailable", http.StatusServiceUnavailable)
+			return
+		}
 		ctx, cancel := context.WithTimeout(r.Context(), time.Second)
 		defer cancel()
 		resp, err := registryHealth.Check(ctx, &healthpb.HealthCheckRequest{Service: spotterv1.RegistryService_ServiceDesc.ServiceName})
@@ -94,3 +159,11 @@ func routes(api http.Handler, registryHealth healthpb.HealthClient) http.Handler
 	mux.Handle("/", api)
 	return mux
 }
+
+type uuidV7 struct{}
+
+func (uuidV7) NewID() uuid.UUID { return uuid.Must(uuid.NewV7()) }
+
+type systemClock struct{}
+
+func (systemClock) Now() time.Time { return time.Now().UTC().Truncate(time.Microsecond) }
