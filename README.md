@@ -123,6 +123,22 @@ One trace follows a request across every process and the message bus ([0010](doc
 
 Spec: [observability](openspec/specs/observability/spec.md).
 
+## Optimization and load tests
+
+`spotter-optimize` exports a registered PyTorch version to ONNX, checks it against PyTorch on every holdout tile, quantizes it to int8 (static, per-channel, calibrated on training tiles), measures each variant, and registers the variants as new versions with their parent recorded ([0011](docs/decisions/0011-onnx-runtime-static-int8.md)). A quantized version is validated only if it loses at most 0.01 holdout accuracy.
+
+| Variant (4 threads) | Size | Holdout accuracy | p50, batch 1 | Images/s, batch 32 |
+|---|---|---|---|---|
+| PyTorch fp32 (v1) | 1,143 KB | 96.57% | 1.98 ms | 645 |
+| ONNX fp32 (v2) | 1,157 KB | 96.57% | 0.81 ms | 1,282 |
+| ONNX int8 (v3) | 320 KB | 96.54% | **0.43 ms** | **3,011** |
+
+ONNX fp32 matches PyTorch to 1.25e-6 in probability with no disagreeing predictions. Full report: [benchmarks/2026-11-22-model-variants.md](benchmarks/2026-11-22-model-variants.md).
+
+**End to end it's a different story** ([load tests](benchmarks/2026-11-22-load-tests.md)). `spotterload` (Go) drives the gateway and times each job from submission to its completion event. With 4 closed-loop clients, v1 and v3 both deliver about 60 jobs/s at a p50 of 64–67 ms: the model is about 3 ms of a 65 ms job. Jaeger spans show where the rest goes: **writing the image to the object store takes 50 of the 66 ms submit call**. A second worker didn't add throughput for the same reason. The next lever is the submit path (keep ~3 KB tiles inline instead of in the object store), not the model.
+
+Specs: [model-optimization](openspec/specs/model-optimization/spec.md), [load-testing](openspec/specs/load-testing/spec.md).
+
 ## Architecture
 
 - **Go services:** registry (model versions and their lifecycle), gateway (REST and gRPC front door), monitor (drift detection). Each is hexagonal: domain and use-case code depend only on ports, and Postgres, NATS, and S3 sit behind adapters.

@@ -2,7 +2,7 @@
 
 ## Context
 
-Version 1 (PyTorch, 96.57% holdout accuracy) is registered and served (changes `phase-03-model-training`, `phase-04-event-driven-inference`). The runtime choice is recorded in decision record [0011](../../../docs/decisions/0011-onnx-runtime-static-int8.md).
+Version 1 (PyTorch, 96.57% holdout accuracy) is registered and served (changes `phase-03-model-training`, `phase-04-event-driven-inference`). The runtime choice is recorded in decision record [0011](../../../../docs/decisions/0011-onnx-runtime-static-int8.md).
 
 ## Decisions
 
