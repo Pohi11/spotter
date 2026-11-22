@@ -41,11 +41,11 @@ A failed request SHALL return a JSON body with the gRPC code, a message, and any
 - **THEN** the response is 503
 
 ### Requirement: The OpenAPI document is served
-The gateway SHALL serve an OpenAPI document generated from the protobuf definitions at `GET /openapi.json`, describing every REST path above.
+The gateway SHALL serve an OpenAPI document generated from the protobuf definitions at `GET /openapi.json`, describing every REST path above, with path parameters in JSON (lowerCamelCase) form.
 
 #### Scenario: Fetch the document
 - **WHEN** a client sends `GET /openapi.json`
-- **THEN** the response is 200 JSON whose `paths` include `/v1/models` and `/v1/versions/{version_id}:transition`
+- **THEN** the response is 200 JSON whose `paths` include `/v1/models` and `/v1/versions/{versionId}:transition`
 
 ### Requirement: The gateway process is configured from the environment and stops gracefully
 The gateway SHALL read `REGISTRY_ADDR` (required), `HTTP_ADDR` (default `:8080`), and `SHUTDOWN_TIMEOUT` (default `10s`) from environment variables, failing startup with an error naming any missing or invalid variable. It SHALL answer `GET /livez` with 200 while running and `GET /readyz` with 200 only when the registry's gRPC health check reports `SERVING`, otherwise 503. On SIGINT or SIGTERM it SHALL finish in-flight requests within `SHUTDOWN_TIMEOUT` and exit without error.

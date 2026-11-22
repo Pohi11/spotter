@@ -22,7 +22,7 @@ plugins:
     out: gen/go
     opt: paths=source_relative
   - remote: buf.build/grpc-ecosystem/openapiv2:v2.34.0
-    out: gen/openapi
+    out: gen/openapi/v2
   - remote: buf.build/protocolbuffers/python:v36.2
     out: gen/python/src
   - remote: buf.build/protocolbuffers/pyi:v36.2
