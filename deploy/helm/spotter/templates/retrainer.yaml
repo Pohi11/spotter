@@ -1,0 +1,59 @@
+{{- /* Retrains once per DriftDetected event, up to shadow (change retrain-on-drift, decision record 0018). */ -}}
+{{- if .Values.retrainer.enabled }}
+{{- $c := dict "root" . "component" "retrainer" }}
+{{- $waitFor := list (printf "%s:4222" (include "spotter.natsHost" .)) (include "spotter.registryAddr" .) (printf "%s:8333" (include "spotter.s3Host" .)) }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "spotter.name" $c }}
+  labels:
+    {{- include "spotter.labels" $c | nindent 4 }}
+spec:
+  # One watcher: its durable consumer allows one unacknowledged drift event at a time.
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "spotter.selector" $c | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "spotter.labels" $c | nindent 8 }}
+    spec:
+      securityContext:
+        {{- include "spotter.restrictedPod" . | nindent 8 }}
+        runAsUser: 10001
+      initContainers:
+        {{- include "spotter.waitFor" (dict "root" . "addrs" $waitFor) | nindent 8 }}
+      containers:
+        - name: retrainer
+          image: {{ include "spotter.pythonImage" . }}
+          imagePullPolicy: {{ .Values.images.pullPolicy }}
+          command: ["spotter-retrain", "--watch"]
+          env:
+            - name: NATS_URL
+              value: {{ include "spotter.natsURL" . }}
+            - name: REGISTRY_ADDR
+              value: {{ include "spotter.registryAddr" . }}
+            - name: MODEL_NAME
+              value: {{ .Values.model | quote }}
+            - name: DATA_DIR
+              value: /data
+            - name: HOME
+              value: /tmp
+            {{- include "spotter.s3Env" . | nindent 12 }}
+          resources:
+            {{- toYaml .Values.retrainer.resources | nindent 12 }}
+          securityContext:
+            {{- include "spotter.restrictedContainer" . | nindent 12 }}
+          volumeMounts:
+            - { name: data, mountPath: /data }
+            - { name: tmp, mountPath: /tmp }
+      volumes:
+        - name: data
+          emptyDir:
+            sizeLimit: {{ .Values.retrainer.dataSizeLimit }}
+        - name: tmp
+          emptyDir: {}
+{{- end }}
