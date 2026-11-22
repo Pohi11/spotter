@@ -13,4 +13,4 @@
 ## 3. Packaging and real run
 
 - [x] 3.1 Chart: `trainer.command`, optional retrainer Deployment (chart test).
-- [ ] 3.2 Real run: drift on the live stack, retrain, the new version in shadow with its measured metrics.
+- [x] 3.2 Real run: drift on the live stack, retrain, the new version in shadow with its measured metrics.
