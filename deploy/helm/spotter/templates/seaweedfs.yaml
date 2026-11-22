@@ -1,0 +1,85 @@
+{{- /* Single-process SeaweedFS with its S3 gateway (decision record 0003). */ -}}
+{{- $c := dict "root" . "component" "seaweedfs" }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "spotter.name" $c }}-entrypoint
+  labels:
+    {{- include "spotter.labels" $c | nindent 4 }}
+data:
+  # Holds no credentials: it writes the S3 identity from the environment at start.
+  entrypoint.sh: |
+{{ .Files.Get "files/seaweedfs-entrypoint.sh" | indent 4 }}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "spotter.name" $c }}
+  labels:
+    {{- include "spotter.labels" $c | nindent 4 }}
+spec:
+  serviceName: {{ include "spotter.name" $c }}
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "spotter.selector" $c | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "spotter.labels" $c | nindent 8 }}
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: seaweedfs
+          image: {{ .Values.images.seaweedfs.repository }}:{{ .Values.images.seaweedfs.tag }}
+          imagePullPolicy: {{ .Values.images.pullPolicy }}
+          command: ["/bin/sh", "/spotter/entrypoint.sh"]
+          env:
+            - name: S3_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "spotter.secretName" . }}
+                  key: s3-access-key
+            - name: S3_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "spotter.secretName" . }}
+                  key: s3-secret-key
+          ports:
+            - { name: s3, containerPort: 8333 }
+          livenessProbe:
+            httpGet: { path: /healthz, port: s3 }
+            periodSeconds: 10
+            failureThreshold: 6
+          readinessProbe:
+            httpGet: { path: /healthz, port: s3 }
+            periodSeconds: 5
+          resources:
+            {{- toYaml .Values.seaweedfs.resources | nindent 12 }}
+          volumeMounts:
+            - { name: data, mountPath: /data }
+            - { name: entrypoint, mountPath: /spotter, readOnly: true }
+      volumes:
+        - name: entrypoint
+          configMap:
+            name: {{ include "spotter.name" $c }}-entrypoint
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: {{ .Values.seaweedfs.storage }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "spotter.name" $c }}
+  labels:
+    {{- include "spotter.labels" $c | nindent 4 }}
+spec:
+  selector:
+    {{- include "spotter.selector" $c | nindent 4 }}
+  ports:
+    - { name: s3, port: 8333, targetPort: s3 }

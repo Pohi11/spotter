@@ -1,0 +1,26 @@
+{{- /* Scale workers on the backlog of their durable consumer (decision record 0014). */ -}}
+{{- if .Values.worker.autoscaling.enabled }}
+{{- $c := dict "root" . "component" "worker" }}
+{{- $a := .Values.worker.autoscaling }}
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: {{ include "spotter.name" $c }}
+  labels:
+    {{- include "spotter.labels" $c | nindent 4 }}
+spec:
+  scaleTargetRef:
+    name: {{ include "spotter.name" $c }}
+  minReplicaCount: {{ $a.minReplicas }}
+  maxReplicaCount: {{ $a.maxReplicas }}
+  pollingInterval: {{ $a.pollingIntervalSeconds }}
+  cooldownPeriod: {{ $a.cooldownSeconds }}
+  triggers:
+    - type: nats-jetstream
+      metadata:
+        natsServerMonitoringEndpoint: "{{ include "spotter.natsHost" . }}.{{ .Release.Namespace }}.svc.cluster.local:8222"
+        account: "$G"
+        stream: INFERENCE
+        consumer: "inference-worker-{{ .Values.model }}"
+        lagThreshold: {{ $a.lagThreshold | quote }}
+{{- end }}

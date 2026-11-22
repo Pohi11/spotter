@@ -1,0 +1,31 @@
+{{- /* helm test: the platform answers end to end (design D6). */ -}}
+{{- $c := dict "root" . "component" "smoke-test" }}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ include "spotter.name" $c }}
+  labels:
+    {{- include "spotter.labels" $c | nindent 4 }}
+  annotations:
+    helm.sh/hook: test
+    helm.sh/hook-delete-policy: before-hook-creation
+spec:
+  restartPolicy: Never
+  securityContext:
+    {{- include "spotter.restrictedPod" . | nindent 4 }}
+  containers:
+    - name: smoke
+      image: {{ include "spotter.goImage" . }}
+      imagePullPolicy: {{ .Values.images.pullPolicy }}
+      command:
+        - spotterctl
+        - smoke
+        - -gateway-url=http://{{ .Release.Name }}-gateway:8080
+        - -registry-url=http://{{ .Release.Name }}-registry:8080
+        - -nats-url={{ include "spotter.natsURL" . }}
+        - -timeout=3m
+      resources:
+        requests: { cpu: 10m, memory: 16Mi }
+        limits: { cpu: 200m, memory: 64Mi }
+      securityContext:
+        {{- include "spotter.restrictedContainer" . | nindent 8 }}

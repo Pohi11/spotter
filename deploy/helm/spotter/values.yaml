@@ -1,0 +1,131 @@
+# Default values for the Spotter chart (decision record 0014). No credentials live here:
+# the chart generates them into a Secret at first install (or uses auth.existingSecret).
+
+images:
+  go:
+    repository: spotter-go
+    tag: dev
+  python:
+    repository: spotter-python
+    tag: dev
+  postgres:
+    repository: postgres
+    tag: "18"
+  seaweedfs:
+    repository: chrislusf/seaweedfs
+    tag: "4.54"
+  pullPolicy: IfNotPresent
+
+# The model the gateway accepts jobs for and the worker serves.
+model: eurosat-classifier
+
+auth:
+  # A Secret with keys postgres-password, database-url, s3-access-key, s3-secret-key.
+  # Empty: the chart generates one and keeps its values across upgrades.
+  existingSecret: ""
+
+s3:
+  region: us-east-1
+  imagesBucket: images
+
+# OTLP gRPC endpoint for traces (decision record 0010); empty turns export off.
+otelEndpoint: ""
+
+# Seconds each Go service waits for in-flight work on SIGTERM. Pods get this plus
+# shutdownMarginSeconds before Kubernetes kills them.
+shutdownTimeoutSeconds: 10
+shutdownMarginSeconds: 5
+
+registry:
+  replicas: 1
+  resources:
+    requests: { cpu: 50m, memory: 64Mi }
+    limits: { cpu: 500m, memory: 256Mi }
+
+gateway:
+  replicas: 1
+  resources:
+    requests: { cpu: 50m, memory: 64Mi }
+    limits: { cpu: "1", memory: 256Mi }
+
+monitor:
+  replicas: 1
+  resources:
+    requests: { cpu: 50m, memory: 64Mi }
+    limits: { cpu: 500m, memory: 256Mi }
+
+worker:
+  replicas: 1
+  ackWaitSeconds: 30
+  maxDeliver: 5
+  # MODEL_THREADS is derived from limits.cpu (whole cores, at least 1).
+  resources:
+    requests: { cpu: 250m, memory: 768Mi }
+    limits: { cpu: "1", memory: 1536Mi }
+  terminationGracePeriodSeconds: 45
+  autoscaling:
+    # Needs KEDA in the cluster. Off: the Deployment runs worker.replicas.
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 4
+    # Target backlog per replica: KEDA adds replicas while lag / replicas exceeds this.
+    lagThreshold: 20
+    pollingIntervalSeconds: 5
+    cooldownSeconds: 60
+
+trainer:
+  # A one-off Job that trains, publishes, and registers a version (downloads EuroSAT, ~94 MB).
+  enabled: false
+  backoffLimit: 0
+  dataSizeLimit: 2Gi
+  resources:
+    requests: { cpu: "1", memory: 2Gi }
+    limits: { cpu: "4", memory: 4Gi }
+
+postgres:
+  # Off: point the registry at your own database with externalDatabase.existingSecret.
+  enabled: true
+  user: spotter
+  database: spotter
+  storage: 1Gi
+  resources:
+    requests: { cpu: 100m, memory: 128Mi }
+    limits: { cpu: "1", memory: 512Mi }
+
+externalDatabase:
+  # Used when postgres.enabled is false: a Secret holding the registry's DATABASE_URL.
+  existingSecret: ""
+  key: database-url
+
+seaweedfs:
+  storage: 2Gi
+  resources:
+    requests: { cpu: 100m, memory: 128Mi }
+    limits: { cpu: "1", memory: 512Mi }
+
+# The official NATS chart (vendored under charts/): one server with JetStream on a file store.
+nats:
+  enabled: true
+  config:
+    jetstream:
+      enabled: true
+      fileStore:
+        pvc:
+          size: 2Gi
+    monitor:
+      enabled: true
+  service:
+    ports:
+      # KEDA reads consumer lag from the monitoring endpoint.
+      monitor:
+        enabled: true
+  container:
+    merge:
+      resources:
+        requests: { cpu: 50m, memory: 64Mi }
+        limits: { cpu: "1", memory: 512Mi }
+  # Configuration changes roll out with helm upgrade; no sidecar needed.
+  reloader:
+    enabled: false
+  natsBox:
+    enabled: false

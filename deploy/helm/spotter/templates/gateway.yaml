@@ -1,0 +1,61 @@
+{{- $c := dict "root" . "component" "gateway" }}
+{{- $waitFor := list (printf "%s:4222" (include "spotter.natsHost" .)) (printf "%s:8333" (include "spotter.s3Host" .)) (include "spotter.registryAddr" .) }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "spotter.name" $c }}
+  labels:
+    {{- include "spotter.labels" $c | nindent 4 }}
+spec:
+  replicas: {{ .Values.gateway.replicas }}
+  selector:
+    matchLabels:
+      {{- include "spotter.selector" $c | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "spotter.labels" $c | nindent 8 }}
+    spec:
+      terminationGracePeriodSeconds: {{ include "spotter.terminationGrace" . }}
+      securityContext:
+        {{- include "spotter.restrictedPod" . | nindent 8 }}
+      initContainers:
+        {{- include "spotter.waitFor" (dict "root" . "addrs" $waitFor) | nindent 8 }}
+      containers:
+        - name: gateway
+          image: {{ include "spotter.goImage" . }}
+          imagePullPolicy: {{ .Values.images.pullPolicy }}
+          command: ["gateway"]
+          env:
+            {{- include "spotter.goServiceEnv" . | nindent 12 }}
+            - name: HTTP_ADDR
+              value: ":8080"
+            - name: GRPC_ADDR
+              value: ":9091"
+            - name: REGISTRY_ADDR
+              value: {{ include "spotter.registryAddr" . }}
+            - name: IMAGES_BUCKET
+              value: {{ .Values.s3.imagesBucket | quote }}
+            {{- include "spotter.s3Env" . | nindent 12 }}
+            {{- include "spotter.otelEnv" (dict "root" . "service" "gateway") | nindent 12 }}
+          ports:
+            - { name: http, containerPort: 8080 }
+            - { name: grpc, containerPort: 9091 }
+          {{- include "spotter.goProbes" . | nindent 10 }}
+          resources:
+            {{- toYaml .Values.gateway.resources | nindent 12 }}
+          securityContext:
+            {{- include "spotter.restrictedContainer" . | nindent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "spotter.name" $c }}
+  labels:
+    {{- include "spotter.labels" $c | nindent 4 }}
+spec:
+  selector:
+    {{- include "spotter.selector" $c | nindent 4 }}
+  ports:
+    - { name: http, port: 8080, targetPort: http }
+    - { name: grpc, port: 9091, targetPort: grpc }

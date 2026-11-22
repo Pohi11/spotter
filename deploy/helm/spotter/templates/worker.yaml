@@ -1,0 +1,75 @@
+{{- $c := dict "root" . "component" "worker" }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "spotter.name" $c }}
+  labels:
+    {{- include "spotter.labels" $c | nindent 4 }}
+spec:
+  {{- if not .Values.worker.autoscaling.enabled }}
+  replicas: {{ .Values.worker.replicas }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "spotter.selector" $c | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "spotter.labels" $c | nindent 8 }}
+    spec:
+      # Long enough to finish the job in hand and drain the NATS connection.
+      terminationGracePeriodSeconds: {{ .Values.worker.terminationGracePeriodSeconds }}
+      securityContext:
+        {{- include "spotter.restrictedPod" . | nindent 8 }}
+        runAsUser: 10001
+      initContainers:
+        {{- include "spotter.waitFor" (dict "root" . "addrs" (list (printf "%s:4222" (include "spotter.natsHost" .)))) | nindent 8 }}
+      containers:
+        - name: worker
+          image: {{ include "spotter.pythonImage" . }}
+          imagePullPolicy: {{ .Values.images.pullPolicy }}
+          command: ["spotter-inference"]
+          env:
+            - name: NATS_URL
+              value: {{ include "spotter.natsURL" . }}
+            - name: REGISTRY_ADDR
+              value: {{ include "spotter.registryAddr" . }}
+            - name: MODEL_NAME
+              value: {{ .Values.model | quote }}
+            - name: ACK_WAIT
+              value: {{ .Values.worker.ackWaitSeconds | quote }}
+            - name: MAX_DELIVER
+              value: {{ .Values.worker.maxDeliver | quote }}
+            - name: METRICS_PORT
+              value: "9464"
+            # Model threads never exceed the CPU the pod may use (change phase-08-promotion).
+            - name: MODEL_THREADS
+              value: {{ include "spotter.wholeCores" .Values.worker.resources.limits.cpu | quote }}
+            - name: HOME
+              value: /tmp
+            {{- include "spotter.s3Env" . | nindent 12 }}
+            {{- include "spotter.otelEnv" (dict "root" . "service" "inference-worker") | nindent 12 }}
+          ports:
+            - { name: metrics, containerPort: 9464 }
+          # The worker serves only /metrics, which starts before it waits for JetStream and
+          # loads models; the startup probe gives that time.
+          startupProbe:
+            tcpSocket: { port: metrics }
+            periodSeconds: 5
+            failureThreshold: 60
+          livenessProbe:
+            tcpSocket: { port: metrics }
+            periodSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            tcpSocket: { port: metrics }
+            periodSeconds: 5
+          resources:
+            {{- toYaml .Values.worker.resources | nindent 12 }}
+          securityContext:
+            {{- include "spotter.restrictedContainer" . | nindent 12 }}
+          volumeMounts:
+            - { name: tmp, mountPath: /tmp }
+      volumes:
+        - name: tmp
+          emptyDir: {}

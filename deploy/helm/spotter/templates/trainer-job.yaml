@@ -1,0 +1,51 @@
+{{- /* One-off training run: train, publish, register, validate (change phase-03-model-training). */ -}}
+{{- if .Values.trainer.enabled }}
+{{- $c := dict "root" . "component" "trainer" }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "spotter.name" $c }}-{{ .Release.Revision }}
+  labels:
+    {{- include "spotter.labels" $c | nindent 4 }}
+spec:
+  backoffLimit: {{ .Values.trainer.backoffLimit }}
+  template:
+    metadata:
+      labels:
+        {{- include "spotter.labels" $c | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      securityContext:
+        {{- include "spotter.restrictedPod" . | nindent 8 }}
+        runAsUser: 10001
+      initContainers:
+        {{- include "spotter.waitFor" (dict "root" . "addrs" (list (include "spotter.registryAddr" .) (printf "%s:8333" (include "spotter.s3Host" .)))) | nindent 8 }}
+      containers:
+        - name: trainer
+          image: {{ include "spotter.pythonImage" . }}
+          imagePullPolicy: {{ .Values.images.pullPolicy }}
+          command: ["spotter-train"]
+          env:
+            - name: REGISTRY_ADDR
+              value: {{ include "spotter.registryAddr" . }}
+            - name: MODEL_NAME
+              value: {{ .Values.model | quote }}
+            - name: DATA_DIR
+              value: /data
+            - name: HOME
+              value: /tmp
+            {{- include "spotter.s3Env" . | nindent 12 }}
+          resources:
+            {{- toYaml .Values.trainer.resources | nindent 12 }}
+          securityContext:
+            {{- include "spotter.restrictedContainer" . | nindent 12 }}
+          volumeMounts:
+            - { name: data, mountPath: /data }
+            - { name: tmp, mountPath: /tmp }
+      volumes:
+        - name: data
+          emptyDir:
+            sizeLimit: {{ .Values.trainer.dataSizeLimit }}
+        - name: tmp
+          emptyDir: {}
+{{- end }}

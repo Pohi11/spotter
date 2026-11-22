@@ -1,0 +1,12 @@
+Spotter {{ .Chart.AppVersion }} is installed as release {{ .Release.Name }}.
+
+Check it end to end:
+  helm test {{ .Release.Name }} -n {{ .Release.Namespace }}
+
+Reach the gateway from your machine:
+  kubectl -n {{ .Release.Namespace }} port-forward svc/{{ .Release.Name }}-gateway 8080:8080 9091:9091
+  curl localhost:8080/v1/models/{{ .Values.model }}/versions
+{{- if .Values.worker.autoscaling.enabled }}
+
+Workers scale between {{ .Values.worker.autoscaling.minReplicas }} and {{ .Values.worker.autoscaling.maxReplicas }} on the backlog of inference-worker-{{ .Values.model }} (KEDA).
+{{- end }}

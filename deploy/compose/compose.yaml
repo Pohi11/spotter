@@ -44,7 +44,8 @@ services:
     ports:
       - "8333:8333" # S3 API
     volumes:
-      - ./seaweedfs-entrypoint.sh:/entrypoint-spotter.sh:ro
+      # One definition, shared with the Helm chart.
+      - ../helm/spotter/files/seaweedfs-entrypoint.sh:/entrypoint-spotter.sh:ro
       - seaweeddata:/data
     healthcheck:
       # 127.0.0.1, not localhost: localhost resolves to IPv6 here and SeaweedFS listens on IPv4 only.

@@ -1,0 +1,43 @@
+{{- $c := dict "root" . "component" "monitor" }}
+{{- $waitFor := list (printf "%s:4222" (include "spotter.natsHost" .)) (include "spotter.registryAddr" .) }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "spotter.name" $c }}
+  labels:
+    {{- include "spotter.labels" $c | nindent 4 }}
+spec:
+  replicas: {{ .Values.monitor.replicas }}
+  selector:
+    matchLabels:
+      {{- include "spotter.selector" $c | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "spotter.labels" $c | nindent 8 }}
+    spec:
+      terminationGracePeriodSeconds: {{ include "spotter.terminationGrace" . }}
+      securityContext:
+        {{- include "spotter.restrictedPod" . | nindent 8 }}
+      initContainers:
+        {{- include "spotter.waitFor" (dict "root" . "addrs" $waitFor) | nindent 8 }}
+      containers:
+        - name: monitor
+          image: {{ include "spotter.goImage" . }}
+          imagePullPolicy: {{ .Values.images.pullPolicy }}
+          command: ["monitor"]
+          env:
+            {{- include "spotter.goServiceEnv" . | nindent 12 }}
+            - name: HTTP_ADDR
+              value: ":8082"
+            - name: REGISTRY_ADDR
+              value: {{ include "spotter.registryAddr" . }}
+            {{- include "spotter.s3Env" . | nindent 12 }}
+            {{- include "spotter.otelEnv" (dict "root" . "service" "monitor") | nindent 12 }}
+          ports:
+            - { name: http, containerPort: 8082 }
+          {{- include "spotter.goProbes" . | nindent 10 }}
+          resources:
+            {{- toYaml .Values.monitor.resources | nindent 12 }}
+          securityContext:
+            {{- include "spotter.restrictedContainer" . | nindent 12 }}
