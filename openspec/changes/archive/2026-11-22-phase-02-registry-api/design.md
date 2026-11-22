@@ -2,7 +2,7 @@
 
 ## Context
 
-Phase 1 built the registry's use cases behind ports. This change adds the first driving adapter (gRPC) and the gateway service. The choice of RPC stack is recorded in decision record [0007](../../../docs/decisions/0007-grpc-go-with-grpc-gateway.md).
+Phase 1 built the registry's use cases behind ports. This change adds the first driving adapter (gRPC) and the gateway service. The choice of RPC stack is recorded in decision record [0007](../../../../docs/decisions/0007-grpc-go-with-grpc-gateway.md).
 
 ## Layout
 

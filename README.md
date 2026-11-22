@@ -2,7 +2,7 @@
 
 A small, cloud-neutral platform for deploying and monitoring computer-vision models on overhead imagery. Register a model version, serve it behind REST and gRPC, run inference through an event bus, watch live traffic for drift, retrain, shadow-test the new version, and promote it through code-checked gates and a human approval, with rollback.
 
-Status: the model registry's domain, storage, and process are built; its API comes next. The sections below grow as each part is built.
+Status: the model registry and its gRPC/REST API are built. The sections below grow as each part is built.
 
 ## Model registry
 
@@ -31,6 +31,24 @@ stateDiagram-v2
 - **Kubernetes-ready process:** config from environment variables, migrations at startup, `/livez` and `/readyz`, graceful shutdown on SIGTERM.
 
 Specs: [model-registry](openspec/specs/model-registry/spec.md), [model-lifecycle](openspec/specs/model-lifecycle/spec.md), [registry-service](openspec/specs/registry-service/spec.md).
+
+## API
+
+One file, [registry.proto](proto/spotter/v1/registry.proto), defines the gRPC service, its REST paths, and the [OpenAPI document](gen/openapi/v2/spotter/v1/registry.swagger.json) ([0007](docs/decisions/0007-grpc-go-with-grpc-gateway.md)).
+
+```mermaid
+flowchart LR
+    C[curl / browser] -- REST + JSON --> G[gateway<br/>grpc-gateway]
+    S[other services] -- gRPC --> R
+    G -- gRPC --> R[registry<br/>grpc-go]
+    R --> P[(Postgres)]
+```
+
+- The registry serves gRPC with the standard health service and reflection; the gateway translates REST to gRPC and serves `/openapi.json`.
+- Every registry error maps to one gRPC code (and one HTTP status at the gateway). Validation errors name the field: `400 {"code":3, "details":[{"fieldViolations":[{"field":"artifact_sha256",…}]}]}`.
+- The gateway's `/readyz` checks the registry's gRPC health, so a gateway with no registry gets no traffic.
+
+Specs: [registry-api](openspec/specs/registry-api/spec.md), [gateway-http](openspec/specs/gateway-http/spec.md).
 
 ## Architecture
 
@@ -65,11 +83,14 @@ uv run spotter-inference           # terminal 1: the Python worker
 go run ./cmd/spotterctl ping       # terminal 2: reply from inference-worker (python 3.13.x) in 1.6ms
 ```
 
-Run the registry against the local Postgres (it migrates on start):
+Run the registry (it migrates on start) and the gateway in front of it:
 
 ```bash
-DATABASE_URL='postgres://spotter:spotter-dev@localhost:5432/spotter?sslmode=disable' go run ./services/registry/cmd/registry
-curl localhost:8080/readyz
+DATABASE_URL='postgres://spotter:spotter-dev@localhost:5432/spotter?sslmode=disable' HTTP_ADDR=:8081 go run ./services/registry/cmd/registry
+REGISTRY_ADDR=localhost:9090 go run ./services/gateway/cmd/gateway
+
+curl -X POST localhost:8080/v1/models -d '{"name":"eurosat-classifier"}'
+curl localhost:8080/v1/models/eurosat-classifier/versions
 ```
 
 ## Test
