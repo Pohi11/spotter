@@ -174,7 +174,7 @@ test(`every diagram has a title and a description ${D("Architecture diagrams hav
   await expect(page.locator("#parts")).toContainText("services/gateway");
 });
 
-const PAGES = ["/", "/live", "/model", "/drift", "/results", "/architecture"];
+const PAGES = ["/", "/live", "/model", "/drift", "/results", "/architecture", "/build", "/build/specs", "/build/decisions"];
 
 test(`no page scrolls sideways at phone width ${D("Pages work by keyboard and at phone width")}`, async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 812 });
