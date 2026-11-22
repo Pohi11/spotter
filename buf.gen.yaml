@@ -1,0 +1,17 @@
+# Generated code is committed; CI regenerates and fails on any difference (decision record 0002).
+# Plugin versions are pinned so every machine generates byte-identical output.
+version: v2
+managed:
+  enabled: true
+  override:
+    - file_option: go_package_prefix
+      value: github.com/Pohi11/spotter/gen/go
+clean: true
+plugins:
+  - remote: buf.build/protocolbuffers/go:v1.36.12
+    out: gen/go
+    opt: paths=source_relative
+  - remote: buf.build/protocolbuffers/python:v36.2
+    out: gen/python/src
+  - remote: buf.build/protocolbuffers/pyi:v36.2
+    out: gen/python/src

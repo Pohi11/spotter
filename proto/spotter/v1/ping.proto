@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package spotter.v1;
+
+import "google/protobuf/timestamp.proto";
+
+// A connectivity check between services, sent over NATS request/reply on
+// the subject "spotter.v1.ping". It proves that Go and Python agree on the
+// generated contract and can reach each other through the bus.
+message PingRequest {
+  // Correlation id chosen by the sender; echoed back in the reply.
+  string id = 1;
+  // Name of the sending service, e.g. "spotterctl".
+  string sender = 2;
+  google.protobuf.Timestamp sent_at = 3;
+}
+
+message PingReply {
+  // The id from the request.
+  string id = 1;
+  // Name of the replying service, e.g. "inference-worker".
+  string responder = 2;
+  // Language runtime of the responder, e.g. "python 3.13.9".
+  string runtime = 3;
+  google.protobuf.Timestamp received_at = 4;
+}
