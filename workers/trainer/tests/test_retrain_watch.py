@@ -26,7 +26,7 @@ async def drift(js, model: str, version: int) -> None:
     await js.publish(
         f"monitor.drift.detected.{model}",
         ev.SerializeToString(),
-        headers={"Nats-Msg-Id": uuid.uuid4().hex},
+        headers={"Nats-Msg-Id": uuid.uuid4().hex, "Spotter-Event-Type": "spotter.v1.DriftDetected"},
     )
 
 
