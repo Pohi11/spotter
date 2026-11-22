@@ -99,6 +99,30 @@ First end-to-end run: version 1 promoted to production through the REST API, the
 
 Specs: [event-streams](openspec/specs/event-streams/spec.md), [inference-api](openspec/specs/inference-api/spec.md), [inference-processing](openspec/specs/inference-processing/spec.md).
 
+## Observability
+
+One trace follows a request across every process and the message bus ([0010](docs/decisions/0010-opentelemetry-traces-prometheus-metrics.md)). From Jaeger, for one image:
+
+```
++  0.0 ms   53.7 ms  gateway           spotter.v1.InferenceService/SubmitInference
++  0.0 ms    1.3 ms  gateway           spotter.v1.RegistryService/GetModel  (client)
++  0.0 ms    1.3 ms  registry          spotter.v1.RegistryService/GetModel  (server)
++ 53.1 ms    0.5 ms  gateway           publish inference.requested.eurosat-classifier
++ 54.5 ms   15.2 ms  inference-worker  process inference.requested
++ 55.3 ms    5.4 ms  inference-worker    download image
++ 60.8 ms    4.9 ms  inference-worker    classify
++ 65.9 ms    1.6 ms  inference-worker    record result
++ 67.6 ms    1.2 ms  inference-worker    publish inference.completed.eurosat-classifier
+```
+
+- **W3C trace context** travels over gRPC and HTTP (standard instrumentation) and over NATS in message headers (`internal/natstrace`).
+- **The trace survives the outbox:** a registry change stores the active `traceparent` with its outbox record, and the relay attaches it when it publishes, so "operator promoted version 2" and "worker reloaded" land in one trace.
+- **Spans hold ids, versions, outcomes, and sizes, never image bytes or credentials**; a test records every span of a submission and checks.
+- **Prometheus metrics** at `/metrics` on every service: gRPC and HTTP request rate and duration, the worker's jobs by outcome, model time, and its consumer's pending messages.
+- Export is on when `OTEL_EXPORTER_OTLP_ENDPOINT` is set; otherwise tracing is a no-op that still propagates context. Locally, Jaeger is at http://localhost:16686 and Prometheus at http://localhost:9090.
+
+Spec: [observability](openspec/specs/observability/spec.md).
+
 ## Architecture
 
 - **Go services:** registry (model versions and their lifecycle), gateway (REST and gRPC front door), monitor (drift detection). Each is hexagonal: domain and use-case code depend only on ports, and Postgres, NATS, and S3 sit behind adapters.

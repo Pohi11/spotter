@@ -2,7 +2,7 @@
 
 ## Context
 
-Requests cross the gateway, JetStream, and the worker (change `phase-04-event-driven-inference`); registry events cross the outbox and the relay. Tracing choices are recorded in decision record [0010](../../../docs/decisions/0010-opentelemetry-traces-prometheus-metrics.md).
+Requests cross the gateway, JetStream, and the worker (change `phase-04-event-driven-inference`); registry events cross the outbox and the relay. Tracing choices are recorded in decision record [0010](../../../../docs/decisions/0010-opentelemetry-traces-prometheus-metrics.md).
 
 ## Decisions
 
