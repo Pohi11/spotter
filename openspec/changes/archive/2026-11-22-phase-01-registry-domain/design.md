@@ -2,7 +2,7 @@
 
 ## Context
 
-The registry is the first Go service. It sets the layout every later service follows (decision record [0002](../../../docs/decisions/0002-monorepo-layout-one-go-module.md)) and the testing conventions for Go code ([0001](../../../docs/decisions/0001-adopt-openspec-with-cross-language-traceability.md)). No API is exposed yet; the next change adds gRPC and REST on top of the use cases defined here.
+The registry is the first Go service. It sets the layout every later service follows (decision record [0002](../../../../docs/decisions/0002-monorepo-layout-one-go-module.md)) and the testing conventions for Go code ([0001](../../../../docs/decisions/0001-adopt-openspec-with-cross-language-traceability.md)). No API is exposed yet; the next change adds gRPC and REST on top of the use cases defined here.
 
 ## Layout
 
@@ -45,16 +45,16 @@ The use case turns domain events into `ports.OutboxRecord` values (id, type, agg
 `registrytest.Run(t, newRepository)` exercises the spec scenarios through `app.Service` with a given repository. The memory adapter's test and the Postgres adapter's test both call it. Scenarios that only make sense for the database (a direct SQL insert bypassing the application) live in the Postgres adapter's own tests.
 
 ### D7. Postgres access and migrations
-pgx v5 with hand-written SQL; goose migrations embedded in the binary and applied at startup. Tests run against a real Postgres started by testcontainers, with a fresh schema per test. See decision record [0005](../../../docs/decisions/0005-postgres-access-pgx-goose-testcontainers.md).
+pgx v5 with hand-written SQL; goose migrations embedded in the binary and applied at startup. Tests run against a real Postgres started by testcontainers, with a fresh schema per test. See decision record [0005](../../../../docs/decisions/0005-postgres-access-pgx-goose-testcontainers.md).
 
 ### D8. Spec traceability for Go
-Each test calls `spectest.Verifies(t, capability, requirement)`; `tools/speccheck` joins the `go test -json` report with the specs. See decision record [0006](../../../docs/decisions/0006-go-spec-test-traceability.md).
+Each test calls `spectest.Verifies(t, capability, requirement)`; `tools/speccheck` joins the `go test -json` report with the specs. See decision record [0006](../../../../docs/decisions/0006-go-spec-test-traceability.md).
 
 ### D9. The dependency rule is a test
 `archtest` runs `go list -deps -json` on `domain`, `ports`, and `app`, and fails on forbidden standard-library imports (`net/...`, `database/...`, `os/exec`), on any module package outside the allowed set, and on any third-party module other than `github.com/google/uuid`. A test needs no extra tool in CI.
 
 ### D10. Kubernetes-ready process from the start
-Configuration comes only from environment variables (decision record [0004](../../../docs/decisions/0004-local-dev-topology.md)). `/livez` answers without touching dependencies, so a slow database doesn't get the pod restarted; `/readyz` pings the database, so traffic is withheld until it answers. `main` turns SIGINT/SIGTERM into context cancellation; `run` shuts the HTTP server down with `SHUTDOWN_TIMEOUT` and closes the pool.
+Configuration comes only from environment variables (decision record [0004](../../../../docs/decisions/0004-local-dev-topology.md)). `/livez` answers without touching dependencies, so a slow database doesn't get the pod restarted; `/readyz` pings the database, so traffic is withheld until it answers. `main` turns SIGINT/SIGTERM into context cancellation; `run` shuts the HTTP server down with `SHUTDOWN_TIMEOUT` and closes the pool.
 
 ## Risks and trade-offs
 
