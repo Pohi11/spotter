@@ -41,6 +41,23 @@ def split_s3_uri(uri: str) -> tuple[str, str]:
     return bucket, key
 
 
+# Threads per model for intra-op parallelism. Both runtimes default to one thread per core,
+# and ONNX Runtime's threads busy-wait between runs: with a production and a shadow session
+# on a 22-thread laptop the worker used 16 cores to serve 10.8 jobs/s and starved the
+# gateway, NATS, and the object store beside it. Batch-1 inference on this small network
+# gains little from more threads; the worker scales by replicas instead.
+_threads = 1
+
+
+def configure_threads(n: int) -> None:
+    """Set the intra-op threads for models loaded from now on (and for PyTorch globally)."""
+    global _threads
+    if n < 1:
+        raise ValueError(f"MODEL_THREADS must be at least 1, got {n}")
+    _threads = n
+    torch.set_num_threads(n)
+
+
 def _pytorch(data: bytes) -> Predict:
     net = EuroSATNet()
     net.load_state_dict(torch.load(io.BytesIO(data), weights_only=True))
@@ -56,7 +73,11 @@ def _pytorch(data: bytes) -> Predict:
 def _onnx(data: bytes) -> Predict:
     import onnxruntime as ort
 
-    session = ort.InferenceSession(data, providers=["CPUExecutionProvider"])
+    opts = ort.SessionOptions()
+    opts.intra_op_num_threads = _threads
+    opts.inter_op_num_threads = 1
+    opts.add_session_config_entry("session.intra_op.allow_spinning", "0")
+    session = ort.InferenceSession(data, sess_options=opts, providers=["CPUExecutionProvider"])
     name = session.get_inputs()[0].name
 
     def predict(x: np.ndarray) -> np.ndarray:
