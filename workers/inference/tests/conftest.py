@@ -17,6 +17,10 @@ from google.protobuf.timestamp_pb2 import Timestamp
 from nats.errors import TimeoutError as NatsTimeout
 from nats.js.api import AckPolicy, ConsumerConfig
 from nats.js.errors import NotFoundError
+from opentelemetry import trace
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 from PIL import Image
 from spotter.v1 import inference_pb2 as ipb
 from spotter.v1 import registry_events_pb2 as events
@@ -30,6 +34,14 @@ def artifact_bytes(net) -> bytes:
     buf = io.BytesIO()
     torch.save(net.state_dict(), buf)
     return buf.getvalue()
+
+
+# Every span the worker creates in tests is recorded here (the global provider can be set
+# only once per process).
+SPANS = InMemorySpanExporter()
+_provider = TracerProvider()
+_provider.add_span_processor(SimpleSpanProcessor(SPANS))
+trace.set_tracer_provider(_provider)
 
 
 class FakeRegistry(rpc.RegistryServiceServicer):
@@ -73,7 +85,7 @@ class Infra:
         return ModelHolder(self.registry_stub, self.s3, self.model)
 
     # --- jobs -----------------------------------------------------------------------
-    async def submit(self, image: bytes) -> str:
+    async def submit(self, image: bytes, headers: dict | None = None) -> str:
         """Do what the gateway does: store the image, record PENDING, publish the request."""
         job_id = str(uuid.uuid4())
         key = f"{self.model}/{job_id}"
@@ -94,7 +106,7 @@ class Infra:
         await self.js.publish(
             f"inference.requested.{self.model}",
             req.SerializeToString(),
-            headers={"Nats-Msg-Id": f"requested-{job_id}"},
+            headers={"Nats-Msg-Id": f"requested-{job_id}", **(headers or {})},
         )
         return job_id
 

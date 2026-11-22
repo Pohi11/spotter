@@ -2,7 +2,8 @@
 
 Configuration from environment variables: NATS_URL, REGISTRY_ADDR (localhost:9090),
 MODEL_NAME (eurosat-classifier), S3_ENDPOINT, S3_ACCESS_KEY, S3_SECRET_KEY,
-S3_REGION (us-east-1), BATCH (8), ACK_WAIT (30), MAX_DELIVER (5), RETRY_DELAY (5).
+S3_REGION (us-east-1), BATCH (8), ACK_WAIT (30), MAX_DELIVER (5), RETRY_DELAY (5),
+METRICS_PORT (9464), OTEL_EXPORTER_OTLP_ENDPOINT (unset: no export).
 """
 
 import asyncio
@@ -15,12 +16,14 @@ from dataclasses import dataclass
 import boto3
 import grpc
 import nats
+import prometheus_client
 from nats.aio.msg import Msg
 from nats.errors import TimeoutError as NatsTimeout
 from nats.js.api import AckPolicy, ConsumerConfig, DeliverPolicy
 from spotter.v1 import registry_events_pb2 as events
 from spotter.v1 import registry_pb2_grpc as rpc
 
+from spotter_inference import metrics, telemetry
 from spotter_inference.models import ChecksumMismatch, ModelHolder
 from spotter_inference.ping import RESPONDER, SUBJECT, handle_ping
 from spotter_inference.processor import Processor
@@ -44,6 +47,7 @@ class Config:
     ack_wait: float
     max_deliver: int
     retry_delay: float
+    metrics_port: int
 
     @property
     def consumer(self) -> str:
@@ -64,6 +68,7 @@ class Config:
             ack_wait=float(e("ACK_WAIT", "30")),
             max_deliver=int(e("MAX_DELIVER", "5")),
             retry_delay=float(e("RETRY_DELAY", "5")),
+            metrics_port=int(e("METRICS_PORT", "9464")),
         )
 
 
@@ -105,6 +110,7 @@ async def wait_for_jetstream(js, stop: asyncio.Event):
 async def serve(cfg: Config, stop: asyncio.Event) -> None:
     nc = await nats.connect(cfg.nats_url, name=RESPONDER)
     await start_ping_responder(nc)  # first, so the worker answers pings while it waits
+    prometheus_client.start_http_server(cfg.metrics_port)
 
     js = nc.jetstream()
     kv = await wait_for_jetstream(js, stop)
@@ -158,6 +164,8 @@ async def serve(cfg: Config, stop: asyncio.Event) -> None:
         if holder.current is None:
             await reload()  # e.g. the registry was down at startup
         try:
+            with contextlib.suppress(Exception):  # the gauge is best effort
+                metrics.CONSUMER_PENDING.set((await psub.consumer_info()).num_pending)
             msgs = await psub.fetch(cfg.batch, timeout=1)
         except NatsTimeout:
             continue
@@ -183,6 +191,7 @@ async def main() -> None:
 
 def run() -> None:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
+    telemetry.setup()
     with contextlib.suppress(KeyboardInterrupt):
         asyncio.run(main())
 

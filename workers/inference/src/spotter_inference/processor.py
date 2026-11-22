@@ -18,13 +18,17 @@ import numpy as np
 import torch
 from google.protobuf.timestamp_pb2 import Timestamp
 from nats.js.errors import KeyNotFoundError, KeyWrongLastSequenceError
+from opentelemetry import propagate, trace
+from opentelemetry.trace import SpanKind
 from PIL import Image, UnidentifiedImageError
 from spotter.v1 import inference_pb2 as pb
 from spotter_model import CLASSES, preprocess
 
+from spotter_inference import metrics
 from spotter_inference.models import LoadedModel, split_s3_uri
 
 log = logging.getLogger("spotter_inference.processor")
+tracer = trace.get_tracer("spotter_inference.processor")
 
 FINAL = (pb.JOB_STATUS_SUCCEEDED, pb.JOB_STATUS_FAILED)
 
@@ -77,7 +81,29 @@ class Processor:
         self.retry_delay = retry_delay
         self.before_ack = before_ack  # test hook: raise here to simulate a crash before ack
 
-    async def handle(self, msg) -> None:
+    async def handle(self, msg) -> str:
+        """Process one message and return its outcome: succeeded, failed, retried, or duplicate.
+
+        The span continues the trace in the message's headers (decision record 0010); the
+        outcome is a span attribute and a metric label.
+        """
+        parent = propagate.extract(dict(msg.headers or {}))
+        with tracer.start_as_current_span(
+            "process inference.requested",
+            context=parent,
+            kind=SpanKind.CONSUMER,
+            attributes={
+                "messaging.system": "nats",
+                "messaging.destination.name": msg.subject,
+                "messaging.message.delivery_count": msg.metadata.num_delivered,
+            },
+        ) as span:
+            outcome = await self._handle(msg, span)
+            span.set_attribute("spotter.outcome", outcome)
+            metrics.JOBS.labels(outcome=outcome).inc()
+            return outcome
+
+    async def _handle(self, msg, span) -> str:
         deliveries = msg.metadata.num_delivered
         model_name = msg.subject.removeprefix("inference.requested.")
         try:
@@ -87,47 +113,49 @@ class Processor:
         except Exception as e:  # noqa: BLE001 - anything undecodable is poison
             await self._dead_letter("", model_name, f"undecodable request: {e}", deliveries)
             await msg.term()
-            return
+            return "failed"
+        span.set_attributes({"spotter.job_id": req.job_id, "spotter.model": req.model_name})
 
         try:
             entry = await self.kv.get(req.job_id)
         except KeyNotFoundError:
             await self._dead_letter(req.job_id, model_name, "unknown job", deliveries)
             await msg.term()
-            return
+            return "failed"
         except Exception as e:  # noqa: BLE001
-            await self._retry_or_fail(msg, req, None, f"job store unavailable: {e}")
-            return
+            return await self._retry_or_fail(msg, req, None, f"job store unavailable: {e}")
 
         job = pb.InferenceJob.FromString(entry.value)
         if job.status in FINAL:
             # A redelivery of a job that already finished: re-publish, ack, record nothing.
             await self._publish_outcome(job, deliveries)
             await self._ack(msg)
-            return
+            return "duplicate"
 
         loaded = self.model()
         if loaded is None:
-            await self._retry_or_fail(msg, req, entry, "no production model version loaded")
-            return
+            return await self._retry_or_fail(msg, req, entry, "no production model version loaded")
+        span.set_attribute("spotter.model_version", loaded.version)
 
         try:
-            bucket, key = split_s3_uri(req.image_uri)
-            data = await asyncio.to_thread(
-                lambda: self.s3.get_object(Bucket=bucket, Key=key)["Body"].read()
-            )
+            with tracer.start_as_current_span("download image") as s:
+                bucket, key = split_s3_uri(req.image_uri)
+                data = await asyncio.to_thread(
+                    lambda: self.s3.get_object(Bucket=bucket, Key=key)["Body"].read()
+                )
+                s.set_attribute("spotter.image_bytes", len(data))
         except Exception as e:  # noqa: BLE001
-            await self._retry_or_fail(msg, req, entry, f"image unavailable: {e}")
-            return
+            return await self._retry_or_fail(msg, req, entry, f"image unavailable: {e}")
 
         try:
-            with Image.open(io.BytesIO(data)) as img:
+            with tracer.start_as_current_span("classify"), Image.open(io.BytesIO(data)) as img:
                 img.load()
                 prediction, stats, ms = await asyncio.to_thread(classify, loaded, img.copy())
+            metrics.MODEL_SECONDS.observe(ms / 1000)
         except (UnidentifiedImageError, OSError) as e:
             await self._fail(req, entry, f"image could not be decoded: {e}", deliveries)
             await msg.term()
-            return
+            return "failed"
 
         job.status = pb.JOB_STATUS_SUCCEEDED
         job.prediction.CopyFrom(prediction)
@@ -135,30 +163,33 @@ class Processor:
         job.inference_ms = ms
         job.completed_at.CopyFrom(_now())
         try:
-            await self.kv.update(req.job_id, job.SerializeToString(), last=entry.revision)
+            with tracer.start_as_current_span("record result"):
+                await self.kv.update(req.job_id, job.SerializeToString(), last=entry.revision)
         except KeyWrongLastSequenceError:
             # Another delivery finished this job first; keep its result.
             current = pb.InferenceJob.FromString((await self.kv.get(req.job_id)).value)
             await self._publish_outcome(current, deliveries)
             await self._ack(msg)
-            return
+            return "duplicate"
 
         await self._publish_outcome(job, deliveries)
         await self._ack(msg)
+        return "succeeded"
 
     async def _ack(self, msg) -> None:
         if self.before_ack:
             self.before_ack()
         await msg.ack_sync()
 
-    async def _retry_or_fail(self, msg, req, entry, reason: str) -> None:
+    async def _retry_or_fail(self, msg, req, entry, reason: str) -> str:
         deliveries = msg.metadata.num_delivered
         if deliveries >= self.max_deliver:
             await self._fail(req, entry, f"{reason} (after {deliveries} deliveries)", deliveries)
             await msg.term()
-        else:
-            log.warning("job %s: %s; retrying in %.1fs", req.job_id, reason, self.retry_delay)
-            await msg.nak(delay=self.retry_delay)
+            return "failed"
+        log.warning("job %s: %s; retrying in %.1fs", req.job_id, reason, self.retry_delay)
+        await msg.nak(delay=self.retry_delay)
+        return "retried"
 
     async def _fail(self, req, entry, reason: str, deliveries: int) -> None:
         """Record FAILED (if still pending) and publish the dead letter."""
@@ -184,14 +215,14 @@ class Processor:
                 inference_ms=job.inference_ms,
                 completed_at=job.completed_at,
             )
-            await self.js.publish(
-                f"inference.completed.{job.model_name}",
-                event.SerializeToString(),
-                headers={
+            subject = f"inference.completed.{job.model_name}"
+            with tracer.start_as_current_span(f"publish {subject}", kind=SpanKind.PRODUCER):
+                headers = {
                     "Nats-Msg-Id": f"completed-{job.job_id}",
                     "Spotter-Event-Type": "spotter.v1.InferenceCompleted",
-                },
-            )
+                }
+                propagate.inject(headers)  # consumers of completions continue this trace
+                await self.js.publish(subject, event.SerializeToString(), headers=headers)
         elif job.status == pb.JOB_STATUS_FAILED:
             await self._dead_letter(job.job_id, job.model_name, job.error, deliveries)
 
@@ -208,6 +239,7 @@ class Processor:
         headers = {"Spotter-Event-Type": "spotter.v1.InferenceFailed"}
         if job_id:
             headers["Nats-Msg-Id"] = f"failed-{job_id}"
+        propagate.inject(headers)
         log.error("job %s dead-lettered: %s", job_id or "?", reason)
         await self.js.publish(
             f"inference.failed.{model_name or 'unknown'}",
