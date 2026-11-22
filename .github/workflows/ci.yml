@@ -56,9 +56,6 @@ jobs:
       # Postgres tests start their own container with testcontainers (decision record 0005).
       - name: Test (race detector)
         run: go run gotest.tools/gotestsum@v1.13.0 --format testname --jsonfile go-test.json -- -race -count=1 ./...
-      - name: Every requirement has a passing test
-        if: ${{ !cancelled() }}
-        run: go run ./tools/speccheck -openspec openspec -go go-test.json
       - name: Upload test report
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7
@@ -76,12 +73,37 @@ jobs:
         run: uv sync --locked
       - name: Lint
         run: uv run ruff check . && uv run ruff format --check .
-      - name: Start NATS
-        run: docker run -d --name nats -p 4222:4222 "$NATS_IMAGE" --jetstream
+      - name: Start NATS and SeaweedFS
+        run: |
+          cp .env.example .env
+          docker compose up -d --wait nats seaweedfs
       - name: Test
-        env:
-          NATS_URL: nats://localhost:4222
-        run: uv run pytest -q
+        run: |
+          set -a; . ./.env; set +a
+          uv run pytest -q --junitxml=python-test.xml
+      - name: Upload test report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: python-test-report
+          path: python-test.xml
+
+  spec-coverage:
+    name: Every requirement has a passing test
+    needs: [go, python]
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+      - uses: actions/download-artifact@v7
+        with:
+          pattern: "*-test-report"
+          merge-multiple: true
+      - name: Check spec coverage across Go and Python
+        run: go run ./tools/speccheck -openspec openspec -go go-test.json -junit python-test.xml
 
   end-to-end:
     name: Go to Python over NATS

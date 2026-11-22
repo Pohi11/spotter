@@ -58,3 +58,4 @@ skills-lock.json
 
 # Test reports
 go-test.json
+python-test.xml
