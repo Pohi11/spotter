@@ -1,0 +1,57 @@
+# Secrets — .env is never committed; .env.example is
+.env
+.env.*
+!.env.example
+*.kubeconfig
+kubeconfig*
+*.tfstate
+*.tfstate.*
+.terraform/
+*.tfvars
+!example.tfvars
+
+# Go
+/bin/
+*.test
+*.out
+coverage.*
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Models, datasets, and generated artifacts (stored in the object store, not git)
+data/
+*.pt
+*.pth
+*.onnx
+mlruns/
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+
+# Test reports
+**/test-results/
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Private working notes — stay local, never published
+CLAUDE.md
+PLAN.md
+docs/private/
+
+# Local AI tooling config
+.claude/
+.mcp.json
+skills-lock.json

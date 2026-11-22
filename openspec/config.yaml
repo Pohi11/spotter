@@ -1,0 +1,30 @@
+schema: spec-driven
+
+context: |
+  Artifacts are public. Write in neutral voice: describe what and why, never who
+  decided, proposed, or wrote anything (no "I", "we", "Claude", or "the AI" as actors).
+  Spotter is a cloud-neutral platform for deploying and monitoring computer-vision models:
+  Go control-plane services (registry, gateway, monitor), Python/PyTorch workers, NATS JetStream,
+  PostgreSQL, an S3-compatible object store (SeaweedFS), Kubernetes via Helm.
+  Services are hexagonal: domain/ and app/ never import adapters.
+  Delivery over NATS is at least once: every consumer is idempotent, every publisher sets a message id,
+  and state change plus event publish go through a transactional outbox.
+  Promotion gates, lifecycle transitions, rollback, and drift thresholds are plain code, never model output.
+  Message and API shapes live in proto/ and are referenced, not repeated, in specs.
+  All data is public (EuroSAT) or synthetic.
+
+rules:
+  specs:
+    - Every requirement has at least one WHEN/THEN scenario that can become an automated test
+    - Scenarios name observable effects (e.g. "exactly one result is recorded"), not intentions
+  design:
+    - Link to docs/decisions/NNNN-*.md for cross-change decisions instead of repeating them
+  tasks:
+    - Each task leaves the system runnable and names the test that proves it
+
+operations:
+  apply:
+    guidance:
+      - Run tests and lint after each task; commit only when both pass
+      - One Conventional Commit per completed task (type(scope) summary, imperative, max 72 chars)
+      - Go tests run with -race
