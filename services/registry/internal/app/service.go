@@ -74,6 +74,9 @@ func (s *Service) RegisterVersion(ctx context.Context, in RegisterVersionInput) 
 // the caller last read; if the version has changed since, the call fails with
 // domain.ErrConflict and changes nothing.
 func (s *Service) TransitionVersion(ctx context.Context, versionID uuid.UUID, to domain.Stage, reason string, expectedRevision int64) (domain.ModelVersion, error) {
+	if to == domain.StageProduction {
+		return domain.ModelVersion{}, domain.ErrPromotionRequired // decision record 0013
+	}
 	v, err := s.repo.Version(ctx, versionID)
 	if err != nil {
 		return domain.ModelVersion{}, fmt.Errorf("transition version %s: %w", versionID, err)

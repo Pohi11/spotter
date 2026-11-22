@@ -104,6 +104,21 @@ message InferenceCompleted {
   google.protobuf.Timestamp completed_at = 6;
 }
 
+// Published by a worker on inference.shadow.<model_name>, message id shadow-<job_id>, when a
+// job was also classified by the shadow version. Only production's result is returned.
+message ShadowCompared {
+  string job_id = 1;
+  string model_name = 2;
+  string production_version_id = 3;
+  string shadow_version_id = 4;
+  string production_label = 5;
+  string shadow_label = 6;
+  bool agree = 7;
+  float production_ms = 8;
+  float shadow_ms = 9;
+  google.protobuf.Timestamp compared_at = 10;
+}
+
 // Published by a worker on inference.failed.<model_name> when a job is dead-lettered.
 message InferenceFailed {
   // Empty if the request could not be decoded.

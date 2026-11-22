@@ -123,6 +123,59 @@ func (s *Server) GetVersionHistory(ctx context.Context, req *spotterv1.GetVersio
 	return &spotterv1.GetVersionHistoryResponse{Changes: out}, nil
 }
 
+func (s *Server) ApproveVersion(ctx context.Context, req *spotterv1.ApproveVersionRequest) (*spotterv1.ApproveVersionResponse, error) {
+	id, err := parseID("version_id", req.GetVersionId())
+	if err != nil {
+		return nil, s.toStatus(err)
+	}
+	a, err := s.svc.ApproveVersion(ctx, id, req.GetApprover(), req.GetReason())
+	if err != nil {
+		return nil, s.toStatus(err)
+	}
+	return &spotterv1.ApproveVersionResponse{VersionId: a.VersionID.String(), Approver: a.Approver, ApprovedAt: timestamppb.New(a.At)}, nil
+}
+
+func (s *Server) GetPromotionGates(ctx context.Context, req *spotterv1.GetPromotionGatesRequest) (*spotterv1.GetPromotionGatesResponse, error) {
+	id, err := parseID("version_id", req.GetVersionId())
+	if err != nil {
+		return nil, s.toStatus(err)
+	}
+	gates, err := s.svc.PromotionGates(ctx, id)
+	if err != nil {
+		return nil, s.toStatus(err)
+	}
+	out := make([]*spotterv1.Gate, len(gates))
+	for i, g := range gates {
+		out[i] = &spotterv1.Gate{Name: g.Name, Passed: g.Passed, Detail: g.Detail}
+	}
+	ok, _ := domain.AllPassed(gates)
+	return &spotterv1.GetPromotionGatesResponse{Gates: out, AllPassed: ok}, nil
+}
+
+func (s *Server) PromoteVersion(ctx context.Context, req *spotterv1.PromoteVersionRequest) (*spotterv1.PromoteVersionResponse, error) {
+	id, err := parseID("version_id", req.GetVersionId())
+	if err != nil {
+		return nil, s.toStatus(err)
+	}
+	promoted, retired, err := s.svc.PromoteVersion(ctx, id, req.GetReason())
+	if err != nil {
+		return nil, s.toStatus(err)
+	}
+	resp := &spotterv1.PromoteVersionResponse{Promoted: version(promoted)}
+	if retired != nil {
+		resp.Retired = version(*retired)
+	}
+	return resp, nil
+}
+
+func (s *Server) RollbackModel(ctx context.Context, req *spotterv1.RollbackModelRequest) (*spotterv1.RollbackModelResponse, error) {
+	restored, rolledBack, err := s.svc.RollbackModel(ctx, req.GetModelName(), req.GetReason())
+	if err != nil {
+		return nil, s.toStatus(err)
+	}
+	return &spotterv1.RollbackModelResponse{Restored: version(restored), RolledBack: version(rolledBack)}, nil
+}
+
 // toStatus is the single place registry errors become gRPC statuses (design D2).
 func (s *Server) toStatus(err error) error {
 	var ve *domain.ValidationError
@@ -139,7 +192,9 @@ func (s *Server) toStatus(err error) error {
 		return status.Error(codes.NotFound, err.Error())
 	case errors.Is(err, domain.ErrAlreadyExists):
 		return status.Error(codes.AlreadyExists, err.Error())
-	case errors.Is(err, domain.ErrIllegalTransition), errors.Is(err, domain.ErrProductionOccupied):
+	case errors.Is(err, domain.ErrIllegalTransition), errors.Is(err, domain.ErrProductionOccupied),
+		errors.Is(err, domain.ErrPromotionRequired), errors.Is(err, domain.ErrGatesFailed),
+		errors.Is(err, domain.ErrNothingToRollBack):
 		return status.Error(codes.FailedPrecondition, err.Error())
 	case errors.Is(err, domain.ErrConflict):
 		return status.Error(codes.Aborted, err.Error())

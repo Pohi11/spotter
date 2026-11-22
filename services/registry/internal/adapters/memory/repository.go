@@ -25,6 +25,8 @@ type Repository struct {
 	history   map[uuid.UUID][]domain.StageChange
 	outbox    []ports.OutboxRecord
 	published map[uuid.UUID]bool
+	approvals map[uuid.UUID]int
+	shadow    map[string]shadowRow
 }
 
 // New returns an empty repository.
@@ -34,6 +36,8 @@ func New() *Repository {
 		versions:  map[uuid.UUID]domain.ModelVersion{},
 		history:   map[uuid.UUID][]domain.StageChange{},
 		published: map[uuid.UUID]bool{},
+		approvals: map[uuid.UUID]int{},
+		shadow:    map[string]shadowRow{},
 	}
 }
 
@@ -189,4 +193,125 @@ func withTrace(ctx context.Context, records []ports.OutboxRecord) []ports.Outbox
 		out[i].TraceParent = tp
 	}
 	return out
+}
+
+func (r *Repository) ProductionVersion(_ context.Context, modelID uuid.UUID) (domain.ModelVersion, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	for _, v := range r.versions {
+		if v.ModelID == modelID && v.Stage == domain.StageProduction {
+			return clone(v), nil
+		}
+	}
+	return domain.ModelVersion{}, domain.ErrNotFound
+}
+
+func (r *Repository) LastRetiredFromProduction(_ context.Context, modelID uuid.UUID) (domain.ModelVersion, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	var best domain.ModelVersion
+	var bestAt time.Time
+	found := false
+	for id, v := range r.versions {
+		if v.ModelID != modelID || v.Stage != domain.StageRetired {
+			continue
+		}
+		for _, c := range r.history[id] {
+			if c.From == domain.StageProduction && c.To == domain.StageRetired && (!found || c.At.After(bestAt)) {
+				best, bestAt, found = v, c.At, true
+			}
+		}
+	}
+	if !found {
+		return domain.ModelVersion{}, domain.ErrNotFound
+	}
+	return clone(best), nil
+}
+
+func (r *Repository) SwapProduction(ctx context.Context, out *domain.ModelVersion, outExpected int64, in domain.ModelVersion, inExpected int64, changes []domain.StageChange, records []ports.OutboxRecord) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	check := func(v domain.ModelVersion, expected int64) error {
+		stored, ok := r.versions[v.ID]
+		if !ok {
+			return domain.ErrNotFound
+		}
+		if stored.Revision != expected {
+			return domain.ErrConflict
+		}
+		return nil
+	}
+	if out != nil {
+		if err := check(*out, outExpected); err != nil {
+			return err
+		}
+	}
+	if err := check(in, inExpected); err != nil {
+		return err
+	}
+	for id, other := range r.versions {
+		if other.ModelID == in.ModelID && other.Stage == domain.StageProduction && id != in.ID && (out == nil || id != out.ID) {
+			return domain.ErrProductionOccupied
+		}
+	}
+	if out != nil {
+		r.versions[out.ID] = clone(*out)
+	}
+	r.versions[in.ID] = clone(in)
+	for _, c := range changes {
+		r.history[c.VersionID] = append(r.history[c.VersionID], c)
+	}
+	r.outbox = append(r.outbox, withTrace(ctx, records)...)
+	return nil
+}
+
+func (r *Repository) AddApproval(_ context.Context, a domain.Approval) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.approvals[a.VersionID]++
+	return nil
+}
+
+func (r *Repository) Approvals(_ context.Context, versionID uuid.UUID) (int, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return r.approvals[versionID], nil
+}
+
+func (r *Repository) RecordShadowComparison(_ context.Context, versionID uuid.UUID, jobID string, agree bool, shadowMS float64) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	key := versionID.String() + "/" + jobID
+	if _, dup := r.shadow[key]; dup {
+		return nil
+	}
+	r.shadow[key] = shadowRow{version: versionID, agree: agree, ms: shadowMS}
+	return nil
+}
+
+func (r *Repository) ShadowStats(_ context.Context, versionID uuid.UUID) (domain.ShadowStats, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	var s domain.ShadowStats
+	total := 0.0
+	for _, row := range r.shadow {
+		if row.version != versionID {
+			continue
+		}
+		s.Compared++
+		if row.agree {
+			s.Agreed++
+		}
+		total += row.ms
+	}
+	if s.Compared > 0 {
+		s.MeanShadowMS = total / float64(s.Compared)
+	}
+	return s, nil
+}
+
+type shadowRow struct {
+	version uuid.UUID
+	agree   bool
+	ms      float64
 }

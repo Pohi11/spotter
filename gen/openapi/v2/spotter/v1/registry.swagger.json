@@ -118,6 +118,45 @@
         ]
       }
     },
+    "/v1/models/{modelName}:rollback": {
+      "post": {
+        "summary": "Marks the production version rolled back and restores the previous one atomically.",
+        "operationId": "RegistryService_RollbackModel",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1RollbackModelResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "modelName",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/RegistryServiceRollbackModelBody"
+            }
+          }
+        ],
+        "tags": [
+          "RegistryService"
+        ]
+      }
+    },
     "/v1/models/{name}": {
       "get": {
         "summary": "Returns a model by name.",
@@ -180,6 +219,37 @@
         ]
       }
     },
+    "/v1/versions/{versionId}/gates": {
+      "get": {
+        "summary": "Evaluates the promotion gates for a shadow version without changing anything.",
+        "operationId": "RegistryService_GetPromotionGates",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetPromotionGatesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "versionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "RegistryService"
+        ]
+      }
+    },
     "/v1/versions/{versionId}/history": {
       "get": {
         "summary": "Lists a version's stage changes, oldest first.",
@@ -204,6 +274,84 @@
             "in": "path",
             "required": true,
             "type": "string"
+          }
+        ],
+        "tags": [
+          "RegistryService"
+        ]
+      }
+    },
+    "/v1/versions/{versionId}:approve": {
+      "post": {
+        "summary": "Records a person's approval of a shadow version.",
+        "operationId": "RegistryService_ApproveVersion",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ApproveVersionResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "versionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/RegistryServiceApproveVersionBody"
+            }
+          }
+        ],
+        "tags": [
+          "RegistryService"
+        ]
+      }
+    },
+    "/v1/versions/{versionId}:promote": {
+      "post": {
+        "summary": "Promotes a shadow version whose gates all pass, retiring the current production\nversion in the same transaction.",
+        "operationId": "RegistryService_PromoteVersion",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1PromoteVersionResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "versionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/RegistryServicePromoteVersionBody"
+            }
           }
         ],
         "tags": [
@@ -252,6 +400,25 @@
     }
   },
   "definitions": {
+    "RegistryServiceApproveVersionBody": {
+      "type": "object",
+      "properties": {
+        "approver": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    },
+    "RegistryServicePromoteVersionBody": {
+      "type": "object",
+      "properties": {
+        "reason": {
+          "type": "string"
+        }
+      }
+    },
     "RegistryServiceRegisterVersionBody": {
       "type": "object",
       "properties": {
@@ -270,6 +437,14 @@
             "type": "number",
             "format": "double"
           }
+        }
+      }
+    },
+    "RegistryServiceRollbackModelBody": {
+      "type": "object",
+      "properties": {
+        "reason": {
+          "type": "string"
         }
       }
     },
@@ -316,11 +491,56 @@
         }
       }
     },
+    "v1ApproveVersionResponse": {
+      "type": "object",
+      "properties": {
+        "versionId": {
+          "type": "string"
+        },
+        "approver": {
+          "type": "string"
+        },
+        "approvedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "v1Gate": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "accuracy, shadow_agreement, shadow_latency, or approval."
+        },
+        "passed": {
+          "type": "boolean"
+        },
+        "detail": {
+          "type": "string"
+        }
+      }
+    },
     "v1GetModelResponse": {
       "type": "object",
       "properties": {
         "model": {
           "$ref": "#/definitions/v1Model"
+        }
+      }
+    },
+    "v1GetPromotionGatesResponse": {
+      "type": "object",
+      "properties": {
+        "gates": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Gate"
+          }
+        },
+        "allPassed": {
+          "type": "boolean"
         }
       }
     },
@@ -439,6 +659,18 @@
       "default": "MODEL_VERSION_STAGE_UNSPECIFIED",
       "description": "Lifecycle stage of a model version. Mirrors the registry's transition table."
     },
+    "v1PromoteVersionResponse": {
+      "type": "object",
+      "properties": {
+        "promoted": {
+          "$ref": "#/definitions/v1ModelVersion"
+        },
+        "retired": {
+          "$ref": "#/definitions/v1ModelVersion",
+          "description": "The previous production version, now retired; unset if there was none."
+        }
+      }
+    },
     "v1RegisterModelRequest": {
       "type": "object",
       "properties": {
@@ -462,6 +694,17 @@
       "type": "object",
       "properties": {
         "version": {
+          "$ref": "#/definitions/v1ModelVersion"
+        }
+      }
+    },
+    "v1RollbackModelResponse": {
+      "type": "object",
+      "properties": {
+        "restored": {
+          "$ref": "#/definitions/v1ModelVersion"
+        },
+        "rolledBack": {
           "$ref": "#/definitions/v1ModelVersion"
         }
       }

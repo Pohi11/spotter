@@ -6,6 +6,7 @@ package registrytest
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"sync"
 	"testing"
@@ -88,6 +89,13 @@ func Run(t *testing.T, newRepo func(t *testing.T) ports.Repository) {
 		{"FailedTransitionsStoreNoEvent", failedTransitionsStoreNoEvent},
 		{"MarkPublished", markPublished},
 		{"TraceContextStoredWithOutbox", traceContextStoredWithOutbox},
+		{"GenericTransitionToProductionRefused", genericTransitionToProductionRefused},
+		{"ShadowComparisonsCountedOnce", shadowComparisonsCountedOnce},
+		{"Approvals", approvals},
+		{"PromotionRefusedWithoutApproval", promotionRefusedWithoutApproval},
+		{"SuccessfulPromotion", successfulPromotion},
+		{"RollbackAfterPromotion", rollbackAfterPromotion},
+		{"NothingToRollBack", nothingToRollBack},
 	}
 	for _, sc := range scenarios {
 		t.Run(sc.name, func(t *testing.T) {
@@ -130,13 +138,39 @@ func (h *harness) version(modelName string) domain.ModelVersion {
 func (h *harness) move(v domain.ModelVersion, stages ...domain.Stage) domain.ModelVersion {
 	h.t.Helper()
 	for _, s := range stages {
-		next, err := h.svc.TransitionVersion(ctx, v.ID, s, "test move to "+string(s), v.Revision)
+		var next domain.ModelVersion
+		var err error
+		if s == domain.StageProduction {
+			// The generic use case refuses production (decision record 0013); these scenarios
+			// test the repository's rules, so they write the transition directly.
+			next, err = h.direct(v, s)
+		} else {
+			next, err = h.svc.TransitionVersion(ctx, v.ID, s, "test move to "+string(s), v.Revision)
+		}
 		if err != nil {
 			h.t.Fatalf("move %s → %s: %v", v.Stage, s, err)
 		}
 		v = next
 	}
 	return v
+}
+
+// direct applies a domain transition and saves it through the repository, bypassing the
+// use case, with its outbox event.
+func (h *harness) direct(v domain.ModelVersion, to domain.Stage) (domain.ModelVersion, error) {
+	next, change, err := v.Transition(to, "test move to "+string(to), time.Now().UTC().Truncate(time.Microsecond))
+	if err != nil {
+		return v, err
+	}
+	m, err := h.repo.ModelByID(ctx, v.ModelID)
+	if err != nil {
+		return v, err
+	}
+	rec, err := protoevents.Encoder{}.Encode(domain.StageChanged{ID: IDs{}.NewID(), ModelID: m.ID, ModelName: m.Name, Number: v.Number, Change: change})
+	if err != nil {
+		return v, err
+	}
+	return next, h.repo.SaveTransition(ctx, next, v.Revision, change, []ports.OutboxRecord{rec})
 }
 
 func (h *harness) stored(id uuid.UUID) domain.ModelVersion {
@@ -351,10 +385,13 @@ func illegalTransitionChangesNothing(t *testing.T, h *harness) {
 	spectest.Verifies(t, lifecycle, "Every transition is recorded in the version's history")
 	h.model("eurosat-classifier")
 	v := h.version("eurosat-classifier")
-	for _, to := range []domain.Stage{domain.StageProduction, domain.StageRetired, domain.StageRegistered} {
+	for _, to := range []domain.Stage{domain.StageRetired, domain.StageRegistered} {
 		if _, err := h.svc.TransitionVersion(ctx, v.ID, to, "skip ahead", v.Revision); !errors.Is(err, domain.ErrIllegalTransition) {
 			t.Fatalf("registered → %s: err = %v, want illegal transition", to, err)
 		}
+	}
+	if _, err := h.direct(v, domain.StageProduction); !errors.Is(err, domain.ErrIllegalTransition) {
+		t.Fatalf("registered → production: err = %v, want illegal transition", err)
 	}
 	if got := h.stored(v.ID); got.Stage != domain.StageRegistered || got.Revision != 1 {
 		t.Fatalf("version changed: %+v", got)
@@ -371,7 +408,13 @@ func terminalStages(t *testing.T, h *harness) {
 	rolledBack := h.move(h.version("eurosat-classifier"), domain.StageValidated, domain.StageShadow, domain.StageProduction, domain.StageRolledBack)
 	for _, v := range []domain.ModelVersion{rejected, rolledBack} {
 		for _, to := range domain.Stages() {
-			if _, err := h.svc.TransitionVersion(ctx, v.ID, to, "revive", v.Revision); !errors.Is(err, domain.ErrIllegalTransition) {
+			var err error
+			if to == domain.StageProduction {
+				_, err = h.direct(v, to) // the generic use case refuses production before the table
+			} else {
+				_, err = h.svc.TransitionVersion(ctx, v.ID, to, "revive", v.Revision)
+			}
+			if !errors.Is(err, domain.ErrIllegalTransition) {
 				t.Fatalf("%s → %s: err = %v, want illegal transition", v.Stage, to, err)
 			}
 		}
@@ -409,7 +452,7 @@ func oneProductionPerModel(t *testing.T, h *harness) {
 	h.move(h.version("eurosat-classifier"), domain.StageValidated, domain.StageShadow, domain.StageProduction)
 	v2 := h.move(h.version("eurosat-classifier"), domain.StageValidated, domain.StageShadow)
 
-	_, err := h.svc.TransitionVersion(ctx, v2.ID, domain.StageProduction, "promote", v2.Revision)
+	_, err := h.direct(v2, domain.StageProduction)
 	if !errors.Is(err, domain.ErrProductionOccupied) {
 		t.Fatalf("err = %v, want ErrProductionOccupied", err)
 	}
@@ -603,5 +646,151 @@ func failedTransitionsStoreNoEvent(t *testing.T, h *harness) {
 	}
 	if after := len(h.outbox()); after != before {
 		t.Fatalf("outbox grew from %d to %d after failed transitions", before, after)
+	}
+}
+
+// ---- model-promotion ----
+
+const promotionCap = "model-promotion"
+
+// shadowCandidate returns a shadow version with n comparisons, `agreed` of them agreeing,
+// each taking ms milliseconds.
+func (h *harness) shadowCandidate(model string, n, agreed int, ms float64) domain.ModelVersion {
+	h.t.Helper()
+	v := h.move(h.version(model), domain.StageValidated, domain.StageShadow)
+	for i := range n {
+		if err := h.repo.RecordShadowComparison(ctx, v.ID, fmt.Sprintf("job-%d", i), i < agreed, ms); err != nil {
+			h.t.Fatal(err)
+		}
+	}
+	return v
+}
+
+func genericTransitionToProductionRefused(t *testing.T, h *harness) {
+	spectest.Verifies(t, lifecycle, "Production is entered only through promotion or rollback")
+	h.model("eurosat-classifier")
+	v := h.move(h.version("eurosat-classifier"), domain.StageValidated, domain.StageShadow)
+	_, err := h.svc.TransitionVersion(ctx, v.ID, domain.StageProduction, "shortcut", v.Revision)
+	if !errors.Is(err, domain.ErrPromotionRequired) || !strings.Contains(err.Error(), "PromoteVersion") {
+		t.Fatalf("err = %v, want ErrPromotionRequired naming PromoteVersion", err)
+	}
+	if got := h.stored(v.ID); got.Stage != domain.StageShadow {
+		t.Fatalf("version moved to %s", got.Stage)
+	}
+}
+
+func shadowComparisonsCountedOnce(t *testing.T, h *harness) {
+	spectest.Verifies(t, promotionCap, "Shadow comparisons are counted once per job")
+	h.model("eurosat-classifier")
+	v := h.move(h.version("eurosat-classifier"), domain.StageValidated, domain.StageShadow)
+	for _, c := range []struct {
+		job   string
+		agree bool
+		ms    float64
+	}{{"a", true, 2}, {"b", false, 4}, {"c", true, 6}, {"a", true, 2}} { // "a" redelivered
+		if err := h.svc.RecordShadowComparison(ctx, app.ShadowComparison{ShadowVersionID: v.ID, JobID: c.job, Agree: c.agree, ShadowMS: c.ms}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	s, err := h.repo.ShadowStats(ctx, v.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if s.Compared != 3 || s.Agreed != 2 || s.MeanShadowMS != 4 {
+		t.Fatalf("stats = %+v, want 3 compared, 2 agreed, mean 4 ms", s)
+	}
+}
+
+func approvals(t *testing.T, h *harness) {
+	spectest.Verifies(t, promotionCap, "Approvals are recorded")
+	h.model("eurosat-classifier")
+	v := h.move(h.version("eurosat-classifier"), domain.StageValidated, domain.StageShadow)
+	if _, err := h.svc.ApproveVersion(ctx, v.ID, "ana", "agreement 99.4% over 500 jobs"); err != nil {
+		t.Fatal(err)
+	}
+	if n, _ := h.repo.Approvals(ctx, v.ID); n != 1 {
+		t.Fatalf("approvals = %d, want 1", n)
+	}
+	validated := h.move(h.version("eurosat-classifier"), domain.StageValidated)
+	if _, err := h.svc.ApproveVersion(ctx, validated.ID, "ana", "too early"); !errors.Is(err, domain.ErrIllegalTransition) {
+		t.Fatalf("approving a validated version: err = %v", err)
+	}
+}
+
+func promotionRefusedWithoutApproval(t *testing.T, h *harness) {
+	spectest.Verifies(t, promotionCap, "Promotion is atomic and gated")
+	h.model("eurosat-classifier")
+	prod := h.move(h.version("eurosat-classifier"), domain.StageValidated, domain.StageShadow, domain.StageProduction)
+	cand := h.shadowCandidate("eurosat-classifier", 300, 300, 3)
+	_, _, err := h.svc.PromoteVersion(ctx, cand.ID, "")
+	if !errors.Is(err, domain.ErrGatesFailed) || !strings.Contains(err.Error(), "approval") {
+		t.Fatalf("err = %v, want gates failed naming approval", err)
+	}
+	if h.stored(prod.ID).Stage != domain.StageProduction || h.stored(cand.ID).Stage != domain.StageShadow {
+		t.Fatal("a refused promotion changed stages")
+	}
+}
+
+func successfulPromotion(t *testing.T, h *harness) {
+	spectest.Verifies(t, promotionCap, "Promotion is atomic and gated")
+	spectest.Verifies(t, promotionCap, "Promotion gates are evaluated as code")
+	h.model("eurosat-classifier")
+	prod := h.move(h.version("eurosat-classifier"), domain.StageValidated, domain.StageShadow, domain.StageProduction)
+	cand := h.shadowCandidate("eurosat-classifier", 300, 299, 3)
+	if _, err := h.svc.ApproveVersion(ctx, cand.ID, "ana", "agreement 99.7%"); err != nil {
+		t.Fatal(err)
+	}
+	gates, err := h.svc.PromotionGates(ctx, cand.ID)
+	if ok, failed := domain.AllPassed(gates); err != nil || !ok {
+		t.Fatalf("gates failed %v (%v)", failed, err)
+	}
+	before := len(h.outbox())
+	promoted, retired, err := h.svc.PromoteVersion(ctx, cand.ID, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if promoted.Stage != domain.StageProduction || retired == nil || retired.ID != prod.ID {
+		t.Fatalf("promoted %+v retired %+v", promoted, retired)
+	}
+	if h.stored(prod.ID).Stage != domain.StageRetired || h.stored(cand.ID).Stage != domain.StageProduction {
+		t.Fatal("stored stages not swapped")
+	}
+	if after := len(h.outbox()); after != before+2 {
+		t.Fatalf("outbox grew by %d, want 2 (one per version)", after-before)
+	}
+}
+
+func rollbackAfterPromotion(t *testing.T, h *harness) {
+	spectest.Verifies(t, promotionCap, "Rollback restores the previous production version atomically")
+	h.model("eurosat-classifier")
+	v3 := h.move(h.version("eurosat-classifier"), domain.StageValidated, domain.StageShadow, domain.StageProduction)
+	v2 := h.shadowCandidate("eurosat-classifier", 300, 300, 3)
+	if _, err := h.svc.ApproveVersion(ctx, v2.ID, "ana", "ok"); err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := h.svc.PromoteVersion(ctx, v2.ID, ""); err != nil {
+		t.Fatal(err)
+	}
+	restored, rolledBack, err := h.svc.RollbackModel(ctx, "eurosat-classifier", "regression reported")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if restored.ID != v3.ID || rolledBack.ID != v2.ID {
+		t.Fatalf("restored %s, rolled back %s", restored.ID, rolledBack.ID)
+	}
+	if h.stored(v3.ID).Stage != domain.StageProduction || h.stored(v2.ID).Stage != domain.StageRolledBack {
+		t.Fatal("stored stages not swapped back")
+	}
+}
+
+func nothingToRollBack(t *testing.T, h *harness) {
+	spectest.Verifies(t, promotionCap, "Rollback restores the previous production version atomically")
+	h.model("eurosat-classifier")
+	only := h.move(h.version("eurosat-classifier"), domain.StageValidated, domain.StageShadow, domain.StageProduction)
+	if _, _, err := h.svc.RollbackModel(ctx, "eurosat-classifier", "x"); !errors.Is(err, domain.ErrNothingToRollBack) {
+		t.Fatalf("err = %v, want ErrNothingToRollBack", err)
+	}
+	if h.stored(only.ID).Stage != domain.StageProduction {
+		t.Fatal("rollback with nothing to restore changed the production version")
 	}
 }

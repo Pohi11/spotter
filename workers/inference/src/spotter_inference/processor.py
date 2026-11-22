@@ -5,6 +5,10 @@ Decision record 0009 and design D3/D4 of the event-driven inference change:
 - publish the completion with the job id as message id (the stream drops duplicates);
 - ack only after both; nak with a delay on transient failures; term poison messages and
   the last allowed delivery after recording FAILED and publishing InferenceFailed.
+
+When a shadow version is loaded (decision record 0013), the image is classified again with
+it after the job is acknowledged, and a ShadowCompared event is published. Nothing the
+shadow model does can change the job's result.
 """
 
 import asyncio
@@ -70,11 +74,13 @@ class Processor:
         s3,
         model: Callable[[], LoadedModel | None],
         max_deliver: int,
+        shadow: Callable[[], LoadedModel | None] = lambda: None,
         retry_delay: float = 5.0,
         before_ack: Callable[[], None] | None = None,
     ) -> None:
         self.js, self.kv, self.s3 = js, kv, s3
         self.model = model
+        self.shadow = shadow
         self.max_deliver = max_deliver
         self.retry_delay = retry_delay
         self.before_ack = before_ack  # test hook: raise here to simulate a crash before ack
@@ -148,7 +154,8 @@ class Processor:
         try:
             with tracer.start_as_current_span("classify"), Image.open(io.BytesIO(data)) as img:
                 img.load()
-                prediction, stats, ms = await asyncio.to_thread(classify, loaded, img.copy())
+                image = img.copy()
+                prediction, stats, ms = await asyncio.to_thread(classify, loaded, image)
             metrics.MODEL_SECONDS.observe(ms / 1000)
         except (UnidentifiedImageError, OSError) as e:
             await self._fail(req, entry, f"image could not be decoded: {e}", deliveries)
@@ -172,7 +179,48 @@ class Processor:
 
         await self._publish_outcome(job, deliveries)
         await self._ack(msg)
+        await self._compare(job, loaded, image)
         return "succeeded"
+
+    async def _compare(self, job: pb.InferenceJob, production: LoadedModel, image) -> None:
+        """Classify with the shadow version and publish ShadowCompared; never raise.
+
+        Runs only on the delivery that recorded the result, so a job is compared once; the
+        message id `shadow-<job_id>` drops a second publish all the same.
+        """
+        shadow = self.shadow()
+        if shadow is None or shadow.version_id == production.version_id:
+            return
+        try:
+            with tracer.start_as_current_span(
+                "shadow classify", attributes={"spotter.shadow_version": shadow.version}
+            ):
+                prediction, _, ms = await asyncio.to_thread(classify, shadow, image)
+            agree = prediction.label == job.prediction.label
+            event = pb.ShadowCompared(
+                job_id=job.job_id,
+                model_name=job.model_name,
+                production_version_id=production.version_id,
+                shadow_version_id=shadow.version_id,
+                production_label=job.prediction.label,
+                shadow_label=prediction.label,
+                agree=agree,
+                production_ms=job.inference_ms,
+                shadow_ms=ms,
+                compared_at=_now(),
+            )
+            subject = f"inference.shadow.{job.model_name}"
+            with tracer.start_as_current_span(f"publish {subject}", kind=SpanKind.PRODUCER):
+                headers = {
+                    "Nats-Msg-Id": f"shadow-{job.job_id}",
+                    "Spotter-Event-Type": "spotter.v1.ShadowCompared",
+                }
+                propagate.inject(headers)
+                await self.js.publish(subject, event.SerializeToString(), headers=headers)
+            metrics.SHADOW.labels(outcome="agree" if agree else "disagree").inc()
+        except Exception as e:  # noqa: BLE001 - the shadow never affects the job
+            log.warning("job %s: shadow comparison failed: %s", job.job_id, e)
+            metrics.SHADOW.labels(outcome="error").inc()
 
     async def _ack(self, msg) -> None:
         if self.before_ack:

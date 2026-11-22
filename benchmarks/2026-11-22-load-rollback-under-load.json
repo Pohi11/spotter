@@ -1,0 +1,21 @@
+{
+  "closed_loop": true,
+  "concurrency": 4,
+  "date": "2026-11-22T20:53:36Z",
+  "duration_s": 10,
+  "images": 600,
+  "model": "eurosat-classifier",
+  "report": {
+    "submitted": 496,
+    "failed_submissions": 0,
+    "completed": 496,
+    "lost": 0,
+    "seconds": 10.0526732,
+    "completed_per_second": 49.34010985257136,
+    "p50_ms": 80.4297,
+    "p95_ms": 96.7862,
+    "p99_ms": 113.98292500000001,
+    "max_ms": 199.844,
+    "max_outstanding": 4
+  }
+}

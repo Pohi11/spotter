@@ -1,4 +1,8 @@
-"""Loading the production model version: find it, download it, verify it, swap it in."""
+"""Loading model versions: find them, download them, verify them, swap them in.
+
+The worker holds the production version and, when one exists, the newest shadow version
+(decision record 0013). Results come from production only.
+"""
 
 import asyncio
 import hashlib
@@ -37,6 +41,23 @@ def split_s3_uri(uri: str) -> tuple[str, str]:
     return bucket, key
 
 
+# Threads per model for intra-op parallelism. Both runtimes default to one thread per core,
+# and ONNX Runtime's threads busy-wait between runs: with a production and a shadow session
+# on a 22-thread laptop the worker used 16 cores to serve 10.8 jobs/s and starved the
+# gateway, NATS, and the object store beside it. Batch-1 inference on this small network
+# gains little from more threads; the worker scales by replicas instead.
+_threads = 1
+
+
+def configure_threads(n: int) -> None:
+    """Set the intra-op threads for models loaded from now on (and for PyTorch globally)."""
+    global _threads
+    if n < 1:
+        raise ValueError(f"MODEL_THREADS must be at least 1, got {n}")
+    _threads = n
+    torch.set_num_threads(n)
+
+
 def _pytorch(data: bytes) -> Predict:
     net = EuroSATNet()
     net.load_state_dict(torch.load(io.BytesIO(data), weights_only=True))
@@ -52,7 +73,11 @@ def _pytorch(data: bytes) -> Predict:
 def _onnx(data: bytes) -> Predict:
     import onnxruntime as ort
 
-    session = ort.InferenceSession(data, providers=["CPUExecutionProvider"])
+    opts = ort.SessionOptions()
+    opts.intra_op_num_threads = _threads
+    opts.inter_op_num_threads = 1
+    opts.add_session_config_entry("session.intra_op.allow_spinning", "0")
+    session = ort.InferenceSession(data, sess_options=opts, providers=["CPUExecutionProvider"])
     name = session.get_inputs()[0].name
 
     def predict(x: np.ndarray) -> np.ndarray:
@@ -86,7 +111,7 @@ def load_version(s3, version: pb.ModelVersion) -> LoadedModel:
 
 
 class ModelHolder:
-    """Holds the currently loaded production model and reloads it on demand."""
+    """Holds the loaded production and shadow models and reloads them on demand."""
 
     def __init__(self, registry: rpc.RegistryServiceStub, s3, model_name: str) -> None:
         self._registry = registry
@@ -94,34 +119,44 @@ class ModelHolder:
         self._model_name = model_name
         self._lock = asyncio.Lock()
         self.current: LoadedModel | None = None
+        self.shadow: LoadedModel | None = None
 
-    def _production_version(self) -> pb.ModelVersion | None:
+    def _versions(self) -> tuple[pb.ModelVersion | None, pb.ModelVersion | None]:
+        """The production version and the newest shadow version (either may be None)."""
         resp = self._registry.ListVersions(
             pb.ListVersionsRequest(model_name=self._model_name), timeout=10
         )
-        for v in resp.versions:
-            if v.stage == events.MODEL_VERSION_STAGE_PRODUCTION:
-                return v
-        return None
+        prod = shadow = None
+        for v in resp.versions:  # highest version number first
+            if v.stage == events.MODEL_VERSION_STAGE_PRODUCTION and prod is None:
+                prod = v
+            elif v.stage == events.MODEL_VERSION_STAGE_SHADOW and shadow is None:
+                shadow = v
+        return prod, shadow
 
     async def reload(self) -> None:
-        """Load the production version if it changed; unload if there is none."""
+        """Load the production and shadow versions if they changed; unload what is gone.
+
+        A shadow version that fails to load is logged and skipped: it never affects
+        production. A production checksum mismatch unloads production and raises.
+        """
         async with self._lock:
-            version = await asyncio.to_thread(self._production_version)
-            if version is None:
+            prod, shadow = await asyncio.to_thread(self._versions)
+            await self._reload_shadow(shadow)
+            if prod is None:
                 if self.current is not None:
                     log.info("no production version of %s; unloading", self._model_name)
                 self.current = None
                 return
-            if self.current is not None and self.current.version_id == version.id:
+            if self.current is not None and self.current.version_id == prod.id:
                 return
             try:
-                loaded = await asyncio.to_thread(load_version, self._s3, version)
+                loaded = await asyncio.to_thread(load_version, self._s3, prod)
             except ChecksumMismatch:
                 log.error(
                     "refusing to load %s version %d: checksum mismatch",
                     self._model_name,
-                    version.version,
+                    prod.version,
                 )
                 self.current = None
                 raise
@@ -130,7 +165,25 @@ class ModelHolder:
                 "loaded %s version %d (%s)", self._model_name, loaded.version, loaded.version_id
             )
 
+    async def _reload_shadow(self, version: pb.ModelVersion | None) -> None:
+        if version is None:
+            if self.shadow is not None:
+                log.info("no shadow version of %s; unloading shadow", self._model_name)
+            self.shadow = None
+            return
+        if self.shadow is not None and self.shadow.version_id == version.id:
+            return
+        try:
+            self.shadow = await asyncio.to_thread(load_version, self._s3, version)
+        except Exception as e:  # noqa: BLE001 - a bad shadow must not stop production
+            log.error("not shadowing %s version %d: %s", self._model_name, version.version, e)
+            self.shadow = None
+            return
+        log.info("shadowing %s version %d (%s)", self._model_name, version.version, version.id)
+
     def follows(self, event: events.ModelVersionStageChanged) -> bool:
-        """Whether a stage change means the production version may have changed."""
-        prod = events.MODEL_VERSION_STAGE_PRODUCTION
-        return event.model_name == self._model_name and prod in (event.from_stage, event.to_stage)
+        """Whether a stage change may change the production or shadow version."""
+        watched = (events.MODEL_VERSION_STAGE_PRODUCTION, events.MODEL_VERSION_STAGE_SHADOW)
+        return event.model_name == self._model_name and (
+            event.from_stage in watched or event.to_stage in watched
+        )
