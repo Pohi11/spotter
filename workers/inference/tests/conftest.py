@@ -1,9 +1,11 @@
 """Real NATS JetStream and SeaweedFS (from Compose), a fake registry, and a tiny model."""
 
 import asyncio
+import contextlib
 import hashlib
 import io
 import os
+import tempfile
 import uuid
 from concurrent import futures
 from dataclasses import dataclass, field
@@ -34,6 +36,25 @@ def artifact_bytes(net) -> bytes:
     buf = io.BytesIO()
     torch.save(net.state_dict(), buf)
     return buf.getvalue()
+
+
+def onnx_bytes(net) -> bytes:
+    """A self-contained ONNX export with a dynamic batch, as spotter-optimize makes."""
+    with tempfile.TemporaryDirectory() as d, contextlib.redirect_stdout(io.StringIO()):
+        path = os.path.join(d, "model.onnx")
+        torch.onnx.export(
+            net,
+            (torch.zeros(1, 3, 64, 64),),
+            path,
+            input_names=["input"],
+            output_names=["logits"],
+            dynamic_shapes={"x": {0: torch.export.Dim("batch")}},
+            dynamo=True,
+            external_data=False,
+            verbose=False,
+        )
+        with open(path, "rb") as f:
+            return f.read()
 
 
 # Every span the worker creates in tests is recorded here (the global provider can be set
@@ -67,9 +88,13 @@ class Infra:
     consumers: list[str] = field(default_factory=list)
 
     # --- model versions -------------------------------------------------------------
-    def publish_version(self, number: int, *, corrupt_checksum: bool = False) -> rpb.ModelVersion:
-        data = artifact_bytes(EuroSATNet())
-        key = f"{self.model}/{hashlib.sha256(data).hexdigest()}/model.pt"
+    def publish_version(
+        self, number: int, *, corrupt_checksum: bool = False, framework: str = "pytorch"
+    ) -> rpb.ModelVersion:
+        net = EuroSATNet().eval()
+        data = onnx_bytes(net) if framework == "onnx" else artifact_bytes(net)
+        name = "model.onnx" if framework == "onnx" else "model.pt"
+        key = f"{self.model}/{hashlib.sha256(data).hexdigest()}/{name}"
         self.s3.put_object(Bucket=self.bucket, Key=key, Body=data)
         sha = "0" * 64 if corrupt_checksum else hashlib.sha256(data).hexdigest()
         return rpb.ModelVersion(
@@ -77,7 +102,7 @@ class Infra:
             version=number,
             artifact_uri=f"s3://{self.bucket}/{key}",
             artifact_sha256=sha,
-            framework="pytorch",
+            framework=framework,
             stage=events.MODEL_VERSION_STAGE_PRODUCTION,
         )
 

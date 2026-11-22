@@ -4,8 +4,10 @@ import asyncio
 import hashlib
 import io
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass
 
+import numpy as np
 import torch
 from spotter.v1 import registry_events_pb2 as events
 from spotter.v1 import registry_pb2 as pb
@@ -19,11 +21,15 @@ class ChecksumMismatch(Exception):
     """The artifact's bytes don't match the checksum registered for the version."""
 
 
+Predict = Callable[[np.ndarray], np.ndarray]  # normalized float32 [N,3,64,64] -> probs [N,10]
+
+
 @dataclass(frozen=True)
 class LoadedModel:
     version_id: str
     version: int
-    net: torch.nn.Module
+    framework: str
+    predict: Predict  # the same call whichever runtime is behind it
 
 
 def split_s3_uri(uri: str) -> tuple[str, str]:
@@ -31,8 +37,37 @@ def split_s3_uri(uri: str) -> tuple[str, str]:
     return bucket, key
 
 
+def _pytorch(data: bytes) -> Predict:
+    net = EuroSATNet()
+    net.load_state_dict(torch.load(io.BytesIO(data), weights_only=True))
+    net.eval()
+
+    def predict(x: np.ndarray) -> np.ndarray:
+        with torch.no_grad():
+            return torch.softmax(net(torch.from_numpy(x)), dim=1).numpy()
+
+    return predict
+
+
+def _onnx(data: bytes) -> Predict:
+    import onnxruntime as ort
+
+    session = ort.InferenceSession(data, providers=["CPUExecutionProvider"])
+    name = session.get_inputs()[0].name
+
+    def predict(x: np.ndarray) -> np.ndarray:
+        logits = session.run(None, {name: x})[0]
+        e = np.exp(logits - logits.max(axis=1, keepdims=True))
+        return e / e.sum(axis=1, keepdims=True)
+
+    return predict
+
+
+RUNTIMES = {"pytorch": _pytorch, "onnx": _onnx}
+
+
 def load_version(s3, version: pb.ModelVersion) -> LoadedModel:
-    """Download a version's artifact, verify its SHA-256, and load the weights."""
+    """Download a version's artifact, verify its SHA-256, and load it with its runtime."""
     bucket, key = split_s3_uri(version.artifact_uri)
     data = s3.get_object(Bucket=bucket, Key=key)["Body"].read()
     actual = hashlib.sha256(data).hexdigest()
@@ -40,10 +75,14 @@ def load_version(s3, version: pb.ModelVersion) -> LoadedModel:
         raise ChecksumMismatch(
             f"version {version.id}: sha256 {actual} != registered {version.artifact_sha256}"
         )
-    net = EuroSATNet()
-    net.load_state_dict(torch.load(io.BytesIO(data), weights_only=True))
-    net.eval()
-    return LoadedModel(version_id=version.id, version=version.version, net=net)
+    if version.framework not in RUNTIMES:
+        raise ValueError(f"version {version.id}: unsupported framework {version.framework!r}")
+    return LoadedModel(
+        version_id=version.id,
+        version=version.version,
+        framework=version.framework,
+        predict=RUNTIMES[version.framework](data),
+    )
 
 
 class ModelHolder:

@@ -201,3 +201,19 @@ async def test_promotion_while_running(infra):
     await processor(infra, holder).handle(await fetch_one(sub))
     job, _ = await infra.job(job_id)
     assert job.prediction.model_version == 2
+
+
+@pytest.mark.spec(*SERVES)
+async def test_onnx_production_version(infra):
+    infra.registry.versions = [infra.publish_version(4, framework="onnx")]
+    holder = infra.holder()
+    await holder.reload()
+    assert holder.current.framework == "onnx"
+    sub = await infra.consumer()
+    job_id = await infra.submit(jpeg())
+
+    await processor(infra, holder).handle(await fetch_one(sub))
+
+    job, _ = await infra.job(job_id)
+    assert job.status == ipb.JOB_STATUS_SUCCEEDED and job.prediction.model_version == 4
+    assert abs(sum(s.score for s in job.prediction.scores) - 1) < 1e-4

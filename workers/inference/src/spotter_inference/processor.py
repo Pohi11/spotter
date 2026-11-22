@@ -15,7 +15,6 @@ from collections.abc import Callable
 from datetime import UTC, datetime
 
 import numpy as np
-import torch
 from google.protobuf.timestamp_pb2 import Timestamp
 from nats.js.errors import KeyNotFoundError, KeyWrongLastSequenceError
 from opentelemetry import propagate, trace
@@ -45,10 +44,9 @@ def classify(model: LoadedModel, image: Image.Image) -> tuple[pb.Prediction, pb.
     stats = pb.InputStats(
         channel_mean=pixels.mean(axis=(0, 1)).tolist(), channel_std=pixels.std(axis=(0, 1)).tolist()
     )
-    x = preprocess(image)
+    x = preprocess(image).numpy()
     start = time.perf_counter()
-    with torch.no_grad():
-        probs = torch.softmax(model.net(x), dim=1)[0]
+    probs = model.predict(x)[0]  # PyTorch or ONNX Runtime: same call, same output
     ms = (time.perf_counter() - start) * 1000
     best = int(probs.argmax())
     prediction = pb.Prediction(
