@@ -1,0 +1,21 @@
+# uv workspace root (decision record 0002). It has no package of its own; it ties the
+# Python members together under one lock file and holds the shared dev tools.
+[tool.uv.workspace]
+members = ["gen/python", "workers/inference"]
+
+[dependency-groups]
+dev = ["pytest>=9", "pytest-asyncio>=1.2", "ruff>=0.14"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+extend-exclude = ["gen/python/src"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "ASYNC"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["workers"]
+markers = ["integration: needs a running NATS server at NATS_URL"]

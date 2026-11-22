@@ -1,0 +1,19 @@
+[project]
+name = "spotter-inference"
+version = "0.1.0"
+description = "Spotter inference worker"
+requires-python = ">=3.13"
+dependencies = ["nats-py>=2.17", "spotter-proto"]
+
+[project.scripts]
+spotter-inference = "spotter_inference.__main__:run"
+
+[tool.uv.sources]
+spotter-proto = { workspace = true }
+
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/spotter_inference"]
