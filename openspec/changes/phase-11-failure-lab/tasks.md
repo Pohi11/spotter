@@ -12,4 +12,4 @@
 
 ## 3. Measurements
 
-- [ ] 3.1 Run both modes under every fault; dated report; decision record 0019.
+- [x] 3.1 Run both modes under every fault; dated report; decision record 0019.

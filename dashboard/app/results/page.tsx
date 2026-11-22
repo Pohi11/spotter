@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { FaultTimeline } from "@/components/fault-timeline";
 import { Code, Figure, PageTitle, Section, fmtMs, link, pct } from "@/components/ui";
-import { LOAD_RUNS, loadResults, reportDate, runKey } from "@/lib/results";
+import { type FailureRun, LOAD_RUNS, loadResults, reportDate, runKey } from "@/lib/results";
 
 // The results page (spec: dashboard "Results come from dated reports"). Numbers come from
 // benchmarks/*.json; the words around them say what each run was and what it showed.
@@ -210,9 +211,94 @@ export default function ResultsPage() {
         </Source>
       </Section>
 
+      {r.failureLab.length > 0 && <FailureLab runs={r.failureLab} />}
+
       <p className="mt-24 max-w-2xl leading-relaxed text-muted">
         Drift detection results are on the <Link href="/drift#experiment" className={link}>drift page</Link>.
       </p>
     </>
+  );
+}
+
+const FAULT_NAMES: Record<string, string> = {
+  none: "No fault",
+  "worker-kill": "Worker killed, restarted at heal",
+  "nats-restart": "NATS restarted",
+  "postgres-pause": "Postgres paused",
+  "objectstore-pause": "Object store paused",
+};
+
+function FailureLab({ runs }: { runs: FailureRun[] }) {
+  const first = runs[0];
+  const faults = [...new Set(runs.map((x) => x.fault))];
+  return (
+    <Section
+      id="failure-lab"
+      title="Under faults: the bus against a direct call"
+      intro={
+        <>
+          <Code>spotterchaos</Code> ran {first.config.concurrency} closed-loop clients for {first.config.duration_s} s in each mode,
+          injected one fault at {first.config.fault_at_s} s, and healed it at {first.config.heal_at_s} s. Asynchronous: submit, then
+          wait for the completion event on the bus. Synchronous: the gateway calls the worker over gRPC and answers in the same
+          call. The worker ran without a shadow model, so both modes did the same work per image.
+        </>
+      }
+    >
+      <div className="mt-8 overflow-x-auto">
+        <table className="w-full min-w-[56rem] border-t border-ink text-left text-sm">
+          <thead>
+            <tr className="text-xs text-faint">
+              <th scope="col" className={th}>Fault</th>
+              <th scope="col" className={th}>Mode</th>
+              <th scope="col" className={th}>Requests</th>
+              <th scope="col" className={th}>Per second before the fault</th>
+              <th scope="col" className={th}>Rejected</th>
+              <th scope="col" className={th}>Lost</th>
+              <th scope="col" className={th}>Duplicates</th>
+              <th scope="col" className={th}>p99</th>
+              <th scope="col" className={th}>Recovery</th>
+              <th scope="col" className="py-3 font-medium">Completions per second, each scaled to its own peak (fault shaded, rejections in red)</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-rule border-t border-rule">
+            {faults.flatMap((fault) =>
+              runs
+                .filter((x) => x.fault === fault)
+                .map((x, i) => (
+                  <tr key={x.file} data-run={`${x.mode}-${x.fault}`}>
+                    {i === 0 && (
+                      <th scope="rowgroup" rowSpan={runs.filter((y) => y.fault === fault).length} className="py-3 pr-4 align-top font-semibold">
+                        {FAULT_NAMES[fault] ?? fault}
+                      </th>
+                    )}
+                    <td className="py-3 pr-4">{x.mode === "async" ? "Bus" : "Direct call"}</td>
+                    <td className={td}>{x.report.requests.toLocaleString()}</td>
+                    <td className={td}>{x.report.baseline_per_second.toFixed(0)}</td>
+                    <td className={`${td} ${x.report.rejected ? "text-fail" : ""}`}>{x.report.rejected.toLocaleString()}</td>
+                    <td className={`${td} ${x.report.lost ? "font-semibold text-fail" : ""}`}>{x.report.lost}</td>
+                    <td className={`${td} ${x.report.duplicates ? "font-semibold text-fail" : ""}`}>{x.report.duplicates}</td>
+                    <td className={td}>{fmtMs(x.report.p99_ms)}</td>
+                    <td className={td}>
+                      {x.fault === "none" || x.fault === "nats-restart"
+                        ? ""
+                        : x.report.recovery_seconds === null
+                          ? "did not recover"
+                          : `${x.report.recovery_seconds} s`}
+                    </td>
+                    <td className="py-2">
+                      <FaultTimeline run={x} max={Math.max(...x.report.completed_per_second)} />
+                    </td>
+                  </tr>
+                )),
+            )}
+          </tbody>
+        </table>
+      </div>
+      <Source file={`${reportDate(first.date)}-failure-lab.md`}>
+        Measured {reportDate(first.date)}. Rejected: the client got an error and could retry. Lost: accepted but never completed.
+        Duplicates: more than one stored completion for a job. Recovery: from heal until a second reached 80% of the
+        throughput before the fault (not shown for the NATS restart, which has no heal step). One JSON file per run sits next to the write-up.
+      </Source>
+    </Section>
   );
 }

@@ -18,4 +18,9 @@ test(`every result is read from its dated report ${REQ}`, () => {
   expect(r.drift.conditions.length).toBeGreaterThan(0);
   expect(r.promotion.promote_to_serving_ms).toBeGreaterThan(0);
   expect(r.spike.autoscaled.report.completed).toBeGreaterThan(0);
+  // The failure lab: both modes under each condition, newest report per run.
+  expect(r.failureLab.map((x) => `${x.mode}-${x.fault}`)).toEqual(
+    ["none", "worker-kill", "nats-restart", "postgres-pause", "objectstore-pause"].flatMap((f) => [`async-${f}`, `sync-${f}`]),
+  );
+  for (const x of r.failureLab) expect(x.report.completed_per_second.length).toBeGreaterThan(0);
 });

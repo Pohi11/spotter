@@ -193,6 +193,21 @@ After clean traffic every gate passed except the approval (592 comparisons, 98.5
 
 Spec: [model-retraining](openspec/specs/model-retraining/spec.md).
 
+## Failure lab
+
+`spotterchaos` (Go) measures the running platform under faults and compares the event-driven path with a synchronous chain in which the gateway calls the worker over gRPC (`ClassifySync`, on only with `WORKER_ADDR`). It owns the worker process, drives 4 closed-loop clients for 40 s, injects one fault at 10 s, heals it at 20 s, and counts rejected, lost, and duplicate jobs from the clients and the stream ([report](benchmarks/2026-11-22-failure-lab.md), [0019](docs/decisions/0019-event-driven-inference-under-faults.md)).
+
+| Fault | Bus: rejected / lost / duplicates | Direct call: rejected |
+|---|---|---|
+| Worker killed, new one started 10 s later | **0 / 0 / 0** (the job it held waited 30 s for redelivery) | **1,204** (every request until a new worker was ready) |
+| NATS restarted | 2 / 0 / 0 (about 4 s stalled) | 0 (not on its path) |
+| Postgres paused 10 s | 0 / 0 / 0 (stalled) | 0 (stalled) |
+| Object store paused 10 s | 3 / 0 / 0 (stalled) | 0 (not on its path) |
+
+The bus never lost or doubled an accepted job and turned a worker crash into a delay; it pays with about a seventh of the direct call's throughput on this laptop (62 against 435 per second) and two more dependencies on its path. The bus stays the default.
+
+Spec: [failure-lab](openspec/specs/failure-lab/spec.md).
+
 ## Kubernetes
 
 One Helm chart, [`deploy/helm/spotter`](deploy/helm/spotter), declares the platform ([0014](docs/decisions/0014-helm-umbrella-chart-keda-scaling.md)): registry, gateway, monitor, and worker Deployments; Postgres and SeaweedFS StatefulSets; NATS with JetStream from the official chart, vendored so installs work offline; and an optional trainer Job.
