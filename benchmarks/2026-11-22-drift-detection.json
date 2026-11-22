@@ -1,0 +1,130 @@
+{
+  "date": "2026-11-22",
+  "model": "eurosat-classifier",
+  "window": 200,
+  "evaluate_every": 50,
+  "psi_enter": 0.2,
+  "psi_exit": 0.1,
+  "clean_events": 3000,
+  "false_alarms": 0,
+  "cap": 1000,
+  "conditions": [
+    {
+      "degradation": "darken",
+      "strength": 0.25,
+      "detected": true,
+      "degraded_events_until_detection": 144,
+      "drifted_features": [
+        "mean_b",
+        "mean_g"
+      ]
+    },
+    {
+      "degradation": "darken",
+      "strength": 0.5,
+      "detected": true,
+      "degraded_events_until_detection": 96,
+      "drifted_features": [
+        "mean_b",
+        "mean_g"
+      ]
+    },
+    {
+      "degradation": "darken",
+      "strength": 1.0,
+      "detected": true,
+      "degraded_events_until_detection": 64,
+      "drifted_features": [
+        "mean_b",
+        "mean_g"
+      ]
+    },
+    {
+      "degradation": "blur",
+      "strength": 0.25,
+      "detected": false,
+      "degraded_events_until_detection": null,
+      "drifted_features": []
+    },
+    {
+      "degradation": "blur",
+      "strength": 0.5,
+      "detected": true,
+      "degraded_events_until_detection": 167,
+      "drifted_features": [
+        "confidence"
+      ]
+    },
+    {
+      "degradation": "blur",
+      "strength": 1.0,
+      "detected": true,
+      "degraded_events_until_detection": 215,
+      "drifted_features": [
+        "confidence",
+        "contrast"
+      ]
+    },
+    {
+      "degradation": "noise",
+      "strength": 0.25,
+      "detected": true,
+      "degraded_events_until_detection": 161,
+      "drifted_features": [
+        "confidence",
+        "contrast"
+      ]
+    },
+    {
+      "degradation": "noise",
+      "strength": 0.5,
+      "detected": true,
+      "degraded_events_until_detection": 137,
+      "drifted_features": [
+        "confidence"
+      ]
+    },
+    {
+      "degradation": "noise",
+      "strength": 1.0,
+      "detected": true,
+      "degraded_events_until_detection": 62,
+      "drifted_features": [
+        "confidence"
+      ]
+    },
+    {
+      "degradation": "haze",
+      "strength": 0.25,
+      "detected": true,
+      "degraded_events_until_detection": 150,
+      "drifted_features": [
+        "mean_b",
+        "mean_g",
+        "mean_r"
+      ]
+    },
+    {
+      "degradation": "haze",
+      "strength": 0.5,
+      "detected": true,
+      "degraded_events_until_detection": 124,
+      "drifted_features": [
+        "mean_b",
+        "mean_g",
+        "mean_r"
+      ]
+    },
+    {
+      "degradation": "haze",
+      "strength": 1.0,
+      "detected": true,
+      "degraded_events_until_detection": 130,
+      "drifted_features": [
+        "mean_b",
+        "mean_g",
+        "mean_r"
+      ]
+    }
+  ]
+}
