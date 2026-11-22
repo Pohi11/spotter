@@ -195,8 +195,8 @@ def main() -> None:
     }
     out = Path(_env("BENCH_DIR", "benchmarks"))
     out.mkdir(parents=True, exist_ok=True)
-    (out / f"{date}-model-variants.json").write_text(json.dumps(report, indent=2))
-    (out / f"{date}-model-variants.md").write_text(_markdown(report))
+    (out / f"{date}-model-variants.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
+    (out / f"{date}-model-variants.md").write_text(_markdown(report), encoding="utf-8")
     print(f"report: {out / f'{date}-model-variants.md'}", flush=True)
 
     parent_acc = variants[0]["accuracy"]

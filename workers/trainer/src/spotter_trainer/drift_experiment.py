@@ -148,7 +148,9 @@ async def amain() -> None:
 def write_report(out: Path, report: dict) -> None:
     out.mkdir(parents=True, exist_ok=True)
     date, cap = report["date"], report["cap"]
-    (out / f"{date}-drift-detection.json").write_text(json.dumps(report, indent=2))
+    (out / f"{date}-drift-detection.json").write_text(
+        json.dumps(report, indent=2), encoding="utf-8"
+    )
     lines = [
         f"# Drift detection, {date}",
         "",
@@ -165,7 +167,7 @@ def write_report(out: Path, report: dict) -> None:
             f"| {r['degradation']} | {r['strength']} | {'yes' if r['detected'] else 'no'} | "
             f"{n if n is not None else f'> {cap}'} | {', '.join(r['drifted_features'])} |"
         )
-    (out / f"{date}-drift-detection.md").write_text("\n".join(lines) + "\n")
+    (out / f"{date}-drift-detection.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 def main() -> None:
