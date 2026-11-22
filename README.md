@@ -2,7 +2,7 @@
 
 A small, cloud-neutral platform for deploying and monitoring computer-vision models on overhead imagery. Register a model version, serve it behind REST and gRPC, run inference through an event bus, watch live traffic for drift, retrain, shadow-test the new version, and promote it through code-checked gates and a human approval, with rollback.
 
-Status: registry and API, a trained EuroSAT model, event-driven inference, tracing and metrics, optimized model variants with load tests, drift monitoring, shadow testing with gated promotion and rollback, and Kubernetes deployment are built. The dashboard comes next.
+Status: registry and API, a trained EuroSAT model, event-driven inference, tracing and metrics, optimized model variants with load tests, drift monitoring, retraining on drift, shadow testing with gated promotion and rollback, Kubernetes deployment, and an operator dashboard are built.
 
 ## Model registry
 
@@ -213,6 +213,20 @@ Installing into an empty cluster found two real bugs: the Go image's named user 
 
 Spec: [platform-deployment](openspec/specs/platform-deployment/spec.md).
 
+## Dashboard
+
+[`dashboard/`](dashboard/) is a Next.js app (TypeScript, Tailwind CSS) for operators and for anyone evaluating the design ([0016](docs/decisions/0016-dashboard-and-gateway-event-feed.md)):
+
+- **Home:** what Spotter does, one recorded tile followed span by span through its OpenTelemetry trace, and a panel that classifies EuroSAT tiles (optionally blurred, noised, hazed, or darkened with the drift experiment's functions) through the running platform.
+- **Live events:** every event on the three JetStream streams, decoded and summarized as it arrives, through the gateway's `GET /v1/events` server-sent-event feed.
+- **Model:** versions, stages, and stage history; each promotion gate with its reason; approval, promotion, and a rollback that names what it restores and asks first.
+- **Drift:** PSI per feature per version over time from the monitor's `DriftEvaluated` events, and the measured detection results.
+- **Results** and **Architecture:** every measured number, read from the dated reports in `benchmarks/`, and diagrams of the parts, a tile's path, the lifecycle, the delivery guarantees, the hexagonal layout, and the Kubernetes deployment.
+
+The browser reaches the gateway only through an allowlisted proxy, so the dashboard holds no credentials. Its tests: Vitest for the logic and Playwright against a stub gateway that serves responses recorded from the real one; each names the requirement it verifies ([0017](docs/decisions/0017-typescript-spec-test-traceability.md)).
+
+Specs: [dashboard](openspec/specs/dashboard/spec.md), [event-feed](openspec/specs/event-feed/spec.md).
+
 ## Architecture
 
 - **Go services:** registry (model versions and their lifecycle), gateway (REST and gRPC front door), monitor (drift detection). Each is hexagonal: domain and use-case code depend only on ports, and Postgres, NATS, and S3 sit behind adapters.
@@ -241,7 +255,7 @@ tilt up                                               # builds images, installs 
 helm test spotter -n spotter                          # end-to-end smoke test
 ```
 
-k3d makes the new cluster your current kube context unless you pass `--kubeconfig-switch-context=false` (then run `tilt up --context k3d-spotter`). Tilt forwards the gateway to `localhost:8080` (REST) and `:9091` (gRPC), and NATS to `:4222`.
+k3d makes the new cluster your current kube context unless you pass `--kubeconfig-switch-context=false` (then run `tilt up --context k3d-spotter`). Tilt forwards the gateway to `localhost:8080` (REST) and `:9091` (gRPC), the dashboard to `:3000`, and NATS to `:4222`.
 
 **On the host,** with only the dependencies in Docker:
 
@@ -266,6 +280,13 @@ REGISTRY_ADDR=localhost:9090 go run ./services/gateway/cmd/gateway
 REGISTRY_ADDR=localhost:9090 uv run spotter-inference
 
 curl localhost:8080/v1/models/eurosat-classifier/versions
+```
+
+The dashboard (Node 24 and pnpm), at http://localhost:3100:
+
+```bash
+cd dashboard && pnpm install && pnpm dev      # GATEWAY_URL defaults to http://localhost:8080
+pnpm test && pnpm e2e                         # unit tests; browser tests against the stub gateway
 ```
 
 Put a validated version into shadow (`expectedRevision` is the version's current revision), send traffic, check its gates, approve it, and promote it; roll back if needed:
