@@ -10,8 +10,8 @@ Defines how Spotter detects, from unlabeled inference traffic, that a model vers
 The population stability index of a feature SHALL be computed over 10 bins whose edges are the reference's deciles (the outer bins open-ended), as the sum over bins of (current share − reference share) × ln(current share ÷ reference share), with every share floored at 0.0001 so empty bins stay finite.
 
 #### Scenario: Same distribution
-- **WHEN** the window is drawn from the same distribution as a reference of 4,000 values
-- **THEN** PSI is below 0.05
+- **WHEN** 20 windows of 200 values are drawn from the same distribution as a reference of 4,000 values
+- **THEN** their mean PSI is below 0.1 (sampling noise alone gives about (10 − 1) × (1/200 + 1/4000) ≈ 0.047)
 
 #### Scenario: Shifted distribution
 - **WHEN** every window value is the reference value plus three reference standard deviations
