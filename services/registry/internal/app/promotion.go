@@ -161,7 +161,18 @@ type ShadowComparison struct {
 	ShadowMS        float64
 }
 
-// RecordShadowComparison stores a comparison (once per job).
+// RecordShadowComparison stores a comparison (once per job). It returns domain.ErrNotFound
+// for an unknown version and a ValidationError for a comparison that can't be stored, so the
+// caller can drop such an event instead of retrying it.
 func (s *Service) RecordShadowComparison(ctx context.Context, c ShadowComparison) error {
+	if c.JobID == "" {
+		return &domain.ValidationError{Field: "job_id", Problem: "must not be empty"}
+	}
+	if c.ShadowMS < 0 {
+		return &domain.ValidationError{Field: "shadow_ms", Problem: "must not be negative"}
+	}
+	if _, err := s.repo.Version(ctx, c.ShadowVersionID); err != nil {
+		return err
+	}
 	return s.repo.RecordShadowComparison(ctx, c.ShadowVersionID, c.JobID, c.Agree, c.ShadowMS)
 }

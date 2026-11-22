@@ -30,6 +30,7 @@ import (
 	"github.com/Pohi11/spotter/internal/telemetry"
 	"github.com/Pohi11/spotter/services/registry/internal/adapters/grpcapi"
 	"github.com/Pohi11/spotter/services/registry/internal/adapters/natspub"
+	"github.com/Pohi11/spotter/services/registry/internal/adapters/natssub"
 	"github.com/Pohi11/spotter/services/registry/internal/adapters/postgres"
 	"github.com/Pohi11/spotter/services/registry/internal/adapters/protoevents"
 	"github.com/Pohi11/spotter/services/registry/internal/app"
@@ -98,6 +99,11 @@ func run(ctx context.Context, getenv func(string) string, logger *slog.Logger, o
 	}()
 	defer func() { <-relayDone }()
 
+	// The shadow-stats consumer stops after the servers have drained (below).
+	consumeCtx, stopConsuming := context.WithCancel(context.WithoutCancel(ctx))
+	consumed := make(chan error, 1)
+	go func() { consumed <- natssub.ConsumeShadow(consumeCtx, js, service, logger) }()
+
 	grpcServer := grpc.NewServer(grpc.StatsHandler(otelgrpc.NewServerHandler()))
 	spotterv1.RegisterRegistryServiceServer(grpcServer, grpcapi.New(service, logger))
 	healthServer := health.NewServer()
@@ -105,7 +111,7 @@ func run(ctx context.Context, getenv func(string) string, logger *slog.Logger, o
 	healthpb.RegisterHealthServer(grpcServer, healthServer)
 	reflection.Register(grpcServer)
 
-	return svc.Run(ctx, svc.Options{
+	runErr := svc.Run(ctx, svc.Options{
 		Logger:          logger,
 		ShutdownTimeout: cfg.ShutdownTimeout,
 		OnListening:     onListening,
@@ -115,6 +121,11 @@ func run(ctx context.Context, getenv func(string) string, logger *slog.Logger, o
 		svc.Listener{Name: "http", Addr: cfg.HTTPAddr, Server: svc.HTTP(healthHandler(pool, tel.Metrics))},
 		svc.Listener{Name: "grpc", Addr: cfg.GRPCAddr, Server: svc.GRPC(grpcServer)},
 	)
+	stopConsuming()
+	if err := <-consumed; err != nil && runErr == nil {
+		runErr = err
+	}
+	return runErr
 }
 
 // relayOutbox publishes pending outbox records every relayInterval until ctx is done.

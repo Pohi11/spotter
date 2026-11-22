@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -26,6 +27,12 @@ const capability = "gateway-http"
 // gateway serves the REST handler in front of a fake registry over an in-memory listener.
 func gateway(t *testing.T) *httptest.Server {
 	t.Helper()
+	srv, _ := gatewayWithRegistry(t)
+	return srv
+}
+
+func gatewayWithRegistry(t *testing.T) (*httptest.Server, *registryfake.Server) {
+	t.Helper()
 	lis := bufconn.Listen(1 << 20)
 	reg := registryfake.Serve(lis)
 	t.Cleanup(reg.GRPC.Stop)
@@ -36,7 +43,7 @@ func gateway(t *testing.T) *httptest.Server {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { conn.Close() })
-	return serve(t, conn)
+	return serve(t, conn), reg
 }
 
 func serve(t *testing.T, conn grpc.ClientConnInterface) *httptest.Server {
@@ -198,5 +205,40 @@ func TestOpenAPIDocument(t *testing.T) {
 		if _, ok := paths[p]; !ok {
 			t.Errorf("OpenAPI paths missing %s (have %d paths)", p, len(paths))
 		}
+	}
+}
+
+func TestPromoteOverREST(t *testing.T) {
+	spectest.Verifies(t, "model-promotion", "Promotion operations are available over gRPC and REST")
+	srv, reg := gatewayWithRegistry(t)
+	id := registerVersion(t, srv)["id"].(string)
+	for i, stage := range []string{"VALIDATED", "SHADOW"} {
+		code, body := call(t, srv, "POST", "/v1/versions/"+id+":transition",
+			fmt.Sprintf(`{"toStage":"MODEL_VERSION_STAGE_%s","reason":"test","expectedRevision":"%d"}`, stage, i+1))
+		mustOK(t, code, body, "transition to "+stage)
+	}
+	if err := reg.RecordShadowComparisons(context.Background(), id, 250, 249, 3); err != nil {
+		t.Fatal(err)
+	}
+
+	code, body := call(t, srv, "POST", "/v1/versions/"+id+":promote", `{}`)
+	if code != http.StatusBadRequest || !strings.Contains(fmt.Sprint(body["message"]), "approval") {
+		t.Fatalf("promote before approval: %d %v, want 400 naming the approval gate", code, body)
+	}
+	code, body = call(t, srv, "POST", "/v1/versions/"+id+":approve", `{"approver":"ana","reason":"agreement 99.6% over 250 jobs"}`)
+	mustOK(t, code, body, "approve")
+	code, body = call(t, srv, "GET", "/v1/versions/"+id+"/gates", "")
+	mustOK(t, code, body, "gates")
+	if body["allPassed"] != true {
+		t.Fatalf("gates after approval: %v", body)
+	}
+	code, body = call(t, srv, "POST", "/v1/versions/"+id+":promote", `{}`)
+	mustOK(t, code, body, "promote")
+	if stage := body["promoted"].(map[string]any)["stage"]; stage != "MODEL_VERSION_STAGE_PRODUCTION" {
+		t.Fatalf("promoted stage = %v", stage)
+	}
+	code, body = call(t, srv, "POST", "/v1/models/eurosat-classifier:rollback", `{"reason":"x"}`)
+	if code != http.StatusBadRequest {
+		t.Fatalf("rollback with nothing to restore: %d %v, want 400", code, body)
 	}
 }
