@@ -38,7 +38,8 @@ func TestAllGatesPass(t *testing.T) {
 
 func TestTooFewComparisons(t *testing.T) {
 	spectest.Verifies(t, promotion, "Promotion gates are evaluated as code")
-	g := gate(domain.EvaluateGates(withAccuracy(domain.StageShadow, 0.97), nil,
+	prod := withAccuracy(domain.StageProduction, 0.96)
+	g := gate(domain.EvaluateGates(withAccuracy(domain.StageShadow, 0.97), &prod,
 		domain.ShadowStats{Compared: 120, Agreed: 120, MeanShadowMS: 3}, 1, domain.DefaultGates), "shadow_agreement")
 	if g.Passed || !strings.Contains(g.Detail, "120 of at least 200") {
 		t.Fatalf("gate = %+v", g)
@@ -52,6 +53,24 @@ func TestNoApproval(t *testing.T) {
 	ok, failed := domain.AllPassed(gates)
 	if ok || len(failed) != 1 || failed[0] != "approval" {
 		t.Fatalf("failed = %v, want only approval", failed)
+	}
+}
+
+func TestFirstVersionNeedsAnApprovalButNoShadowEvidence(t *testing.T) {
+	spectest.Verifies(t, promotion, "Promotion gates are evaluated as code")
+	none := domain.ShadowStats{}
+	gates := domain.EvaluateGates(withAccuracy(domain.StageShadow, 0.97), nil, none, 0, domain.DefaultGates)
+	if ok, failed := domain.AllPassed(gates); ok || len(failed) != 1 || failed[0] != "approval" {
+		t.Fatalf("without approval: failed = %v, want only approval", failed)
+	}
+	gates = domain.EvaluateGates(withAccuracy(domain.StageShadow, 0.97), nil, none, 1, domain.DefaultGates)
+	if ok, failed := domain.AllPassed(gates); !ok {
+		t.Fatalf("with approval: failed = %v", failed)
+	}
+	for _, name := range []string{"shadow_agreement", "shadow_latency"} {
+		if g := gate(gates, name); !strings.Contains(g.Detail, "no production version") {
+			t.Errorf("%s detail %q does not say why it passed", name, g.Detail)
+		}
 	}
 }
 

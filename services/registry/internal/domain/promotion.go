@@ -89,15 +89,22 @@ func EvaluateGates(candidate ModelVersion, production *ModelVersion, stats Shado
 	if stats.Compared > 0 {
 		rate = float64(stats.Agreed) / float64(stats.Compared)
 	}
-	agree.Passed = stats.Compared >= cfg.MinComparisons && rate >= cfg.MinAgreement
-	agree.Detail = fmt.Sprintf("%d of at least %d comparisons, agreement %.1f%% (need %.0f%%)",
-		stats.Compared, cfg.MinComparisons, 100*rate, 100*cfg.MinAgreement)
-	gates = append(gates, agree)
-
 	lat := Gate{Name: "shadow_latency"}
-	lat.Passed = stats.Compared > 0 && stats.MeanShadowMS <= cfg.LatencyBudgetMS
-	lat.Detail = fmt.Sprintf("mean shadow latency %.2f ms (budget %.0f ms)", stats.MeanShadowMS, cfg.LatencyBudgetMS)
-	gates = append(gates, lat)
+	if production == nil {
+		// The worker shadows only next to a production version, so the first version of a
+		// model can't collect comparisons; its promotion rests on accuracy and the approval
+		// (decision record 0015).
+		const none = "no production version to compare with"
+		agree.Passed, agree.Detail = true, none
+		lat.Passed, lat.Detail = true, none
+	} else {
+		agree.Passed = stats.Compared >= cfg.MinComparisons && rate >= cfg.MinAgreement
+		agree.Detail = fmt.Sprintf("%d of at least %d comparisons, agreement %.1f%% (need %.0f%%)",
+			stats.Compared, cfg.MinComparisons, 100*rate, 100*cfg.MinAgreement)
+		lat.Passed = stats.Compared > 0 && stats.MeanShadowMS <= cfg.LatencyBudgetMS
+		lat.Detail = fmt.Sprintf("mean shadow latency %.2f ms (budget %.0f ms)", stats.MeanShadowMS, cfg.LatencyBudgetMS)
+	}
+	gates = append(gates, agree, lat)
 
 	gates = append(gates, Gate{Name: "approval", Passed: approvals > 0, Detail: fmt.Sprintf("%d approval(s) recorded", approvals)})
 	return gates
