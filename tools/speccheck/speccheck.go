@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"encoding/json"
+	"encoding/xml"
 	"fmt"
 	"io"
 	"io/fs"
@@ -108,6 +109,51 @@ func ReadGoLinks(r io.Reader) ([]Link, error) {
 	for k, reqs := range named {
 		for _, req := range reqs {
 			links = append(links, Link{Requirement: req, Test: k.pkg + " " + k.test, Passed: result[k] == "pass"})
+		}
+	}
+	return links, nil
+}
+
+// junitSuites matches pytest's JUnit XML: <testsuites><testsuite><testcase> with
+// <properties><property name="spec" value="capability: requirement"/></properties>.
+type junitSuites struct {
+	Suites []struct {
+		Cases []junitCase `xml:"testcase"`
+	} `xml:"testsuite"`
+}
+
+type junitCase struct {
+	Class      string `xml:"classname,attr"`
+	Name       string `xml:"name,attr"`
+	Properties []struct {
+		Name  string `xml:"name,attr"`
+		Value string `xml:"value,attr"`
+	} `xml:"properties>property"`
+	Failure *struct{} `xml:"failure"`
+	Error   *struct{} `xml:"error"`
+	Skipped *struct{} `xml:"skipped"`
+}
+
+// ReadJUnitLinks parses a JUnit XML report (pytest --junitxml) into requirement links.
+func ReadJUnitLinks(r io.Reader) ([]Link, error) {
+	var doc junitSuites
+	if err := xml.NewDecoder(r).Decode(&doc); err != nil {
+		return nil, fmt.Errorf("read junit xml: %w", err)
+	}
+	var links []Link
+	for _, s := range doc.Suites {
+		for _, c := range s.Cases {
+			passed := c.Failure == nil && c.Error == nil && c.Skipped == nil
+			for _, p := range c.Properties {
+				if p.Name != "spec" {
+					continue
+				}
+				capability, title, ok := strings.Cut(p.Value, ": ")
+				if !ok {
+					return nil, fmt.Errorf("junit: test %s.%s has malformed spec property %q", c.Class, c.Name, p.Value)
+				}
+				links = append(links, Link{Requirement: Requirement{Capability: capability, Title: title}, Test: c.Class + " " + c.Name, Passed: passed})
+			}
 		}
 	}
 	return links, nil

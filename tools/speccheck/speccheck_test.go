@@ -88,6 +88,42 @@ func TestCheckReportsUncoveredAndUnknown(t *testing.T) {
 	}
 }
 
+// A pytest --junitxml excerpt: one passing marked test, one failing, one skipped.
+const junitXML = `<?xml version="1.0" encoding="utf-8"?>
+<testsuites><testsuite name="pytest">
+  <testcase classname="workers.trainer.tests.test_splits" name="test_same_seed">
+    <properties><property name="spec" value="training-data: Splits are deterministic"/></properties>
+  </testcase>
+  <testcase classname="workers.trainer.tests.test_metrics" name="test_known">
+    <properties><property name="spec" value="model-evaluation: Evaluation reports per-class metrics"/></properties>
+    <failure message="boom">assert 1 == 2</failure>
+  </testcase>
+  <testcase classname="workers.x" name="test_skipped">
+    <properties><property name="spec" value="training-data: Splits are stratified and disjoint"/></properties>
+    <skipped message="NATS_URL not set"/>
+  </testcase>
+</testsuite></testsuites>`
+
+func TestReadJUnitLinks(t *testing.T) {
+	links, err := ReadJUnitLinks(strings.NewReader(junitXML))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(links) != 3 {
+		t.Fatalf("links = %+v, want 3", links)
+	}
+	want := map[string]bool{
+		"training-data: Splits are deterministic":                true,
+		"model-evaluation: Evaluation reports per-class metrics": false,
+		"training-data: Splits are stratified and disjoint":      false, // skipped is not passing
+	}
+	for _, l := range links {
+		if got, ok := want[l.Requirement.String()]; !ok || got != l.Passed {
+			t.Errorf("link %s passed=%v, want %v", l.Requirement, l.Passed, got)
+		}
+	}
+}
+
 func TestCheckPassesWhenEverythingIsCovered(t *testing.T) {
 	reqs := []Requirement{{"model-lifecycle", "Only listed stage transitions are allowed"}}
 	links := []Link{{Requirement: reqs[0], Test: "p TestA", Passed: true}}
