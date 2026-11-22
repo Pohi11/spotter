@@ -15,7 +15,7 @@ import pytest
 import torch
 from google.protobuf.timestamp_pb2 import Timestamp
 from nats.errors import TimeoutError as NatsTimeout
-from nats.js.api import AckPolicy, ConsumerConfig, StorageType, StreamConfig
+from nats.js.api import AckPolicy, ConsumerConfig
 from nats.js.errors import NotFoundError
 from PIL import Image
 from spotter.v1 import inference_pb2 as ipb
@@ -143,28 +143,19 @@ def jpeg(color=(40, 120, 60)) -> bytes:
     return buf.getvalue()
 
 
-async def _ensure_streams(js) -> None:
-    """Create the streams and bucket the Go services would (internal/natsjs), if missing."""
-    for name, subjects, age in (
-        ("INFERENCE", ["inference.>"], 86400),
-        ("REGISTRY", ["registry.events.>"], 604800),
-    ):
-        try:
-            await js.stream_info(name)
-        except NotFoundError:
-            await js.add_stream(
-                StreamConfig(
-                    name=name,
-                    subjects=subjects,
-                    max_age=age,
-                    duplicate_window=120,
-                    storage=StorageType.FILE,
-                )
-            )
+async def _require_streams(js) -> None:
+    """The streams and bucket have one definition, in Go (internal/natsjs).
+
+    Tests don't create their own copies: a second definition drifted once already (a bucket
+    created here had a setting the Go services could not change). Create them with
+    `go run ./cmd/spotterctl setup`.
+    """
     try:
+        await js.stream_info("INFERENCE")
+        await js.stream_info("REGISTRY")
         await js.key_value("inference_jobs")
-    except Exception:  # noqa: BLE001 - bucket missing
-        await js.create_key_value(bucket="inference_jobs", ttl=86400, history=1)
+    except NotFoundError:
+        pytest.fail("JetStream streams missing: run `go run ./cmd/spotterctl setup` first")
 
 
 @pytest.fixture
@@ -173,7 +164,7 @@ async def infra():
         pytest.skip("NATS_URL and S3_ENDPOINT not set")
     nc = await nats.connect(os.environ["NATS_URL"])
     js = nc.jetstream()
-    await _ensure_streams(js)
+    await _require_streams(js)
     s3 = boto3.client(
         "s3",
         endpoint_url=os.environ["S3_ENDPOINT"],

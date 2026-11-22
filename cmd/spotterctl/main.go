@@ -3,6 +3,7 @@
 // Usage:
 //
 //	spotterctl ping  [-nats-url URL] [-timeout 2s]
+//	spotterctl setup [-nats-url URL]
 //	spotterctl infer [-gateway localhost:9091] [-model eurosat-classifier] [-timeout 30s] IMAGE...
 package main
 
@@ -15,14 +16,16 @@ import (
 	"time"
 
 	"github.com/nats-io/nats.go"
+	"github.com/nats-io/nats.go/jetstream"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
 	spotterv1 "github.com/Pohi11/spotter/gen/go/spotter/v1"
+	"github.com/Pohi11/spotter/internal/natsjs"
 	"github.com/Pohi11/spotter/internal/natsping"
 )
 
-const usage = "usage: spotterctl ping [flags] | spotterctl infer [flags] IMAGE..."
+const usage = "usage: spotterctl ping|setup [flags] | spotterctl infer [flags] IMAGE..."
 
 func main() {
 	if err := run(os.Args[1:]); err != nil {
@@ -40,6 +43,8 @@ func run(args []string) error {
 		return ping(args[1:])
 	case "infer":
 		return infer(args[1:])
+	case "setup":
+		return setup(args[1:])
 	default:
 		return errors.New(usage)
 	}
@@ -64,6 +69,32 @@ func ping(args []string) error {
 		return err
 	}
 	fmt.Printf("reply from %s (%s) in %s\n", res.Reply.GetResponder(), res.Reply.GetRuntime(), res.RoundTrip.Round(time.Microsecond))
+	return nil
+}
+
+// setup creates or updates the JetStream streams and bucket from their one definition
+// (internal/natsjs). Services do this at startup; tools and CI use this command.
+func setup(args []string) error {
+	fs := flag.NewFlagSet("setup", flag.ContinueOnError)
+	natsURL := fs.String("nats-url", envOr("NATS_URL", nats.DefaultURL), "NATS server URL")
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+	nc, err := nats.Connect(*natsURL, nats.Name("spotterctl"))
+	if err != nil {
+		return fmt.Errorf("connect to %s: %w", *natsURL, err)
+	}
+	defer nc.Close()
+	js, err := jetstream.New(nc)
+	if err != nil {
+		return err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := natsjs.Ensure(ctx, js); err != nil {
+		return err
+	}
+	fmt.Println("streams INFERENCE, REGISTRY and bucket inference_jobs are up to date")
 	return nil
 }
 

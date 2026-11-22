@@ -73,10 +73,15 @@ jobs:
         run: uv sync --locked
       - name: Lint
         run: uv run ruff check . && uv run ruff format --check .
-      - name: Start NATS and SeaweedFS
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+      - name: Start NATS and SeaweedFS, create streams from their Go definition
         run: |
           cp .env.example .env
           docker compose up -d --wait nats seaweedfs
+          set -a; . ./.env; set +a
+          go run ./cmd/spotterctl setup
       - name: Test
         run: |
           set -a; . ./.env; set +a
