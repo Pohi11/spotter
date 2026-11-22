@@ -38,12 +38,22 @@ func server() (string, error) {
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 		defer cancel()
-		c, err := tcpostgres.Run(ctx, Image,
-			tcpostgres.WithDatabase("spotter_test"),
-			tcpostgres.WithUsername("spotter"),
-			tcpostgres.WithPassword("spotter-test"),
-			tcpostgres.BasicWaitStrategies(),
-		)
+		var c *tcpostgres.PostgresContainer
+		var err error
+		// Retry: when several test binaries start containers at once, testcontainers'
+		// shared reaper can be mid-shutdown, and the first attempt fails (seen locally).
+		for attempt := range 3 {
+			c, err = tcpostgres.Run(ctx, Image,
+				tcpostgres.WithDatabase("spotter_test"),
+				tcpostgres.WithUsername("spotter"),
+				tcpostgres.WithPassword("spotter-test"),
+				tcpostgres.BasicWaitStrategies(),
+			)
+			if err == nil {
+				break
+			}
+			time.Sleep(time.Duration(attempt+1) * 2 * time.Second)
+		}
 		if err != nil {
 			initErr = fmt.Errorf("start postgres container: %w", err)
 			return

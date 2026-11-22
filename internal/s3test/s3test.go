@@ -50,13 +50,22 @@ func start() (Store, error) {
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 		defer cancel()
-		c, err := testcontainers.Run(ctx, Image,
-			testcontainers.WithEnv(map[string]string{"S3_ACCESS_KEY": "test-key", "S3_SECRET_KEY": "test-secret"}),
-			testcontainers.WithFiles(testcontainers.ContainerFile{HostFilePath: entrypoint, ContainerFilePath: "/entrypoint-spotter.sh", FileMode: 0o755}),
-			testcontainers.WithEntrypoint("/bin/sh", "/entrypoint-spotter.sh"),
-			testcontainers.WithExposedPorts("8333/tcp"),
-			testcontainers.WithWaitStrategy(wait.ForHTTP("/healthz").WithPort("8333/tcp").WithStartupTimeout(2*time.Minute)),
-		)
+		var c *testcontainers.DockerContainer
+		// Retry: testcontainers' shared reaper can be mid-shutdown when several test
+		// binaries start containers at once (seen locally with pgtest).
+		for attempt := range 3 {
+			c, err = testcontainers.Run(ctx, Image,
+				testcontainers.WithEnv(map[string]string{"S3_ACCESS_KEY": "test-key", "S3_SECRET_KEY": "test-secret"}),
+				testcontainers.WithFiles(testcontainers.ContainerFile{HostFilePath: entrypoint, ContainerFilePath: "/entrypoint-spotter.sh", FileMode: 0o755}),
+				testcontainers.WithEntrypoint("/bin/sh", "/entrypoint-spotter.sh"),
+				testcontainers.WithExposedPorts("8333/tcp"),
+				testcontainers.WithWaitStrategy(wait.ForHTTP("/healthz").WithPort("8333/tcp").WithStartupTimeout(2*time.Minute)),
+			)
+			if err == nil {
+				break
+			}
+			time.Sleep(time.Duration(attempt+1) * 2 * time.Second)
+		}
 		if err != nil {
 			initErr = fmt.Errorf("start seaweedfs: %w", err)
 			return
