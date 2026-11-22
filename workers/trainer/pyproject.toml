@@ -11,10 +11,14 @@ dependencies = [
   "numpy>=2.1",
   "boto3>=1.40",
   "grpcio>=1.85",
+  "onnx>=1.19",
+  "onnxruntime>=1.23",
+  "onnxscript>=0.5",
 ]
 
 [project.scripts]
 spotter-train = "spotter_trainer.cli:main"
+spotter-optimize = "spotter_trainer.optimize_cli:main"
 
 [tool.uv.sources]
 spotter-model = { workspace = true }
