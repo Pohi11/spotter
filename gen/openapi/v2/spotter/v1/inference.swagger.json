@@ -1,0 +1,259 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "spotter/v1/inference.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "InferenceService",
+      "description": "Asynchronous image classification. Served by the gateway over gRPC and REST."
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v1/inferences/{jobId}": {
+      "get": {
+        "summary": "Returns a job's status and, once it has finished, its result.",
+        "operationId": "InferenceService_GetInference",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetInferenceResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "jobId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "InferenceService"
+        ]
+      }
+    },
+    "/v1/models/{modelName}/inferences": {
+      "post": {
+        "summary": "Stores the image, records a PENDING job, publishes InferenceRequested, and returns\nthe job id without waiting for the result.",
+        "operationId": "InferenceService_SubmitInference",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1SubmitInferenceResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "modelName",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/InferenceServiceSubmitInferenceBody"
+            }
+          }
+        ],
+        "tags": [
+          "InferenceService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "InferenceServiceSubmitInferenceBody": {
+      "type": "object",
+      "properties": {
+        "image": {
+          "type": "string",
+          "format": "byte",
+          "description": "Encoded image (JPEG or PNG), at most 1 MiB. Base64 in JSON."
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "v1ClassScore": {
+      "type": "object",
+      "properties": {
+        "label": {
+          "type": "string"
+        },
+        "score": {
+          "type": "number",
+          "format": "float"
+        }
+      }
+    },
+    "v1GetInferenceResponse": {
+      "type": "object",
+      "properties": {
+        "job": {
+          "$ref": "#/definitions/v1InferenceJob"
+        }
+      }
+    },
+    "v1InferenceJob": {
+      "type": "object",
+      "properties": {
+        "jobId": {
+          "type": "string"
+        },
+        "modelName": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/definitions/v1JobStatus"
+        },
+        "prediction": {
+          "$ref": "#/definitions/v1Prediction",
+          "description": "Set when status is SUCCEEDED."
+        },
+        "error": {
+          "type": "string",
+          "description": "Set when status is FAILED."
+        },
+        "imageUri": {
+          "type": "string"
+        },
+        "submittedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "completedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "inputStats": {
+          "$ref": "#/definitions/v1InputStats",
+          "description": "Kept with the result so a redelivered job can re-publish an identical completion."
+        },
+        "inferenceMs": {
+          "type": "number",
+          "format": "float"
+        }
+      },
+      "description": "The job record. Also the value stored in the inference_jobs key-value bucket."
+    },
+    "v1InputStats": {
+      "type": "object",
+      "properties": {
+        "channelMean": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "format": "float"
+          },
+          "description": "Per-channel (R, G, B) mean and standard deviation of pixel values on a 0-1 scale."
+        },
+        "channelStd": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "format": "float"
+          }
+        }
+      },
+      "description": "Simple per-image statistics, for drift monitoring."
+    },
+    "v1JobStatus": {
+      "type": "string",
+      "enum": [
+        "JOB_STATUS_UNSPECIFIED",
+        "JOB_STATUS_PENDING",
+        "JOB_STATUS_SUCCEEDED",
+        "JOB_STATUS_FAILED"
+      ],
+      "default": "JOB_STATUS_UNSPECIFIED"
+    },
+    "v1Prediction": {
+      "type": "object",
+      "properties": {
+        "label": {
+          "type": "string"
+        },
+        "confidence": {
+          "type": "number",
+          "format": "float"
+        },
+        "scores": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1ClassScore"
+          },
+          "description": "Every class, in the model's output order."
+        },
+        "modelVersionId": {
+          "type": "string"
+        },
+        "modelVersion": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "v1SubmitInferenceResponse": {
+      "type": "object",
+      "properties": {
+        "jobId": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

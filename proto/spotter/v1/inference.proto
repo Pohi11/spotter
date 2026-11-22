@@ -1,0 +1,115 @@
+syntax = "proto3";
+
+package spotter.v1;
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+
+// Asynchronous image classification. Served by the gateway over gRPC and REST.
+service InferenceService {
+  // Stores the image, records a PENDING job, publishes InferenceRequested, and returns
+  // the job id without waiting for the result.
+  rpc SubmitInference(SubmitInferenceRequest) returns (SubmitInferenceResponse) {
+    option (google.api.http) = {
+      post: "/v1/models/{model_name}/inferences"
+      body: "*"
+    };
+  }
+
+  // Returns a job's status and, once it has finished, its result.
+  rpc GetInference(GetInferenceRequest) returns (GetInferenceResponse) {
+    option (google.api.http) = {get: "/v1/inferences/{job_id}"};
+  }
+}
+
+enum JobStatus {
+  JOB_STATUS_UNSPECIFIED = 0;
+  JOB_STATUS_PENDING = 1;
+  JOB_STATUS_SUCCEEDED = 2;
+  JOB_STATUS_FAILED = 3;
+}
+
+message ClassScore {
+  string label = 1;
+  float score = 2;
+}
+
+message Prediction {
+  string label = 1;
+  float confidence = 2;
+  // Every class, in the model's output order.
+  repeated ClassScore scores = 3;
+  string model_version_id = 4;
+  int32 model_version = 5;
+}
+
+// The job record. Also the value stored in the inference_jobs key-value bucket.
+message InferenceJob {
+  string job_id = 1;
+  string model_name = 2;
+  JobStatus status = 3;
+  // Set when status is SUCCEEDED.
+  Prediction prediction = 4;
+  // Set when status is FAILED.
+  string error = 5;
+  string image_uri = 6;
+  google.protobuf.Timestamp submitted_at = 7;
+  google.protobuf.Timestamp completed_at = 8;
+  // Kept with the result so a redelivered job can re-publish an identical completion.
+  InputStats input_stats = 9;
+  float inference_ms = 10;
+}
+
+message SubmitInferenceRequest {
+  string model_name = 1;
+  // Encoded image (JPEG or PNG), at most 1 MiB. Base64 in JSON.
+  bytes image = 2;
+}
+
+message SubmitInferenceResponse {
+  string job_id = 1;
+}
+
+message GetInferenceRequest {
+  string job_id = 1;
+}
+
+message GetInferenceResponse {
+  InferenceJob job = 1;
+}
+
+// Published by the gateway on inference.requested.<model_name>; message id = requested-<job_id>.
+message InferenceRequested {
+  string job_id = 1;
+  string model_name = 2;
+  string image_uri = 3;
+  google.protobuf.Timestamp submitted_at = 4;
+}
+
+// Simple per-image statistics, for drift monitoring.
+message InputStats {
+  // Per-channel (R, G, B) mean and standard deviation of pixel values on a 0-1 scale.
+  repeated float channel_mean = 1;
+  repeated float channel_std = 2;
+}
+
+// Published by a worker on inference.completed.<model_name>; message id = completed-<job_id>.
+message InferenceCompleted {
+  string job_id = 1;
+  string model_name = 2;
+  Prediction prediction = 3;
+  InputStats input_stats = 4;
+  // Time spent in the model, in milliseconds.
+  float inference_ms = 5;
+  google.protobuf.Timestamp completed_at = 6;
+}
+
+// Published by a worker on inference.failed.<model_name> when a job is dead-lettered.
+message InferenceFailed {
+  // Empty if the request could not be decoded.
+  string job_id = 1;
+  string model_name = 2;
+  string reason = 3;
+  uint64 deliveries = 4;
+  google.protobuf.Timestamp failed_at = 5;
+}
