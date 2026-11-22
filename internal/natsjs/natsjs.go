@@ -14,6 +14,7 @@ import (
 const (
 	InferenceStream = "INFERENCE"
 	RegistryStream  = "REGISTRY"
+	MonitorStream   = "MONITOR"
 	JobsBucket      = "inference_jobs"
 
 	// DuplicateWindow is how long a stream remembers message ids to drop duplicates.
@@ -43,6 +44,14 @@ func Streams() []jetstream.StreamConfig {
 			Subjects:    []string{"registry.events.>"},
 			Storage:     jetstream.FileStorage,
 			MaxAge:      7 * 24 * time.Hour,
+			Duplicates:  DuplicateWindow,
+		},
+		{
+			Name:        MonitorStream,
+			Description: "Drift detected and resolved events from the monitor",
+			Subjects:    []string{"monitor.>"},
+			Storage:     jetstream.FileStorage,
+			MaxAge:      30 * 24 * time.Hour,
 			Duplicates:  DuplicateWindow,
 		},
 	}

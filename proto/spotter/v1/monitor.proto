@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package spotter.v1;
+
+import "google/protobuf/timestamp.proto";
+
+// One feature's comparison of the recent window with the version's training-time reference.
+message FeatureDrift {
+  // mean_r, mean_g, mean_b, contrast, or confidence.
+  string feature = 1;
+  double psi = 2;
+  double ks_statistic = 3;
+  double ks_p_value = 4;
+  double reference_mean = 5;
+  double window_mean = 6;
+}
+
+// Published by the monitor on monitor.drift.detected.<model_name> when a version starts drifting.
+message DriftDetected {
+  string model_name = 1;
+  string version_id = 2;
+  int32 version = 3;
+  // The features at or above the drift threshold.
+  repeated FeatureDrift features = 4;
+  int32 window_size = 5;
+  google.protobuf.Timestamp detected_at = 6;
+}
+
+// Published by the monitor on monitor.drift.resolved.<model_name> when a version stops drifting.
+message DriftResolved {
+  string model_name = 1;
+  string version_id = 2;
+  int32 version = 3;
+  // Every feature's latest comparison.
+  repeated FeatureDrift features = 4;
+  google.protobuf.Timestamp resolved_at = 5;
+}

@@ -22,7 +22,7 @@ func TestFirstStartCreatesStreamsAndBucket(t *testing.T) {
 	if err := natsjs.Ensure(ctx, js); err != nil {
 		t.Fatal(err)
 	}
-	for name, subject := range map[string]string{natsjs.InferenceStream: "inference.>", natsjs.RegistryStream: "registry.events.>"} {
+	for name, subject := range map[string]string{natsjs.InferenceStream: "inference.>", natsjs.RegistryStream: "registry.events.>", natsjs.MonitorStream: "monitor.>"} {
 		s, err := js.Stream(ctx, name)
 		if err != nil {
 			t.Fatalf("stream %s: %v", name, err)
