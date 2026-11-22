@@ -1,37 +1,34 @@
 package main
 
 import (
-	"fmt"
 	"time"
+
+	"github.com/Pohi11/spotter/internal/svc"
 )
 
-// config is everything the registry reads from the environment (design D10).
+// config is everything the registry reads from the environment (design D10 of the
+// registry domain change).
 type config struct {
 	DatabaseURL     string
 	HTTPAddr        string
+	GRPCAddr        string
 	ShutdownTimeout time.Duration
 }
 
-// loadConfig reads the configuration through getenv (os.Getenv in production) and
-// names the variable in every error.
 func loadConfig(getenv func(string) string) (config, error) {
-	c := config{
-		DatabaseURL:     getenv("DATABASE_URL"),
-		HTTPAddr:        getenv("HTTP_ADDR"),
-		ShutdownTimeout: 10 * time.Second,
+	env := svc.Env(getenv)
+	dbURL, err := env.Required("DATABASE_URL")
+	if err != nil {
+		return config{}, err
 	}
-	if c.DatabaseURL == "" {
-		return config{}, fmt.Errorf("DATABASE_URL is required")
+	timeout, err := env.Duration("SHUTDOWN_TIMEOUT", 10*time.Second)
+	if err != nil {
+		return config{}, err
 	}
-	if c.HTTPAddr == "" {
-		c.HTTPAddr = ":8080"
-	}
-	if s := getenv("SHUTDOWN_TIMEOUT"); s != "" {
-		d, err := time.ParseDuration(s)
-		if err != nil || d <= 0 {
-			return config{}, fmt.Errorf("SHUTDOWN_TIMEOUT must be a positive duration like 10s, got %q", s)
-		}
-		c.ShutdownTimeout = d
-	}
-	return c, nil
+	return config{
+		DatabaseURL:     dbURL,
+		HTTPAddr:        env.Or("HTTP_ADDR", ":8080"),
+		GRPCAddr:        env.Or("GRPC_ADDR", ":9090"),
+		ShutdownTimeout: timeout,
+	}, nil
 }
