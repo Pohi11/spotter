@@ -91,7 +91,7 @@ sequenceDiagram
 
 - **At-least-once, one result per job** ([0009](docs/decisions/0009-at-least-once-inference-with-kv-job-state.md)): the worker records a result only if the job is still `PENDING` (compare-and-set on the KV revision), publishes the completion with a de-duplicating message id, and acks only after both. Tests stop the worker before it acks and before it records; the job still ends with exactly one result and one completion event.
 - **Retries and dead letters:** transient failures are retried with a delay; undecodable requests, undecodable images, and jobs on their last delivery are recorded `FAILED` and published to `inference.failed.<model>`.
-- **The worker serves the production version only,** verifies the artifact's SHA-256 against the registry before loading it, and reloads when a version enters or leaves production (it follows `registry.events.model_version_stage_changed`).
+- **The worker serves the production version,** verifies the artifact's SHA-256 against the registry before loading it, and reloads when a version enters or leaves production (it follows `registry.events.model_version_stage_changed`). It also runs the newest shadow version, if any, without letting it affect results (see [promotion](#promotion-and-rollback)).
 - **The registry's outbox is published** to JetStream in order, each record once per message id, and marked published only after the server acknowledges it.
 - **Streams are code:** `internal/natsjs` is the one definition of the streams and bucket; services apply it at startup, and `spotterctl setup` applies it for tools and CI.
 
@@ -119,7 +119,7 @@ One trace follows a request across every process and the message bus ([0010](doc
 - **The trace survives the outbox:** a registry change stores the active `traceparent` with its outbox record, and the relay attaches it when it publishes, so "operator promoted version 2" and "worker reloaded" land in one trace.
 - **Spans hold ids, versions, outcomes, and sizes, never image bytes or credentials**; a test records every span of a submission and checks.
 - **Prometheus metrics** at `/metrics` on every service: gRPC and HTTP request rate and duration, the worker's jobs by outcome, model time, and its consumer's pending messages.
-- Export is on when `OTEL_EXPORTER_OTLP_ENDPOINT` is set; otherwise tracing is a no-op that still propagates context. Locally, Jaeger is at http://localhost:16686 and Prometheus at http://localhost:9090.
+- Export is on when `OTEL_EXPORTER_OTLP_ENDPOINT` is set; otherwise tracing is a no-op that still propagates context. Locally, Jaeger is at http://localhost:16686 and Prometheus at http://localhost:9099.
 
 Spec: [observability](openspec/specs/observability/spec.md).
 
@@ -155,6 +155,25 @@ Measured against the live stack with `spotter-degrade` ([report](benchmarks/2026
 Darkening and haze move the brightness features; noise and blur mostly move the model's confidence. Mild blur would need a sharpness feature.
 
 Spec: [drift-monitoring](openspec/specs/drift-monitoring/spec.md).
+
+## Promotion and rollback
+
+A new version earns production on real traffic, through gates that are plain code, with a person's recorded approval ([0013](docs/decisions/0013-gated-promotion-shadow-traffic-human-approval.md)).
+
+- **Shadow:** while a version is in `shadow`, the worker classifies every job with it too, after the job is acknowledged, and publishes `ShadowCompared` (both labels, agreement, both model times) on `inference.shadow.<model>`. Results and completion events come from production only, and a failing shadow model never changes a job's outcome.
+- **Statistics:** the registry consumes the comparisons and stores one row per job, so a redelivered event is counted once.
+- **Gates:** `accuracy` (holdout ≥ production − 0.01), `shadow_agreement` (≥ 200 comparisons, ≥ 95% agreement), `shadow_latency` (mean ≤ 25 ms), and `approval` (≥ 1 recorded approval with name and reason). `GET /v1/versions/{id}/gates` shows each with its reason.
+- **Atomic swap:** `POST /v1/versions/{id}:promote` retires the current production version and promotes the candidate in one transaction, with both history entries and both events. `POST /v1/models/{name}:rollback` marks production `rolled_back` and restores the version most recently retired from production, also in one transaction. There is never zero or two production versions, and the generic transition endpoint refuses `production`.
+
+Measured on the live stack ([report](benchmarks/2026-11-22-promotion-run.md)), shadowing fp32 v2 against int8 v3 in production:
+
+| Shadow agreement | Promote → worker serving | Rollback → worker serving | Rollback under load |
+|---|---|---|---|
+| **99.9%** (818 of 819 jobs) | 232 ms | 457 ms | 496 jobs, **0 failed, 0 lost** |
+
+The run also exposed a worker problem: with two ONNX Runtime sessions, the default per-core thread pools busy-waited across 16 cores and slowed every service on the host to 7.5 jobs/s. Single-threaded models without spinning fixed it (43 jobs/s while shadowing, 63–65 without).
+
+Specs: [model-promotion](openspec/specs/model-promotion/spec.md), [shadow-inference](openspec/specs/shadow-inference/spec.md).
 
 ## Architecture
 
@@ -199,12 +218,15 @@ REGISTRY_ADDR=localhost:9090 uv run spotter-inference
 curl localhost:8080/v1/models/eurosat-classifier/versions
 ```
 
-Promote a validated version to production (`expectedRevision` is the version's current revision), then classify images:
+Put a validated version into shadow (`expectedRevision` is the version's current revision), send traffic, check its gates, approve it, and promote it; roll back if needed:
 
 ```bash
 curl -X POST localhost:8080/v1/versions/<id>:transition -d '{"toStage":"MODEL_VERSION_STAGE_SHADOW","reason":"shadow","expectedRevision":"2"}'
-curl -X POST localhost:8080/v1/versions/<id>:transition -d '{"toStage":"MODEL_VERSION_STAGE_PRODUCTION","reason":"promote","expectedRevision":"3"}'
 go run ./cmd/spotterctl infer data/eurosat/2750/Forest/Forest_1.jpg
+curl localhost:8080/v1/versions/<id>/gates
+curl -X POST localhost:8080/v1/versions/<id>:approve -d '{"approver":"<name>","reason":"<why>"}'
+curl -X POST localhost:8080/v1/versions/<id>:promote -d '{}'
+curl -X POST localhost:8080/v1/models/eurosat-classifier:rollback -d '{"reason":"<why>"}'
 ```
 
 Train a model and register it (downloads EuroSAT, about 94 MB, into `data/`):
