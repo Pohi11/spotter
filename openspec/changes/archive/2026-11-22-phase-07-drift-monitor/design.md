@@ -2,7 +2,7 @@
 
 ## Context
 
-The worker already publishes per-image input statistics (RGB channel means and standard deviations) and the prediction with every `InferenceCompleted` (change `phase-04-event-driven-inference`). Detection choices are recorded in decision record [0012](../../../docs/decisions/0012-drift-detection-psi-against-training-reference.md).
+The worker already publishes per-image input statistics (RGB channel means and standard deviations) and the prediction with every `InferenceCompleted` (change `phase-04-event-driven-inference`). Detection choices are recorded in decision record [0012](../../../../docs/decisions/0012-drift-detection-psi-against-training-reference.md).
 
 ## Features
 

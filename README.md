@@ -2,7 +2,7 @@
 
 A small, cloud-neutral platform for deploying and monitoring computer-vision models on overhead imagery. Register a model version, serve it behind REST and gRPC, run inference through an event bus, watch live traffic for drift, retrain, shadow-test the new version, and promote it through code-checked gates and a human approval, with rollback.
 
-Status: the registry, its API, a trained EuroSAT model, and event-driven inference are built. The sections below grow as each part is built.
+Status: registry and API, a trained EuroSAT model, event-driven inference, tracing and metrics, optimized model variants with load tests, and drift monitoring are built. Kubernetes deployment, shadow testing and promotion, and the dashboard come next.
 
 ## Model registry
 
@@ -138,6 +138,23 @@ ONNX fp32 matches PyTorch to 1.25e-6 in probability with no disagreeing predicti
 **End to end it's a different story** ([load tests](benchmarks/2026-11-22-load-tests.md)). `spotterload` (Go) drives the gateway and times each job from submission to its completion event. With 4 closed-loop clients, v1 and v3 both deliver about 60 jobs/s at a p50 of 64–67 ms: the model is about 3 ms of a 65 ms job. Jaeger spans show where the rest goes: **writing the image to the object store takes 50 of the 66 ms submit call**. A second worker didn't add throughput for the same reason. The next lever is the submit path (keep ~3 KB tiles inline instead of in the object store), not the model.
 
 Specs: [model-optimization](openspec/specs/model-optimization/spec.md), [load-testing](openspec/specs/load-testing/spec.md).
+
+## Drift monitoring
+
+The monitor (Go) watches every `InferenceCompleted` event and compares a sliding window of the last 200 per model version with that version's **training-time reference**: per-image channel brightness, contrast, and model confidence over the validation split, stored as `reference.json` beside the artifact and computed exactly as the worker computes them ([0012](docs/decisions/0012-drift-detection-psi-against-training-reference.md)).
+
+- **PSI** per feature every 50 events; `DriftDetected` when any feature reaches 0.2, `DriftResolved` when all fall below 0.1, published once per change on the `MONITOR` stream. The KS statistic and p-value ride along as evidence. PSI per feature is a Prometheus gauge.
+- PSI has a noise floor: with 10 bins and 200 events, identical distributions give about 0.047 on average (measured 0.051), which is why 0.2/0.1 rather than anything tighter.
+
+Measured against the live stack with `spotter-degrade` ([report](benchmarks/2026-11-22-drift-detection.md)):
+
+| Clean traffic | Darken | Haze | Noise | Blur |
+|---|---|---|---|---|
+| **0 false alarms** in 3,000 events | detected in 64–144 events | 124–150 | 62–161 | 167–215 at radius ≥ 1 px; **mild blur (0.5 px) not detected** |
+
+Darkening and haze move the brightness features; noise and blur mostly move the model's confidence. Mild blur would need a sharpness feature.
+
+Spec: [drift-monitoring](openspec/specs/drift-monitoring/spec.md).
 
 ## Architecture
 

@@ -44,3 +44,14 @@ If holdout accuracy is at least the configured floor (default 0.85), the trainer
 #### Scenario: Below the floor
 - **WHEN** a version's holdout accuracy is 0.80 and the floor is 0.85
 - **THEN** the version stays `registered`
+
+### Requirement: Each version carries a reference distribution
+Each published version SHALL have a `reference.json` next to its artifact holding, for every validation-split image, the features the worker reports at serving time — mean and standard deviation of each RGB channel on a 0–1 scale — and the version's top-class confidence. The features SHALL be computed exactly as the worker computes them.
+
+#### Scenario: Reference written with a version
+- **WHEN** a version is published
+- **THEN** `reference.json` next to its artifact holds one value per validation image for `mean_r`, `mean_g`, `mean_b`, `contrast`, and `confidence`
+
+#### Scenario: Same features as serving
+- **WHEN** the reference features of an image are compared with the input statistics the worker computes for the same JPEG
+- **THEN** they agree to within 1e-6
