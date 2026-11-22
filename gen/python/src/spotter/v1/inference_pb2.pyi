@@ -167,3 +167,17 @@ class InferenceFailed(_message.Message):
     deliveries: int
     failed_at: _timestamp_pb2.Timestamp
     def __init__(self, job_id: _Optional[str] = ..., model_name: _Optional[str] = ..., reason: _Optional[str] = ..., deliveries: _Optional[int] = ..., failed_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ...) -> None: ...
+
+class ClassifySyncRequest(_message.Message):
+    __slots__ = ("model_name", "image")
+    MODEL_NAME_FIELD_NUMBER: _ClassVar[int]
+    IMAGE_FIELD_NUMBER: _ClassVar[int]
+    model_name: str
+    image: bytes
+    def __init__(self, model_name: _Optional[str] = ..., image: _Optional[bytes] = ...) -> None: ...
+
+class ClassifySyncResponse(_message.Message):
+    __slots__ = ("prediction",)
+    PREDICTION_FIELD_NUMBER: _ClassVar[int]
+    prediction: Prediction
+    def __init__(self, prediction: _Optional[_Union[Prediction, _Mapping]] = ...) -> None: ...

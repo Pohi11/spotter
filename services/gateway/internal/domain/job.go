@@ -55,6 +55,8 @@ var (
 	ErrNotFound    = errors.New("not found")
 	ErrInvalid     = errors.New("invalid input")
 	ErrUnavailable = errors.New("a dependency is unavailable")
+	// ErrNotConfigured: an optional capability (synchronous classification) is off.
+	ErrNotConfigured = errors.New("not configured")
 )
 
 // ValidationError names the offending field. errors.Is(err, ErrInvalid) is true.

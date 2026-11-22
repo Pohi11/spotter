@@ -914,6 +914,103 @@ func (x *InferenceFailed) GetFailedAt() *timestamppb.Timestamp {
 	return nil
 }
 
+type ClassifySyncRequest struct {
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	ModelName string                 `protobuf:"bytes,1,opt,name=model_name,json=modelName,proto3" json:"model_name,omitempty"`
+	// Encoded image (JPEG or PNG), at most 1 MiB. Base64 in JSON.
+	Image         []byte `protobuf:"bytes,2,opt,name=image,proto3" json:"image,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ClassifySyncRequest) Reset() {
+	*x = ClassifySyncRequest{}
+	mi := &file_spotter_v1_inference_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ClassifySyncRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ClassifySyncRequest) ProtoMessage() {}
+
+func (x *ClassifySyncRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_spotter_v1_inference_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ClassifySyncRequest.ProtoReflect.Descriptor instead.
+func (*ClassifySyncRequest) Descriptor() ([]byte, []int) {
+	return file_spotter_v1_inference_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *ClassifySyncRequest) GetModelName() string {
+	if x != nil {
+		return x.ModelName
+	}
+	return ""
+}
+
+func (x *ClassifySyncRequest) GetImage() []byte {
+	if x != nil {
+		return x.Image
+	}
+	return nil
+}
+
+type ClassifySyncResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Prediction    *Prediction            `protobuf:"bytes,1,opt,name=prediction,proto3" json:"prediction,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ClassifySyncResponse) Reset() {
+	*x = ClassifySyncResponse{}
+	mi := &file_spotter_v1_inference_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ClassifySyncResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ClassifySyncResponse) ProtoMessage() {}
+
+func (x *ClassifySyncResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_spotter_v1_inference_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ClassifySyncResponse.ProtoReflect.Descriptor instead.
+func (*ClassifySyncResponse) Descriptor() ([]byte, []int) {
+	return file_spotter_v1_inference_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *ClassifySyncResponse) GetPrediction() *Prediction {
+	if x != nil {
+		return x.Prediction
+	}
+	return nil
+}
+
 var File_spotter_v1_inference_proto protoreflect.FileDescriptor
 
 const file_spotter_v1_inference_proto_rawDesc = "" +
@@ -1003,15 +1100,24 @@ const file_spotter_v1_inference_proto_rawDesc = "" +
 	"\n" +
 	"deliveries\x18\x04 \x01(\x04R\n" +
 	"deliveries\x127\n" +
-	"\tfailed_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\bfailedAt*p\n" +
+	"\tfailed_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\bfailedAt\"J\n" +
+	"\x13ClassifySyncRequest\x12\x1d\n" +
+	"\n" +
+	"model_name\x18\x01 \x01(\tR\tmodelName\x12\x14\n" +
+	"\x05image\x18\x02 \x01(\fR\x05image\"N\n" +
+	"\x14ClassifySyncResponse\x126\n" +
+	"\n" +
+	"prediction\x18\x01 \x01(\v2\x16.spotter.v1.PredictionR\n" +
+	"prediction*p\n" +
 	"\tJobStatus\x12\x1a\n" +
 	"\x16JOB_STATUS_UNSPECIFIED\x10\x00\x12\x16\n" +
 	"\x12JOB_STATUS_PENDING\x10\x01\x12\x18\n" +
 	"\x14JOB_STATUS_SUCCEEDED\x10\x02\x12\x15\n" +
-	"\x11JOB_STATUS_FAILED\x10\x032\x92\x02\n" +
+	"\x11JOB_STATUS_FAILED\x10\x032\x92\x03\n" +
 	"\x10InferenceService\x12\x89\x01\n" +
 	"\x0fSubmitInference\x12\".spotter.v1.SubmitInferenceRequest\x1a#.spotter.v1.SubmitInferenceResponse\"-\x82\xd3\xe4\x93\x02':\x01*\"\"/v1/models/{model_name}/inferences\x12r\n" +
-	"\fGetInference\x12\x1f.spotter.v1.GetInferenceRequest\x1a .spotter.v1.GetInferenceResponse\"\x1f\x82\xd3\xe4\x93\x02\x19\x12\x17/v1/inferences/{job_id}B\xa0\x01\n" +
+	"\fGetInference\x12\x1f.spotter.v1.GetInferenceRequest\x1a .spotter.v1.GetInferenceResponse\"\x1f\x82\xd3\xe4\x93\x02\x19\x12\x17/v1/inferences/{job_id}\x12~\n" +
+	"\fClassifySync\x12\x1f.spotter.v1.ClassifySyncRequest\x1a .spotter.v1.ClassifySyncResponse\"+\x82\xd3\xe4\x93\x02%:\x01*\" /v1/models/{model_name}:classifyB\xa0\x01\n" +
 	"\x0ecom.spotter.v1B\x0eInferenceProtoP\x01Z5github.com/Pohi11/spotter/gen/go/spotter/v1;spotterv1\xa2\x02\x03SXX\xaa\x02\n" +
 	"Spotter.V1\xca\x02\n" +
 	"Spotter\\V1\xe2\x02\x16Spotter\\V1\\GPBMetadata\xea\x02\vSpotter::V1b\x06proto3"
@@ -1029,7 +1135,7 @@ func file_spotter_v1_inference_proto_rawDescGZIP() []byte {
 }
 
 var file_spotter_v1_inference_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_spotter_v1_inference_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
+var file_spotter_v1_inference_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
 var file_spotter_v1_inference_proto_goTypes = []any{
 	(JobStatus)(0),                  // 0: spotter.v1.JobStatus
 	(*ClassScore)(nil),              // 1: spotter.v1.ClassScore
@@ -1044,31 +1150,36 @@ var file_spotter_v1_inference_proto_goTypes = []any{
 	(*InferenceCompleted)(nil),      // 10: spotter.v1.InferenceCompleted
 	(*ShadowCompared)(nil),          // 11: spotter.v1.ShadowCompared
 	(*InferenceFailed)(nil),         // 12: spotter.v1.InferenceFailed
-	(*timestamppb.Timestamp)(nil),   // 13: google.protobuf.Timestamp
+	(*ClassifySyncRequest)(nil),     // 13: spotter.v1.ClassifySyncRequest
+	(*ClassifySyncResponse)(nil),    // 14: spotter.v1.ClassifySyncResponse
+	(*timestamppb.Timestamp)(nil),   // 15: google.protobuf.Timestamp
 }
 var file_spotter_v1_inference_proto_depIdxs = []int32{
 	1,  // 0: spotter.v1.Prediction.scores:type_name -> spotter.v1.ClassScore
 	0,  // 1: spotter.v1.InferenceJob.status:type_name -> spotter.v1.JobStatus
 	2,  // 2: spotter.v1.InferenceJob.prediction:type_name -> spotter.v1.Prediction
-	13, // 3: spotter.v1.InferenceJob.submitted_at:type_name -> google.protobuf.Timestamp
-	13, // 4: spotter.v1.InferenceJob.completed_at:type_name -> google.protobuf.Timestamp
+	15, // 3: spotter.v1.InferenceJob.submitted_at:type_name -> google.protobuf.Timestamp
+	15, // 4: spotter.v1.InferenceJob.completed_at:type_name -> google.protobuf.Timestamp
 	9,  // 5: spotter.v1.InferenceJob.input_stats:type_name -> spotter.v1.InputStats
 	3,  // 6: spotter.v1.GetInferenceResponse.job:type_name -> spotter.v1.InferenceJob
-	13, // 7: spotter.v1.InferenceRequested.submitted_at:type_name -> google.protobuf.Timestamp
+	15, // 7: spotter.v1.InferenceRequested.submitted_at:type_name -> google.protobuf.Timestamp
 	2,  // 8: spotter.v1.InferenceCompleted.prediction:type_name -> spotter.v1.Prediction
 	9,  // 9: spotter.v1.InferenceCompleted.input_stats:type_name -> spotter.v1.InputStats
-	13, // 10: spotter.v1.InferenceCompleted.completed_at:type_name -> google.protobuf.Timestamp
-	13, // 11: spotter.v1.ShadowCompared.compared_at:type_name -> google.protobuf.Timestamp
-	13, // 12: spotter.v1.InferenceFailed.failed_at:type_name -> google.protobuf.Timestamp
-	4,  // 13: spotter.v1.InferenceService.SubmitInference:input_type -> spotter.v1.SubmitInferenceRequest
-	6,  // 14: spotter.v1.InferenceService.GetInference:input_type -> spotter.v1.GetInferenceRequest
-	5,  // 15: spotter.v1.InferenceService.SubmitInference:output_type -> spotter.v1.SubmitInferenceResponse
-	7,  // 16: spotter.v1.InferenceService.GetInference:output_type -> spotter.v1.GetInferenceResponse
-	15, // [15:17] is the sub-list for method output_type
-	13, // [13:15] is the sub-list for method input_type
-	13, // [13:13] is the sub-list for extension type_name
-	13, // [13:13] is the sub-list for extension extendee
-	0,  // [0:13] is the sub-list for field type_name
+	15, // 10: spotter.v1.InferenceCompleted.completed_at:type_name -> google.protobuf.Timestamp
+	15, // 11: spotter.v1.ShadowCompared.compared_at:type_name -> google.protobuf.Timestamp
+	15, // 12: spotter.v1.InferenceFailed.failed_at:type_name -> google.protobuf.Timestamp
+	2,  // 13: spotter.v1.ClassifySyncResponse.prediction:type_name -> spotter.v1.Prediction
+	4,  // 14: spotter.v1.InferenceService.SubmitInference:input_type -> spotter.v1.SubmitInferenceRequest
+	6,  // 15: spotter.v1.InferenceService.GetInference:input_type -> spotter.v1.GetInferenceRequest
+	13, // 16: spotter.v1.InferenceService.ClassifySync:input_type -> spotter.v1.ClassifySyncRequest
+	5,  // 17: spotter.v1.InferenceService.SubmitInference:output_type -> spotter.v1.SubmitInferenceResponse
+	7,  // 18: spotter.v1.InferenceService.GetInference:output_type -> spotter.v1.GetInferenceResponse
+	14, // 19: spotter.v1.InferenceService.ClassifySync:output_type -> spotter.v1.ClassifySyncResponse
+	17, // [17:20] is the sub-list for method output_type
+	14, // [14:17] is the sub-list for method input_type
+	14, // [14:14] is the sub-list for extension type_name
+	14, // [14:14] is the sub-list for extension extendee
+	0,  // [0:14] is the sub-list for field type_name
 }
 
 func init() { file_spotter_v1_inference_proto_init() }
@@ -1082,7 +1193,7 @@ func file_spotter_v1_inference_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_spotter_v1_inference_proto_rawDesc), len(file_spotter_v1_inference_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   12,
+			NumMessages:   14,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

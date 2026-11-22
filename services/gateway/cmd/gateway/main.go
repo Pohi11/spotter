@@ -3,7 +3,8 @@
 //
 // Configuration (environment variables): REGISTRY_ADDR, NATS_URL, S3_ENDPOINT,
 // S3_ACCESS_KEY, S3_SECRET_KEY (required); HTTP_ADDR (:8080), GRPC_ADDR (:9091),
-// S3_REGION (us-east-1), IMAGES_BUCKET (images), SHUTDOWN_TIMEOUT (10s).
+// S3_REGION (us-east-1), IMAGES_BUCKET (images), SHUTDOWN_TIMEOUT (10s), and WORKER_ADDR
+// (unset: synchronous classification off; the failure lab's baseline).
 package main
 
 import (
@@ -51,6 +52,7 @@ func main() {
 
 type config struct {
 	RegistryAddr, NATSURL, HTTPAddr, GRPCAddr string
+	WorkerAddr                                string
 	S3                                        s3images.Config
 	ShutdownTimeout                           time.Duration
 }
@@ -77,6 +79,7 @@ func loadConfig(getenv func(string) string) (config, error) {
 	c.GRPCAddr = env.Or("GRPC_ADDR", ":9091")
 	c.S3.Region = env.Or("S3_REGION", "us-east-1")
 	c.S3.Bucket = env.Or("IMAGES_BUCKET", "images")
+	c.WorkerAddr = env.Or("WORKER_ADDR", "")
 	return c, nil
 }
 
@@ -121,11 +124,21 @@ func run(ctx context.Context, getenv func(string) string, logger *slog.Logger, o
 		return fmt.Errorf("S3_ENDPOINT: %w", err)
 	}
 
-	service := app.NewService(app.Deps{
+	deps := app.Deps{
 		Images: images, Jobs: jobs, Pub: jobs,
 		Models: grpcapi.Catalog{Registry: spotterv1.NewRegistryServiceClient(registryConn)},
 		IDs:    uuidV7{}, Clock: systemClock{},
-	})
+	}
+	if cfg.WorkerAddr != "" {
+		workerConn, err := grpc.NewClient(cfg.WorkerAddr, grpc.WithTransportCredentials(insecure.NewCredentials()),
+			grpc.WithStatsHandler(otelgrpc.NewClientHandler()))
+		if err != nil {
+			return fmt.Errorf("WORKER_ADDR: %w", err)
+		}
+		defer workerConn.Close()
+		deps.Classifier = grpcapi.Worker{Client: spotterv1.NewClassifierServiceClient(workerConn)}
+	}
+	service := app.NewService(deps)
 	inference := grpcapi.New(service, logger)
 
 	grpcServer := grpc.NewServer(grpc.StatsHandler(otelgrpc.NewServerHandler()))

@@ -25,6 +25,11 @@ class InferenceServiceStub:
                 request_serializer=spotter_dot_v1_dot_inference__pb2.GetInferenceRequest.SerializeToString,
                 response_deserializer=spotter_dot_v1_dot_inference__pb2.GetInferenceResponse.FromString,
                 _registered_method=True)
+        self.ClassifySync = channel.unary_unary(
+                '/spotter.v1.InferenceService/ClassifySync',
+                request_serializer=spotter_dot_v1_dot_inference__pb2.ClassifySyncRequest.SerializeToString,
+                response_deserializer=spotter_dot_v1_dot_inference__pb2.ClassifySyncResponse.FromString,
+                _registered_method=True)
 
 
 class InferenceServiceServicer:
@@ -46,6 +51,15 @@ class InferenceServiceServicer:
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def ClassifySync(self, request, context):
+        """Classifies an image in the same call by asking the worker directly: no stored image,
+        no job, no event. The synchronous baseline for the failure lab (change
+        phase-11-failure-lab); UNIMPLEMENTED unless the gateway has WORKER_ADDR.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_InferenceServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -58,6 +72,11 @@ def add_InferenceServiceServicer_to_server(servicer, server):
                     servicer.GetInference,
                     request_deserializer=spotter_dot_v1_dot_inference__pb2.GetInferenceRequest.FromString,
                     response_serializer=spotter_dot_v1_dot_inference__pb2.GetInferenceResponse.SerializeToString,
+            ),
+            'ClassifySync': grpc.unary_unary_rpc_method_handler(
+                    servicer.ClassifySync,
+                    request_deserializer=spotter_dot_v1_dot_inference__pb2.ClassifySyncRequest.FromString,
+                    response_serializer=spotter_dot_v1_dot_inference__pb2.ClassifySyncResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -115,6 +134,33 @@ class InferenceService:
             '/spotter.v1.InferenceService/GetInference',
             spotter_dot_v1_dot_inference__pb2.GetInferenceRequest.SerializeToString,
             spotter_dot_v1_dot_inference__pb2.GetInferenceResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def ClassifySync(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/spotter.v1.InferenceService/ClassifySync',
+            spotter_dot_v1_dot_inference__pb2.ClassifySyncRequest.SerializeToString,
+            spotter_dot_v1_dot_inference__pb2.ClassifySyncResponse.FromString,
             options,
             channel_credentials,
             insecure,

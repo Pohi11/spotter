@@ -2,8 +2,8 @@
 
 ## 1. Synchronous baseline
 
-- [ ] 1.1 `classifier.proto` and `ClassifySync` in `inference.proto`; worker gRPC server and `SHADOW` (pytest against an in-process server).
-- [ ] 1.2 Gateway `ClassifySync` use case, `Classifier` port, gRPC adapter, `WORKER_ADDR` (Go tests: classified, not configured, worker down, unknown model).
+- [x] 1.1 `classifier.proto` and `ClassifySync` in `inference.proto`; worker gRPC server and `SHADOW` (pytest against an in-process server).
+- [x] 1.2 Gateway `ClassifySync` use case, `Classifier` port, gRPC adapter, `WORKER_ADDR` (Go tests: classified, not configured, worker down, unknown model).
 
 ## 2. Chaos runner
 

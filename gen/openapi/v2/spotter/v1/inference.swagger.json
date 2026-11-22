@@ -86,9 +86,58 @@
           "InferenceService"
         ]
       }
+    },
+    "/v1/models/{modelName}:classify": {
+      "post": {
+        "summary": "Classifies an image in the same call by asking the worker directly: no stored image,\nno job, no event. The synchronous baseline for the failure lab (change\nphase-11-failure-lab); UNIMPLEMENTED unless the gateway has WORKER_ADDR.",
+        "operationId": "InferenceService_ClassifySync",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ClassifySyncResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "modelName",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/InferenceServiceClassifySyncBody"
+            }
+          }
+        ],
+        "tags": [
+          "InferenceService"
+        ]
+      }
     }
   },
   "definitions": {
+    "InferenceServiceClassifySyncBody": {
+      "type": "object",
+      "properties": {
+        "image": {
+          "type": "string",
+          "format": "byte",
+          "description": "Encoded image (JPEG or PNG), at most 1 MiB. Base64 in JSON."
+        }
+      }
+    },
     "InferenceServiceSubmitInferenceBody": {
       "type": "object",
       "properties": {
@@ -136,6 +185,14 @@
         "score": {
           "type": "number",
           "format": "float"
+        }
+      }
+    },
+    "v1ClassifySyncResponse": {
+      "type": "object",
+      "properties": {
+        "prediction": {
+          "$ref": "#/definitions/v1Prediction"
         }
       }
     },

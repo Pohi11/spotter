@@ -138,14 +138,30 @@ func ToProto(j domain.Job) *spotterv1.InferenceJob {
 		pb.CompletedAt = timestamppb.New(j.CompletedAt)
 	}
 	if p := j.Prediction; p != nil {
-		pb.Prediction = &spotterv1.Prediction{
-			Label: p.Label, Confidence: p.Confidence, ModelVersionId: p.ModelVersionID, ModelVersion: int32(p.ModelVersion),
-		}
-		for _, s := range p.Scores {
-			pb.Prediction.Scores = append(pb.Prediction.Scores, &spotterv1.ClassScore{Label: s.Label, Score: s.Score})
-		}
+		pb.Prediction = PredictionToProto(*p)
 	}
 	return pb
+}
+
+// PredictionToProto converts a domain prediction to its wire form.
+func PredictionToProto(p domain.Prediction) *spotterv1.Prediction {
+	out := &spotterv1.Prediction{
+		Label: p.Label, Confidence: p.Confidence, ModelVersionId: p.ModelVersionID, ModelVersion: int32(p.ModelVersion),
+	}
+	for _, s := range p.Scores {
+		out.Scores = append(out.Scores, &spotterv1.ClassScore{Label: s.Label, Score: s.Score})
+	}
+	return out
+}
+
+// PredictionFromProto converts a wire prediction to the domain form.
+func PredictionFromProto(p *spotterv1.Prediction) domain.Prediction {
+	pred := domain.Prediction{Label: p.GetLabel(), Confidence: p.GetConfidence(),
+		ModelVersionID: p.GetModelVersionId(), ModelVersion: int(p.GetModelVersion())}
+	for _, s := range p.GetScores() {
+		pred.Scores = append(pred.Scores, domain.ClassScore{Label: s.GetLabel(), Score: s.GetScore()})
+	}
+	return pred
 }
 
 // FromProto converts the stored form back to a domain job.
@@ -165,12 +181,8 @@ func FromProto(pb *spotterv1.InferenceJob) (domain.Job, error) {
 		j.CompletedAt = pb.GetCompletedAt().AsTime()
 	}
 	if p := pb.GetPrediction(); p != nil {
-		pred := &domain.Prediction{Label: p.GetLabel(), Confidence: p.GetConfidence(),
-			ModelVersionID: p.GetModelVersionId(), ModelVersion: int(p.GetModelVersion())}
-		for _, s := range p.GetScores() {
-			pred.Scores = append(pred.Scores, domain.ClassScore{Label: s.GetLabel(), Score: s.GetScore()})
-		}
-		j.Prediction = pred
+		pred := PredictionFromProto(p)
+		j.Prediction = &pred
 	}
 	return j, nil
 }
