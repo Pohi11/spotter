@@ -53,6 +53,14 @@ type Repository interface {
 
 	// PendingOutbox lists unpublished outbox records, oldest first.
 	PendingOutbox(ctx context.Context, limit int) ([]OutboxRecord, error)
+	// MarkPublished records outbox records as published so they are not listed again.
+	MarkPublished(ctx context.Context, ids []uuid.UUID, at time.Time) error
+}
+
+// EventPublisher publishes one outbox record to the message bus and returns only after
+// the bus has acknowledged it. Publishing the same record twice must be harmless.
+type EventPublisher interface {
+	Publish(ctx context.Context, rec OutboxRecord) error
 }
 
 // EventEncoder turns domain events into outbox records.

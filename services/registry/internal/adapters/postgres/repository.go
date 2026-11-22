@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -208,6 +209,11 @@ func (r *Repository) PendingOutbox(ctx context.Context, limit int) ([]ports.Outb
 		out = append(out, rec)
 	}
 	return out, rows.Err()
+}
+
+func (r *Repository) MarkPublished(ctx context.Context, ids []uuid.UUID, at time.Time) error {
+	_, err := r.pool.Exec(ctx, `UPDATE outbox SET published_at = $1 WHERE id = ANY($2) AND published_at IS NULL`, at, ids)
+	return err
 }
 
 func insertOutbox(ctx context.Context, tx pgx.Tx, records []ports.OutboxRecord) error {

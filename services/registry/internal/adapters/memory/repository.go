@@ -7,6 +7,7 @@ import (
 	"maps"
 	"slices"
 	"sync"
+	"time"
 
 	"github.com/google/uuid"
 
@@ -17,19 +18,21 @@ import (
 // Repository is safe for concurrent use. Every method holds one mutex for its whole
 // duration, which plays the role of a database transaction.
 type Repository struct {
-	mu       sync.Mutex
-	models   map[uuid.UUID]domain.Model
-	versions map[uuid.UUID]domain.ModelVersion
-	history  map[uuid.UUID][]domain.StageChange
-	outbox   []ports.OutboxRecord
+	mu        sync.Mutex
+	models    map[uuid.UUID]domain.Model
+	versions  map[uuid.UUID]domain.ModelVersion
+	history   map[uuid.UUID][]domain.StageChange
+	outbox    []ports.OutboxRecord
+	published map[uuid.UUID]bool
 }
 
 // New returns an empty repository.
 func New() *Repository {
 	return &Repository{
-		models:   map[uuid.UUID]domain.Model{},
-		versions: map[uuid.UUID]domain.ModelVersion{},
-		history:  map[uuid.UUID][]domain.StageChange{},
+		models:    map[uuid.UUID]domain.Model{},
+		versions:  map[uuid.UUID]domain.ModelVersion{},
+		history:   map[uuid.UUID][]domain.StageChange{},
+		published: map[uuid.UUID]bool{},
 	}
 }
 
@@ -145,13 +148,27 @@ func (r *Repository) History(_ context.Context, versionID uuid.UUID) ([]domain.S
 func (r *Repository) PendingOutbox(_ context.Context, limit int) ([]ports.OutboxRecord, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	n := min(limit, len(r.outbox))
-	out := make([]ports.OutboxRecord, n)
-	for i, rec := range r.outbox[:n] {
+	var out []ports.OutboxRecord
+	for _, rec := range r.outbox {
+		if len(out) == limit {
+			break
+		}
+		if r.published[rec.ID] {
+			continue
+		}
 		rec.Payload = slices.Clone(rec.Payload)
-		out[i] = rec
+		out = append(out, rec)
 	}
 	return out, nil
+}
+
+func (r *Repository) MarkPublished(_ context.Context, ids []uuid.UUID, _ time.Time) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	for _, id := range ids {
+		r.published[id] = true
+	}
+	return nil
 }
 
 // clone copies the metrics map so callers never share it with the repository.

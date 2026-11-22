@@ -18,8 +18,11 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 	reflectionpb "google.golang.org/grpc/reflection/grpc_reflection_v1"
+	"google.golang.org/protobuf/proto"
 
 	spotterv1 "github.com/Pohi11/spotter/gen/go/spotter/v1"
+	"github.com/Pohi11/spotter/internal/natsjs"
+	"github.com/Pohi11/spotter/internal/natstest"
 	"github.com/Pohi11/spotter/internal/pgtest"
 	"github.com/Pohi11/spotter/internal/spectest"
 )
@@ -42,7 +45,7 @@ func TestMissingDatabaseURL(t *testing.T) {
 
 func TestInvalidShutdownTimeout(t *testing.T) {
 	spectest.Verifies(t, service, "Configuration comes from environment variables")
-	_, err := loadConfig(env(map[string]string{"DATABASE_URL": "postgres://x", "SHUTDOWN_TIMEOUT": "soon"}))
+	_, err := loadConfig(env(map[string]string{"DATABASE_URL": "postgres://x", "NATS_URL": "nats://x", "SHUTDOWN_TIMEOUT": "soon"}))
 	if err == nil || !strings.Contains(err.Error(), "SHUTDOWN_TIMEOUT") {
 		t.Fatalf("err = %v, want an error naming SHUTDOWN_TIMEOUT", err)
 	}
@@ -50,7 +53,7 @@ func TestInvalidShutdownTimeout(t *testing.T) {
 
 func TestDefaults(t *testing.T) {
 	spectest.Verifies(t, service, "Configuration comes from environment variables")
-	c, err := loadConfig(env(map[string]string{"DATABASE_URL": "postgres://x"}))
+	c, err := loadConfig(env(map[string]string{"DATABASE_URL": "postgres://x", "NATS_URL": "nats://x"}))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -61,12 +64,15 @@ func TestDefaults(t *testing.T) {
 
 type registry struct {
 	http, grpc string
+	nats       *natstest.Server
 	stop       func() error
 }
 
-// started runs the registry in the background on ports chosen by the OS.
+// started runs the registry in the background on ports chosen by the OS, with its own
+// embedded NATS server.
 func started(t *testing.T, dbURL string) registry {
 	t.Helper()
+	ns := natstest.Start(t)
 	ctx, cancel := context.WithCancel(context.Background())
 	var mu sync.Mutex
 	addrs := map[string]string{}
@@ -74,7 +80,7 @@ func started(t *testing.T, dbURL string) registry {
 	done := make(chan error, 1)
 	go func() {
 		done <- run(ctx, env(map[string]string{
-			"DATABASE_URL": dbURL, "HTTP_ADDR": "127.0.0.1:0", "GRPC_ADDR": "127.0.0.1:0", "SHUTDOWN_TIMEOUT": "5s",
+			"DATABASE_URL": dbURL, "NATS_URL": ns.URL, "HTTP_ADDR": "127.0.0.1:0", "GRPC_ADDR": "127.0.0.1:0", "SHUTDOWN_TIMEOUT": "5s",
 		}), quiet, func(name, addr string) {
 			mu.Lock()
 			defer mu.Unlock()
@@ -107,7 +113,7 @@ func started(t *testing.T, dbURL string) registry {
 		return stopErr
 	}
 	t.Cleanup(func() { _ = stop() })
-	return registry{http: addrs["http"], grpc: addrs["grpc"], stop: stop}
+	return registry{http: addrs["http"], grpc: addrs["grpc"], nats: ns, stop: stop}
 }
 
 func get(t *testing.T, url string) int {
@@ -245,5 +251,75 @@ func TestStopSignalShutsDownGracefully(t *testing.T) {
 			conn.Close()
 			t.Fatalf("%s port still accepts connections after shutdown", name)
 		}
+	}
+}
+
+func TestMissingNATSURL(t *testing.T) {
+	spectest.Verifies(t, service, "Configuration comes from environment variables")
+	_, err := loadConfig(env(map[string]string{"DATABASE_URL": "postgres://x"}))
+	if err == nil || !strings.Contains(err.Error(), "NATS_URL") {
+		t.Fatalf("err = %v, want an error naming NATS_URL", err)
+	}
+}
+
+func TestTransitionReachesTheStream(t *testing.T) {
+	spectest.Verifies(t, "event-streams", "The registry publishes its outbox")
+	dbURL := pgtest.NewSchema(t)
+	r := started(t, dbURL)
+	ctx := context.Background()
+	c := spotterv1.NewRegistryServiceClient(dial(t, r.grpc))
+	if _, err := c.RegisterModel(ctx, &spotterv1.RegisterModelRequest{Name: "eurosat-classifier"}); err != nil {
+		t.Fatal(err)
+	}
+	v, err := c.RegisterVersion(ctx, &spotterv1.RegisterVersionRequest{ModelName: "eurosat-classifier", ArtifactUri: "s3://m/k",
+		ArtifactSha256: "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b", Framework: "pytorch"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := c.TransitionVersion(ctx, &spotterv1.TransitionVersionRequest{VersionId: v.GetVersion().GetId(),
+		ToStage: spotterv1.ModelVersionStage_MODEL_VERSION_STAGE_VALIDATED, Reason: "eval passed", ExpectedRevision: 1}); err != nil {
+		t.Fatal(err)
+	}
+
+	_, js := r.nats.Connect(t)
+	var event spotterv1.ModelVersionStageChanged
+	deadline := time.Now().Add(10 * time.Second)
+	for {
+		s, err := js.Stream(ctx, natsjs.RegistryStream)
+		if err == nil {
+			if msg, err := s.GetLastMsgForSubject(ctx, "registry.events.model_version_stage_changed"); err == nil {
+				if err := proto.Unmarshal(msg.Data, &event); err != nil {
+					t.Fatal(err)
+				}
+				break
+			}
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("no stage-changed event reached the stream within 10s")
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
+	if event.GetVersionId() != v.GetVersion().GetId() || event.GetToStage() != spotterv1.ModelVersionStage_MODEL_VERSION_STAGE_VALIDATED {
+		t.Fatalf("event = %v", &event)
+	}
+
+	conn, err := pgx.Connect(ctx, dbURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer conn.Close(ctx)
+	deadline = time.Now().Add(5 * time.Second)
+	for {
+		var pending int
+		if err := conn.QueryRow(ctx, `SELECT count(*) FROM outbox WHERE published_at IS NULL`).Scan(&pending); err != nil {
+			t.Fatal(err)
+		}
+		if pending == 0 {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("%d outbox records still unpublished", pending)
+		}
+		time.Sleep(100 * time.Millisecond)
 	}
 }

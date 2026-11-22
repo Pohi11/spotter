@@ -84,6 +84,7 @@ func Run(t *testing.T, newRepo func(t *testing.T) ports.Repository) {
 		{"RegistrationEvent", registrationEvent},
 		{"TransitionEvent", transitionEvent},
 		{"FailedTransitionsStoreNoEvent", failedTransitionsStoreNoEvent},
+		{"MarkPublished", markPublished},
 	}
 	for _, sc := range scenarios {
 		t.Run(sc.name, func(t *testing.T) {
@@ -523,6 +524,28 @@ func transitionEvent(t *testing.T, h *harness) {
 		ev.GetToStage() != spotterv1.ModelVersionStage_MODEL_VERSION_STAGE_VALIDATED ||
 		ev.GetRevision() != 2 || ev.GetReason() == "" || ev.GetVersionId() != v.ID.String() {
 		t.Fatalf("decoded event = %v", &ev)
+	}
+}
+
+func markPublished(t *testing.T, h *harness) {
+	spectest.Verifies(t, "event-streams", "The registry publishes its outbox")
+	h.model("eurosat-classifier")
+	h.move(h.version("eurosat-classifier"), domain.StageValidated)
+	recs := h.outbox()
+	if len(recs) != 2 {
+		t.Fatalf("outbox = %d records, want 2", len(recs))
+	}
+	if err := h.repo.MarkPublished(ctx, []uuid.UUID{recs[0].ID}, time.Now()); err != nil {
+		t.Fatal(err)
+	}
+	if left := h.outbox(); len(left) != 1 || left[0].ID != recs[1].ID {
+		t.Fatalf("pending after marking the first = %+v", left)
+	}
+	if err := h.repo.MarkPublished(ctx, []uuid.UUID{recs[0].ID, recs[1].ID}, time.Now()); err != nil {
+		t.Fatal(err) // marking twice is harmless
+	}
+	if left := h.outbox(); len(left) != 0 {
+		t.Fatalf("%d records still pending", len(left))
 	}
 }
 
