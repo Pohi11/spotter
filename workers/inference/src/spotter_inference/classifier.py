@@ -38,6 +38,6 @@ async def serve_classifier(port: int, model: Callable[[], LoadedModel | None]) -
     """Start the gRPC classifier on port (0 picks one; read it from the returned server)."""
     server = grpc.aio.server()
     crpc.add_ClassifierServiceServicer_to_server(Classifier(model), server)
-    server.bound_port = server.add_insecure_port(f"[::]:{port}")
+    server.bound_port = server.add_insecure_port(f"0.0.0.0:{port}")
     await server.start()
     return server
