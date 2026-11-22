@@ -32,8 +32,15 @@ Each comparison SHALL also report the two-sample Kolmogorov–Smirnov statistic 
 - **WHEN** the window equals the reference
 - **THEN** D is 0 and the p-value is 1
 
+### Requirement: Drift events describe the shifted features
+A `spotter.v1.DriftDetected` event SHALL name each feature whose PSI is at least 0.2, with its PSI, KS statistic, KS p-value, reference mean, and window mean.
+
+#### Scenario: Event contents
+- **WHEN** drift is detected because brightness shifted
+- **THEN** the event lists the brightness features with PSI at least 0.2 and their reference and window means
+
 ### Requirement: Drift is announced once per change of state
-The monitor SHALL evaluate a model version every 50 events once its window holds 200 events. It SHALL publish one `spotter.v1.DriftDetected` on `monitor.drift.detected.<model>`, naming each feature whose PSI is at least 0.2 with its PSI, KS statistic, KS p-value, reference mean, and window mean, when the version moves from not drifting to drifting, and one `spotter.v1.DriftResolved` on `monitor.drift.resolved.<model>` when every feature's PSI falls below 0.1. Evaluations that don't change the state SHALL publish nothing.
+Once a version's window holds 200 events, the monitor SHALL evaluate it every 50 events. It SHALL publish one `DriftDetected` on `monitor.drift.detected.<model>` when any feature's PSI reaches 0.2 while not drifting, and one `DriftResolved` on `monitor.drift.resolved.<model>` when every PSI falls below 0.1 while drifting. Other evaluations SHALL publish nothing.
 
 #### Scenario: Clean traffic
 - **WHEN** a version receives events drawn from its reference distribution
