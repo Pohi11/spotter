@@ -2,7 +2,7 @@
 
 ## Context
 
-The registry writes events to an outbox (change `phase-01-registry-domain`); there is a trained, registered model (change `phase-03-model-training`); NATS JetStream and SeaweedFS run locally (decision records [0003](../../../docs/decisions/0003-object-store-seaweedfs.md), [0004](../../../docs/decisions/0004-local-dev-topology.md)). Delivery semantics are recorded in decision record [0009](../../../docs/decisions/0009-at-least-once-inference-with-kv-job-state.md).
+The registry writes events to an outbox (change `phase-01-registry-domain`); there is a trained, registered model (change `phase-03-model-training`); NATS JetStream and SeaweedFS run locally (decision records [0003](../../../../docs/decisions/0003-object-store-seaweedfs.md), [0004](../../../../docs/decisions/0004-local-dev-topology.md)). Delivery semantics are recorded in decision record [0009](../../../../docs/decisions/0009-at-least-once-inference-with-kv-job-state.md).
 
 ## Flow
 
