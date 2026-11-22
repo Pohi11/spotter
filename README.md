@@ -2,7 +2,7 @@
 
 A small, cloud-neutral platform for deploying and monitoring computer-vision models on overhead imagery. Register a model version, serve it behind REST and gRPC, run inference through an event bus, watch live traffic for drift, retrain, shadow-test the new version, and promote it through code-checked gates and a human approval, with rollback.
 
-Status: registry and API, a trained EuroSAT model, event-driven inference, tracing and metrics, optimized model variants with load tests, and drift monitoring are built. Kubernetes deployment, shadow testing and promotion, and the dashboard come next.
+Status: registry and API, a trained EuroSAT model, event-driven inference, tracing and metrics, optimized model variants with load tests, drift monitoring, shadow testing with gated promotion and rollback, and Kubernetes deployment are built. The dashboard comes next.
 
 ## Model registry
 
