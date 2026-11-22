@@ -88,6 +88,7 @@ func registeredVersionWithReference(t *testing.T, st s3test.Store, regAddr strin
 func TestDarkenedTrafficRaisesDriftDetectedAndPSIGauge(t *testing.T) {
 	spectest.Verifies(t, capability, "Drift is announced once per change of state")
 	spectest.Verifies(t, capability, "The monitor process is configured from the environment and observable")
+	spectest.Verifies(t, capability, "Every evaluation is published")
 	ns := natstest.Start(t)
 	st := s3test.Start(t)
 	lis, err := net.Listen("tcp", "127.0.0.1:0")
@@ -157,6 +158,21 @@ func TestDarkenedTrafficRaisesDriftDetectedAndPSIGauge(t *testing.T) {
 	}
 	if detected.GetVersionId() != versionID || len(detected.GetFeatures()) == 0 {
 		t.Fatalf("DriftDetected = %v", &detected)
+	}
+	s, err := js.Stream(context.Background(), natsjs.MonitorStream)
+	if err != nil {
+		t.Fatal(err)
+	}
+	m, err := s.GetLastMsgForSubject(context.Background(), "monitor.drift.evaluated.eurosat-classifier")
+	if err != nil {
+		t.Fatalf("no DriftEvaluated on the stream: %v", err)
+	}
+	var evaluated spotterv1.DriftEvaluated
+	if err := proto.Unmarshal(m.Data, &evaluated); err != nil {
+		t.Fatal(err)
+	}
+	if !evaluated.GetDrifting() || len(evaluated.GetFeatures()) != 5 || m.Header.Get(natsjs.EventTypeHeader) != "spotter.v1.DriftEvaluated" {
+		t.Fatalf("DriftEvaluated = %v, header %q", &evaluated, m.Header.Get(natsjs.EventTypeHeader))
 	}
 
 	mu.Lock()

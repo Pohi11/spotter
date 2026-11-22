@@ -107,12 +107,24 @@ func (r *References) Reference(ctx context.Context, versionID string) (domain.Re
 // Publisher implements ports.Publisher on the MONITOR stream.
 type Publisher struct{ JS jetstream.JetStream }
 
-func (p Publisher) Publish(ctx context.Context, e ports.DriftEvent) error {
-	features := make([]*spotterv1.FeatureDrift, len(e.Results))
-	for i, r := range e.Results {
+func featureDrift(results []domain.Result) []*spotterv1.FeatureDrift {
+	features := make([]*spotterv1.FeatureDrift, len(results))
+	for i, r := range results {
 		features[i] = &spotterv1.FeatureDrift{Feature: string(r.Feature), Psi: r.PSI, KsStatistic: r.KSStatistic,
 			KsPValue: r.KSPValue, ReferenceMean: r.ReferenceMean, WindowMean: r.WindowMean}
 	}
+	return features
+}
+
+// PublishEvaluation sends a DriftEvaluated on monitor.drift.evaluated.<model>.
+func (p Publisher) PublishEvaluation(ctx context.Context, e ports.Evaluation) error {
+	return p.send(ctx, "monitor.drift.evaluated."+e.Model, e.DedupKey, &spotterv1.DriftEvaluated{
+		ModelName: e.Model, VersionId: e.VersionID, Version: int32(e.Version), Features: featureDrift(e.Results),
+		WindowSize: int32(e.WindowSize), Drifting: e.Drifting, EvaluatedAt: timestamppb.New(e.At)})
+}
+
+func (p Publisher) Publish(ctx context.Context, e ports.DriftEvent) error {
+	features := featureDrift(e.Results)
 	var (
 		subject string
 		msg     proto.Message
@@ -129,12 +141,16 @@ func (p Publisher) Publish(ctx context.Context, e ports.DriftEvent) error {
 	default:
 		return nil
 	}
+	return p.send(ctx, subject, e.DedupKey, msg)
+}
+
+func (p Publisher) send(ctx context.Context, subject, msgID string, msg proto.Message) error {
 	data, err := proto.Marshal(msg)
 	if err != nil {
 		return err
 	}
 	m := &nats.Msg{Subject: subject, Data: data, Header: nats.Header{}}
-	m.Header.Set(jetstream.MsgIDHeader, e.DedupKey)
+	m.Header.Set(jetstream.MsgIDHeader, msgID)
 	m.Header.Set(natsjs.EventTypeHeader, string(msg.ProtoReflect().Descriptor().FullName()))
 	_, err = p.JS.PublishMsg(ctx, m)
 	return err

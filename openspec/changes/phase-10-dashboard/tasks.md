@@ -2,11 +2,11 @@
 
 ## 1. Decisions
 
-- [ ] 1.1 Decision records 0016 (dashboard and event feed) and 0017 (TypeScript test traceability); speccheck reads requirement tags in JUnit test names (`speccheck_test.go`).
+- [x] 1.1 Decision records 0016 (dashboard and event feed) and 0017 (TypeScript test traceability); speccheck reads requirement tags in JUnit test names (`speccheck_test.go`).
 
 ## 2. Platform
 
-- [ ] 2.1 `DriftEvaluated` in `monitor.proto`; the monitor publishes it at every evaluation (`app` tests with fakes).
+- [x] 2.1 `DriftEvaluated` in `monitor.proto`; the monitor publishes it at every evaluation (`app` tests with fakes).
 - [ ] 2.2 Gateway event feed: `domain.Event`, `ports.EventSource`, `adapters/natsevents`, `GET /v1/events` handler (tests against embedded JetStream: live, unknown type, replay, bad window, disconnect, keep-alive).
 
 ## 3. Dashboard

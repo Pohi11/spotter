@@ -35,3 +35,18 @@ message DriftResolved {
   repeated FeatureDrift features = 4;
   google.protobuf.Timestamp resolved_at = 5;
 }
+
+// Published by the monitor on monitor.drift.evaluated.<model_name> at every evaluation of a
+// version's window (every 50 events once it holds 200), whether or not the state changed.
+// Message id: evaluated-<version_id>-<stream sequence of the completion that triggered it>.
+message DriftEvaluated {
+  string model_name = 1;
+  string version_id = 2;
+  int32 version = 3;
+  // Every feature's comparison.
+  repeated FeatureDrift features = 4;
+  int32 window_size = 5;
+  // Whether the version is drifting after this evaluation.
+  bool drifting = 6;
+  google.protobuf.Timestamp evaluated_at = 7;
+}

@@ -30,9 +30,23 @@ type DriftEvent struct {
 	DedupKey string
 }
 
-// Publisher announces drift state changes.
+// Evaluation is one comparison of a version's window with its reference, published
+// whether or not the drift state changed.
+type Evaluation struct {
+	Model      string
+	VersionID  string
+	Version    int
+	Results    []domain.Result // every feature
+	WindowSize int
+	Drifting   bool // after this evaluation
+	At         time.Time
+	DedupKey   string
+}
+
+// Publisher announces drift state changes and every evaluation.
 type Publisher interface {
 	Publish(ctx context.Context, e DriftEvent) error
+	PublishEvaluation(ctx context.Context, e Evaluation) error
 }
 
 // Metrics records what the monitor sees.
