@@ -2,8 +2,6 @@ package main
 
 import (
 	"bufio"
-	"encoding/json"
-	"encoding/xml"
 	"fmt"
 	"io"
 	"io/fs"
@@ -11,6 +9,8 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+
+	"github.com/Pohi11/spotter/internal/testreport"
 )
 
 // Requirement identifies one "### Requirement:" block in a spec.
@@ -60,112 +60,45 @@ func ReadRequirements(fsys fs.FS) ([]Requirement, error) {
 	return out, err
 }
 
-// testEvent is one line of `go test -json` output.
-type testEvent struct {
-	Action  string
-	Package string
-	Test    string
-	Output  string
-}
-
 // Link is a test that named a requirement, with its final result.
 type Link struct {
 	Requirement Requirement
-	Test        string // "package TestName/subtest"
+	Test        string // "package TestName/subtest" or "classname name"
 	Passed      bool
 }
 
-var specLine = regexp.MustCompile(`spec: ([a-z][a-z0-9-]*): (.+?)\s*$`)
+// links turns test cases into requirement links (reports are read by internal/testreport).
+func links(cases []testreport.Case) ([]Link, error) {
+	var out []Link
+	for _, c := range cases {
+		for _, r := range c.Requirements {
+			capability, title, ok := strings.Cut(r, ": ")
+			if !ok {
+				return nil, fmt.Errorf("test %s names malformed requirement %q", c.ID, r)
+			}
+			out = append(out, Link{Requirement: Requirement{Capability: capability, Title: title}, Test: c.ID, Passed: c.Status == "passed"})
+		}
+	}
+	return out, nil
+}
 
 // ReadGoLinks parses a `go test -json` stream into requirement links.
 func ReadGoLinks(r io.Reader) ([]Link, error) {
-	type key struct{ pkg, test string }
-	named := map[key][]Requirement{}
-	result := map[key]string{}
-
-	dec := json.NewDecoder(r)
-	for {
-		var ev testEvent
-		if err := dec.Decode(&ev); err == io.EOF {
-			break
-		} else if err != nil {
-			return nil, fmt.Errorf("read go test -json: %w", err)
-		}
-		if ev.Test == "" {
-			continue
-		}
-		k := key{ev.Package, ev.Test}
-		switch ev.Action {
-		case "output":
-			if m := specLine.FindStringSubmatch(ev.Output); m != nil {
-				named[k] = append(named[k], Requirement{Capability: m[1], Title: m[2]})
-			}
-		case "pass", "fail", "skip":
-			result[k] = ev.Action
-		}
+	cases, err := testreport.ReadGo(r)
+	if err != nil {
+		return nil, err
 	}
-
-	var links []Link
-	for k, reqs := range named {
-		for _, req := range reqs {
-			links = append(links, Link{Requirement: req, Test: k.pkg + " " + k.test, Passed: result[k] == "pass"})
-		}
-	}
-	return links, nil
+	return links(cases)
 }
-
-// junitSuites matches pytest's JUnit XML: <testsuites><testsuite><testcase> with
-// <properties><property name="spec" value="capability: requirement"/></properties>.
-type junitSuites struct {
-	Suites []struct {
-		Cases []junitCase `xml:"testcase"`
-	} `xml:"testsuite"`
-}
-
-type junitCase struct {
-	Class      string `xml:"classname,attr"`
-	Name       string `xml:"name,attr"`
-	Properties []struct {
-		Name  string `xml:"name,attr"`
-		Value string `xml:"value,attr"`
-	} `xml:"properties>property"`
-	Failure *struct{} `xml:"failure"`
-	Error   *struct{} `xml:"error"`
-	Skipped *struct{} `xml:"skipped"`
-}
-
-// nameTag matches a requirement tag in a test name, "[spec: capability: requirement]",
-// which TypeScript tests (Vitest, Playwright) use because their JUnit reporters can't
-// write properties (decision record 0017).
-var nameTag = regexp.MustCompile(`\[spec: ([a-z][a-z0-9-]*): ([^\]]+?)\]`)
 
 // ReadJUnitLinks parses a JUnit XML report into requirement links: pytest's spec
-// properties and requirement tags in test names.
+// properties and requirement tags in test names (decision record 0017).
 func ReadJUnitLinks(r io.Reader) ([]Link, error) {
-	var doc junitSuites
-	if err := xml.NewDecoder(r).Decode(&doc); err != nil {
-		return nil, fmt.Errorf("read junit xml: %w", err)
+	cases, _, err := testreport.ReadJUnit(r)
+	if err != nil {
+		return nil, err
 	}
-	var links []Link
-	for _, s := range doc.Suites {
-		for _, c := range s.Cases {
-			passed := c.Failure == nil && c.Error == nil && c.Skipped == nil
-			for _, p := range c.Properties {
-				if p.Name != "spec" {
-					continue
-				}
-				capability, title, ok := strings.Cut(p.Value, ": ")
-				if !ok {
-					return nil, fmt.Errorf("junit: test %s.%s has malformed spec property %q", c.Class, c.Name, p.Value)
-				}
-				links = append(links, Link{Requirement: Requirement{Capability: capability, Title: title}, Test: c.Class + " " + c.Name, Passed: passed})
-			}
-			for _, m := range nameTag.FindAllStringSubmatch(c.Name, -1) {
-				links = append(links, Link{Requirement: Requirement{Capability: m[1], Title: m[2]}, Test: c.Class + " " + c.Name, Passed: passed})
-			}
-		}
-	}
-	return links, nil
+	return links(cases)
 }
 
 // Report is the result of joining requirements with test links.
