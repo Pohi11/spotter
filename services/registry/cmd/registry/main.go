@@ -18,6 +18,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
@@ -26,6 +27,7 @@ import (
 	spotterv1 "github.com/Pohi11/spotter/gen/go/spotter/v1"
 	"github.com/Pohi11/spotter/internal/natsjs"
 	"github.com/Pohi11/spotter/internal/svc"
+	"github.com/Pohi11/spotter/internal/telemetry"
 	"github.com/Pohi11/spotter/services/registry/internal/adapters/grpcapi"
 	"github.com/Pohi11/spotter/services/registry/internal/adapters/natspub"
 	"github.com/Pohi11/spotter/services/registry/internal/adapters/postgres"
@@ -53,6 +55,11 @@ func run(ctx context.Context, getenv func(string) string, logger *slog.Logger, o
 	if err != nil {
 		return err
 	}
+	tel, err := telemetry.Setup(ctx, "registry")
+	if err != nil {
+		return fmt.Errorf("telemetry: %w", err)
+	}
+	defer func() { _ = tel.Shutdown(context.Background()) }()
 
 	pool, err := pgxpool.New(ctx, cfg.DatabaseURL)
 	if err != nil {
@@ -91,7 +98,7 @@ func run(ctx context.Context, getenv func(string) string, logger *slog.Logger, o
 	}()
 	defer func() { <-relayDone }()
 
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(grpc.StatsHandler(otelgrpc.NewServerHandler()))
 	spotterv1.RegisterRegistryServiceServer(grpcServer, grpcapi.New(service, logger))
 	healthServer := health.NewServer()
 	healthServer.SetServingStatus(spotterv1.RegistryService_ServiceDesc.ServiceName, healthpb.HealthCheckResponse_SERVING)
@@ -105,7 +112,7 @@ func run(ctx context.Context, getenv func(string) string, logger *slog.Logger, o
 		// Report NOT_SERVING first so load balancers stop routing before connections close.
 		BeforeShutdown: healthServer.Shutdown,
 	},
-		svc.Listener{Name: "http", Addr: cfg.HTTPAddr, Server: svc.HTTP(healthHandler(pool))},
+		svc.Listener{Name: "http", Addr: cfg.HTTPAddr, Server: svc.HTTP(healthHandler(pool, tel.Metrics))},
 		svc.Listener{Name: "grpc", Addr: cfg.GRPCAddr, Server: svc.GRPC(grpcServer)},
 	)
 }

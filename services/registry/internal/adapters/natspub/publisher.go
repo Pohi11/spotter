@@ -22,6 +22,10 @@ func (p Publisher) Publish(ctx context.Context, rec ports.OutboxRecord) error {
 	msg := &nats.Msg{Subject: Subject(rec.Type), Data: rec.Payload, Header: nats.Header{}}
 	msg.Header.Set(jetstream.MsgIDHeader, rec.ID.String())
 	msg.Header.Set(natsjs.EventTypeHeader, rec.Type)
+	if rec.TraceParent != "" {
+		// The trace of the request that wrote the record, not of this relay pass.
+		msg.Header.Set("traceparent", rec.TraceParent)
+	}
 	_, err := p.JS.PublishMsg(ctx, msg)
 	return err
 }

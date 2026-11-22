@@ -19,6 +19,9 @@ type OutboxRecord struct {
 	AggregateID uuid.UUID // the model version the event is about
 	Payload     []byte
 	OccurredAt  time.Time
+	// TraceParent is the W3C traceparent active when the record was written ("" if none).
+	// Adapters fill it from the context; the publisher attaches it as a header.
+	TraceParent string
 }
 
 // Repository stores models, versions, history, and outbox records.

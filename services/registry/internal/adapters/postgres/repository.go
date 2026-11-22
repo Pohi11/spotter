@@ -14,6 +14,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"github.com/Pohi11/spotter/internal/telemetry"
 	"github.com/Pohi11/spotter/services/registry/internal/domain"
 	"github.com/Pohi11/spotter/services/registry/internal/ports"
 )
@@ -193,7 +194,7 @@ func (r *Repository) History(ctx context.Context, versionID uuid.UUID) ([]domain
 
 func (r *Repository) PendingOutbox(ctx context.Context, limit int) ([]ports.OutboxRecord, error) {
 	rows, err := r.pool.Query(ctx, `
-		SELECT id, event_type, aggregate_id, payload, occurred_at
+		SELECT id, event_type, aggregate_id, payload, occurred_at, trace_parent
 		FROM outbox WHERE published_at IS NULL ORDER BY occurred_at, id LIMIT $1`, limit)
 	if err != nil {
 		return nil, err
@@ -202,7 +203,7 @@ func (r *Repository) PendingOutbox(ctx context.Context, limit int) ([]ports.Outb
 	var out []ports.OutboxRecord
 	for rows.Next() {
 		var rec ports.OutboxRecord
-		if err := rows.Scan(&rec.ID, &rec.Type, &rec.AggregateID, &rec.Payload, &rec.OccurredAt); err != nil {
+		if err := rows.Scan(&rec.ID, &rec.Type, &rec.AggregateID, &rec.Payload, &rec.OccurredAt, &rec.TraceParent); err != nil {
 			return nil, err
 		}
 		rec.OccurredAt = rec.OccurredAt.UTC()
@@ -219,9 +220,9 @@ func (r *Repository) MarkPublished(ctx context.Context, ids []uuid.UUID, at time
 func insertOutbox(ctx context.Context, tx pgx.Tx, records []ports.OutboxRecord) error {
 	for _, rec := range records {
 		if _, err := tx.Exec(ctx, `
-			INSERT INTO outbox (id, event_type, aggregate_id, payload, occurred_at)
-			VALUES ($1, $2, $3, $4, $5)`,
-			rec.ID, rec.Type, rec.AggregateID, rec.Payload, rec.OccurredAt); err != nil {
+			INSERT INTO outbox (id, event_type, aggregate_id, payload, occurred_at, trace_parent)
+			VALUES ($1, $2, $3, $4, $5, $6)`,
+			rec.ID, rec.Type, rec.AggregateID, rec.Payload, rec.OccurredAt, telemetry.TraceParent(ctx)); err != nil {
 			return fmt.Errorf("insert outbox record %s: %w", rec.ID, err)
 		}
 	}

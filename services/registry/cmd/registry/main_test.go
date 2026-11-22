@@ -17,6 +17,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
+	"google.golang.org/grpc/metadata"
 	reflectionpb "google.golang.org/grpc/reflection/grpc_reflection_v1"
 	"google.golang.org/protobuf/proto"
 
@@ -182,7 +183,7 @@ func (f fakePinger) Ping(context.Context) error { return f.err }
 
 func TestReadinessFollowsTheDatabase(t *testing.T) {
 	spectest.Verifies(t, service, "Liveness and readiness are reported over HTTP")
-	srv := httptest.NewServer(healthHandler(fakePinger{err: errors.New("connection refused")}))
+	srv := httptest.NewServer(healthHandler(fakePinger{err: errors.New("connection refused")}, http.NotFoundHandler()))
 	defer srv.Close()
 	if code := get(t, srv.URL+"/readyz"); code != http.StatusServiceUnavailable {
 		t.Fatalf("/readyz = %d with database down, want 503", code)
@@ -321,5 +322,61 @@ func TestTransitionReachesTheStream(t *testing.T) {
 			t.Fatalf("%d outbox records still unpublished", pending)
 		}
 		time.Sleep(100 * time.Millisecond)
+	}
+}
+
+func TestTracedTransitionPublishesInTheSameTrace(t *testing.T) {
+	spectest.Verifies(t, "event-streams", "Trace context survives the outbox")
+	const traceID = "5bf92f3577b34da6a3ce929d0e0e4736"
+	r := started(t, pgtest.NewSchema(t))
+	c := spotterv1.NewRegistryServiceClient(dial(t, r.grpc))
+	ctx := context.Background()
+	if _, err := c.RegisterModel(ctx, &spotterv1.RegisterModelRequest{Name: "eurosat-classifier"}); err != nil {
+		t.Fatal(err)
+	}
+	v, err := c.RegisterVersion(ctx, &spotterv1.RegisterVersionRequest{ModelName: "eurosat-classifier", ArtifactUri: "s3://m/k",
+		ArtifactSha256: "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b", Framework: "pytorch"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	traced := metadata.AppendToOutgoingContext(ctx, "traceparent", "00-"+traceID+"-00f067aa0ba902b7-01")
+	if _, err := c.TransitionVersion(traced, &spotterv1.TransitionVersionRequest{VersionId: v.GetVersion().GetId(),
+		ToStage: spotterv1.ModelVersionStage_MODEL_VERSION_STAGE_VALIDATED, Reason: "eval passed", ExpectedRevision: 1}); err != nil {
+		t.Fatal(err)
+	}
+
+	_, js := r.nats.Connect(t)
+	deadline := time.Now().Add(10 * time.Second)
+	for {
+		if s, err := js.Stream(ctx, natsjs.RegistryStream); err == nil {
+			if msg, err := s.GetLastMsgForSubject(ctx, "registry.events.model_version_stage_changed"); err == nil {
+				if tp := msg.Header.Get("traceparent"); !strings.Contains(tp, traceID) {
+					t.Fatalf("published traceparent %q, want trace %s", tp, traceID)
+				}
+				return
+			}
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("no stage-changed event within 10s")
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
+}
+
+func TestMetricsEndpoint(t *testing.T) {
+	spectest.Verifies(t, "observability", "Telemetry export is configured by environment")
+	spectest.Verifies(t, "observability", "Services expose Prometheus metrics")
+	// No OTEL_EXPORTER_OTLP_ENDPOINT: the registry runs normally and still serves metrics.
+	r := started(t, pgtest.NewSchema(t))
+	c := spotterv1.NewRegistryServiceClient(dial(t, r.grpc))
+	_, _ = c.GetModel(context.Background(), &spotterv1.GetModelRequest{Name: "eurosat-classifier"})
+	resp, err := http.Get("http://" + r.http + "/metrics")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+	body, _ := io.ReadAll(resp.Body)
+	if !strings.Contains(string(body), "rpc_server_call_duration_seconds_count") || !strings.Contains(string(body), "GetModel") {
+		t.Fatalf("/metrics lacks the gRPC server duration for GetModel:\n%.1500s", body)
 	}
 }

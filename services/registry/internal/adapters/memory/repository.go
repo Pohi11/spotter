@@ -11,6 +11,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/Pohi11/spotter/internal/telemetry"
 	"github.com/Pohi11/spotter/services/registry/internal/domain"
 	"github.com/Pohi11/spotter/services/registry/internal/ports"
 )
@@ -71,7 +72,7 @@ func (r *Repository) ModelByID(_ context.Context, id uuid.UUID) (domain.Model, e
 	return m, nil
 }
 
-func (r *Repository) AddVersion(_ context.Context, v domain.ModelVersion, events func(domain.ModelVersion) ([]ports.OutboxRecord, error)) (domain.ModelVersion, error) {
+func (r *Repository) AddVersion(ctx context.Context, v domain.ModelVersion, events func(domain.ModelVersion) ([]ports.OutboxRecord, error)) (domain.ModelVersion, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if _, ok := r.models[v.ModelID]; !ok {
@@ -89,7 +90,7 @@ func (r *Repository) AddVersion(_ context.Context, v domain.ModelVersion, events
 		return domain.ModelVersion{}, err // nothing stored yet, so nothing to undo
 	}
 	r.versions[v.ID] = clone(v)
-	r.outbox = append(r.outbox, records...)
+	r.outbox = append(r.outbox, withTrace(ctx, records)...)
 	return clone(v), nil
 }
 
@@ -116,7 +117,7 @@ func (r *Repository) Versions(_ context.Context, modelID uuid.UUID) ([]domain.Mo
 	return out, nil
 }
 
-func (r *Repository) SaveTransition(_ context.Context, v domain.ModelVersion, expectedRevision int64, change domain.StageChange, records []ports.OutboxRecord) error {
+func (r *Repository) SaveTransition(ctx context.Context, v domain.ModelVersion, expectedRevision int64, change domain.StageChange, records []ports.OutboxRecord) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	stored, ok := r.versions[v.ID]
@@ -135,7 +136,7 @@ func (r *Repository) SaveTransition(_ context.Context, v domain.ModelVersion, ex
 	}
 	r.versions[v.ID] = clone(v)
 	r.history[v.ID] = append(r.history[v.ID], change)
-	r.outbox = append(r.outbox, records...)
+	r.outbox = append(r.outbox, withTrace(ctx, records)...)
 	return nil
 }
 
@@ -178,4 +179,14 @@ func clone(v domain.ModelVersion) domain.ModelVersion {
 		v.Metrics = map[string]float64{}
 	}
 	return v
+}
+
+// withTrace stamps each record with the trace active in ctx, as the Postgres adapter does.
+func withTrace(ctx context.Context, records []ports.OutboxRecord) []ports.OutboxRecord {
+	tp := telemetry.TraceParent(ctx)
+	out := slices.Clone(records)
+	for i := range out {
+		out[i].TraceParent = tp
+	}
+	return out
 }

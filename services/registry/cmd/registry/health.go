@@ -11,11 +11,11 @@ type pinger interface {
 	Ping(ctx context.Context) error
 }
 
-// healthHandler serves /livez and /readyz.
+// healthHandler serves /livez, /readyz, and /metrics.
 //
 // /livez never touches dependencies: a slow database must not get the pod restarted.
 // /readyz pings the database: while it fails, the pod receives no traffic.
-func healthHandler(db pinger) http.Handler {
+func healthHandler(db pinger, metrics http.Handler) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /livez", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -31,5 +31,6 @@ func healthHandler(db pinger) http.Handler {
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("ok\n"))
 	})
+	mux.Handle("GET /metrics", metrics)
 	return mux
 }

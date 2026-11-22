@@ -6,11 +6,13 @@ package registrytest
 import (
 	"context"
 	"errors"
+	"strings"
 	"sync"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"google.golang.org/protobuf/proto"
 
 	spotterv1 "github.com/Pohi11/spotter/gen/go/spotter/v1"
@@ -85,6 +87,7 @@ func Run(t *testing.T, newRepo func(t *testing.T) ports.Repository) {
 		{"TransitionEvent", transitionEvent},
 		{"FailedTransitionsStoreNoEvent", failedTransitionsStoreNoEvent},
 		{"MarkPublished", markPublished},
+		{"TraceContextStoredWithOutbox", traceContextStoredWithOutbox},
 	}
 	for _, sc := range scenarios {
 		t.Run(sc.name, func(t *testing.T) {
@@ -524,6 +527,34 @@ func transitionEvent(t *testing.T, h *harness) {
 		ev.GetToStage() != spotterv1.ModelVersionStage_MODEL_VERSION_STAGE_VALIDATED ||
 		ev.GetRevision() != 2 || ev.GetReason() == "" || ev.GetVersionId() != v.ID.String() {
 		t.Fatalf("decoded event = %v", &ev)
+	}
+}
+
+func traceContextStoredWithOutbox(t *testing.T, h *harness) {
+	spectest.Verifies(t, "event-streams", "Trace context survives the outbox")
+	h.model("eurosat-classifier")
+	h.version("eurosat-classifier") // no active trace
+
+	tp := sdktrace.NewTracerProvider()
+	traced, span := tp.Tracer("test").Start(ctx, "operator request")
+	_, err := h.svc.RegisterVersion(traced, app.RegisterVersionInput{
+		ModelName: "eurosat-classifier", ArtifactURI: "s3://m/k", ArtifactSHA256: SHA, Framework: domain.FrameworkPyTorch,
+	})
+	span.End()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	recs := h.outbox()
+	if len(recs) != 2 {
+		t.Fatalf("outbox = %d records, want 2", len(recs))
+	}
+	if recs[0].TraceParent != "" {
+		t.Fatalf("untraced change stored traceparent %q", recs[0].TraceParent)
+	}
+	want := span.SpanContext().TraceID().String()
+	if !strings.Contains(recs[1].TraceParent, want) {
+		t.Fatalf("traced change stored traceparent %q, want trace %s", recs[1].TraceParent, want)
 	}
 }
 
