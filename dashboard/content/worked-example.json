@@ -1,0 +1,307 @@
+{
+ "about": "One real job, recorded by scripts/record.mjs from a running platform and its Jaeger traces.",
+ "recorded_at": "2026-11-22T22:22:22.377Z",
+ "sample": {
+  "id": "forest_1332",
+  "file": "forest_1332/clean.jpg",
+  "true_class": "Forest",
+  "source": "Forest/Forest_1332.jpg"
+ },
+ "job": {
+  "jobId": "01a2055a-5dbb-7313-94e5-9b955a83d46c",
+  "modelName": "eurosat-classifier",
+  "status": "JOB_STATUS_SUCCEEDED",
+  "prediction": {
+   "label": "Forest",
+   "confidence": 0.9972019,
+   "scores": [
+    {
+     "label": "AnnualCrop",
+     "score": 0.00061114744
+    },
+    {
+     "label": "Forest",
+     "score": 0.9972019
+    },
+    {
+     "label": "HerbaceousVegetation",
+     "score": 0.0013051104
+    },
+    {
+     "label": "Highway",
+     "score": 0.0002602896
+    },
+    {
+     "label": "Industrial",
+     "score": 0.000015129592
+    },
+    {
+     "label": "Pasture",
+     "score": 0.0000758608
+    },
+    {
+     "label": "PermanentCrop",
+     "score": 0.0000085644915
+    },
+    {
+     "label": "Residential",
+     "score": 0.000026727192
+    },
+    {
+     "label": "River",
+     "score": 0.0004598148
+    },
+    {
+     "label": "SeaLake",
+     "score": 0.00003552355
+    }
+   ],
+   "modelVersionId": "01a204cd-c722-72b8-ae4c-8ca118f6b184",
+   "modelVersion": 3
+  },
+  "error": "",
+  "imageUri": "s3://images/eurosat-classifier/01a2055a-5dbb-7313-94e5-9b955a83d46c",
+  "submittedAt": "2026-11-22T22:22:18.091076Z",
+  "completedAt": "2026-11-22T22:22:18.105171Z",
+  "inputStats": null,
+  "inferenceMs": 0
+ },
+ "events": [
+  {
+   "stream": "INFERENCE",
+   "subject": "inference.requested.eurosat-classifier",
+   "sequence": 48635,
+   "time": "2026-11-22T22:22:18.092965572Z",
+   "type": "spotter.v1.InferenceRequested",
+   "payload": {
+    "jobId": "01a2055a-5dbb-7313-94e5-9b955a83d46c",
+    "modelName": "eurosat-classifier",
+    "imageUri": "s3://images/eurosat-classifier/01a2055a-5dbb-7313-94e5-9b955a83d46c",
+    "submittedAt": "2026-11-22T22:22:18.091076Z"
+   }
+  },
+  {
+   "stream": "INFERENCE",
+   "subject": "inference.completed.eurosat-classifier",
+   "sequence": 48636,
+   "time": "2026-11-22T22:22:18.106989442Z",
+   "type": "spotter.v1.InferenceCompleted",
+   "payload": {
+    "jobId": "01a2055a-5dbb-7313-94e5-9b955a83d46c",
+    "modelName": "eurosat-classifier",
+    "prediction": {
+     "label": "Forest",
+     "confidence": 0.9972019,
+     "scores": [
+      {
+       "label": "AnnualCrop",
+       "score": 0.00061114744
+      },
+      {
+       "label": "Forest",
+       "score": 0.9972019
+      },
+      {
+       "label": "HerbaceousVegetation",
+       "score": 0.0013051104
+      },
+      {
+       "label": "Highway",
+       "score": 0.0002602896
+      },
+      {
+       "label": "Industrial",
+       "score": 0.000015129592
+      },
+      {
+       "label": "Pasture",
+       "score": 0.0000758608
+      },
+      {
+       "label": "PermanentCrop",
+       "score": 0.0000085644915
+      },
+      {
+       "label": "Residential",
+       "score": 0.000026727192
+      },
+      {
+       "label": "River",
+       "score": 0.0004598148
+      },
+      {
+       "label": "SeaLake",
+       "score": 0.00003552355
+      }
+     ],
+     "modelVersionId": "01a204cd-c722-72b8-ae4c-8ca118f6b184",
+     "modelVersion": 3
+    },
+    "inputStats": {
+     "channelMean": [
+      0.1524962,
+      0.23744567,
+      0.30304715
+     ],
+     "channelStd": [
+      0.02377142,
+      0.021936368,
+      0.013591783
+     ]
+    },
+    "inferenceMs": 1.8544999,
+    "completedAt": "2026-11-22T22:22:18.105171Z"
+   }
+  }
+ ],
+ "spans": [
+  {
+   "service": "gateway",
+   "name": "spotter.v1.RegistryService/GetModel",
+   "start_ms": 0,
+   "duration_ms": 1.5037
+  },
+  {
+   "service": "gateway",
+   "name": "POST /",
+   "start_ms": 0,
+   "duration_ms": 51.4037
+  },
+  {
+   "service": "registry",
+   "name": "spotter.v1.RegistryService/GetModel",
+   "start_ms": 0.5772,
+   "duration_ms": 0.9265
+  },
+  {
+   "service": "gateway",
+   "name": "store image",
+   "start_ms": 1.5037,
+   "duration_ms": 47.8753
+  },
+  {
+   "service": "gateway",
+   "name": "record job",
+   "start_ms": 49.379,
+   "duration_ms": 1.0843
+  },
+  {
+   "service": "gateway",
+   "name": "publish inference.requested.eurosat-classifier",
+   "start_ms": 50.4633,
+   "duration_ms": 0.9404
+  },
+  {
+   "service": "inference-worker",
+   "name": "process inference.requested",
+   "start_ms": 52.1492,
+   "duration_ms": 14.5772
+  },
+  {
+   "service": "inference-worker",
+   "name": "download image",
+   "start_ms": 53.383,
+   "duration_ms": 6.2123
+  },
+  {
+   "service": "inference-worker",
+   "name": "classify",
+   "start_ms": 59.6785,
+   "duration_ms": 3.7391
+  },
+  {
+   "service": "inference-worker",
+   "name": "record result",
+   "start_ms": 63.5668,
+   "duration_ms": 1.1397
+  },
+  {
+   "service": "inference-worker",
+   "name": "publish inference.completed.eurosat-classifier",
+   "start_ms": 64.8157,
+   "duration_ms": 0.9471
+  }
+ ],
+ "contact": [
+  {
+   "id": "annualcrop_1427",
+   "file": "annualcrop_1427/clean.jpg",
+   "true_class": "AnnualCrop",
+   "label": "AnnualCrop",
+   "confidence": 0.99913824,
+   "version": 3
+  },
+  {
+   "id": "forest_1332",
+   "file": "forest_1332/clean.jpg",
+   "true_class": "Forest",
+   "label": "Forest",
+   "confidence": 0.9972019,
+   "version": 3
+  },
+  {
+   "id": "herbaceousvegetation_1784",
+   "file": "herbaceousvegetation_1784/clean.jpg",
+   "true_class": "HerbaceousVegetation",
+   "label": "HerbaceousVegetation",
+   "confidence": 0.804608,
+   "version": 3
+  },
+  {
+   "id": "highway_2339",
+   "file": "highway_2339/clean.jpg",
+   "true_class": "Highway",
+   "label": "Highway",
+   "confidence": 0.9977447,
+   "version": 3
+  },
+  {
+   "id": "industrial_475",
+   "file": "industrial_475/clean.jpg",
+   "true_class": "Industrial",
+   "label": "Industrial",
+   "confidence": 0.99988306,
+   "version": 3
+  },
+  {
+   "id": "pasture_103",
+   "file": "pasture_103/clean.jpg",
+   "true_class": "Pasture",
+   "label": "Pasture",
+   "confidence": 0.756075,
+   "version": 3
+  },
+  {
+   "id": "permanentcrop_379",
+   "file": "permanentcrop_379/clean.jpg",
+   "true_class": "PermanentCrop",
+   "label": "PermanentCrop",
+   "confidence": 0.9996247,
+   "version": 3
+  },
+  {
+   "id": "residential_1416",
+   "file": "residential_1416/clean.jpg",
+   "true_class": "Residential",
+   "label": "Residential",
+   "confidence": 0.8905784,
+   "version": 3
+  },
+  {
+   "id": "river_468",
+   "file": "river_468/clean.jpg",
+   "true_class": "River",
+   "label": "River",
+   "confidence": 0.8874021,
+   "version": 3
+  },
+  {
+   "id": "sealake_2478",
+   "file": "sealake_2478/clean.jpg",
+   "true_class": "SeaLake",
+   "label": "SeaLake",
+   "confidence": 0.999928,
+   "version": 3
+  }
+ ]
+}

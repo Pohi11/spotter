@@ -134,7 +134,13 @@ type junitCase struct {
 	Skipped *struct{} `xml:"skipped"`
 }
 
-// ReadJUnitLinks parses a JUnit XML report (pytest --junitxml) into requirement links.
+// nameTag matches a requirement tag in a test name, "[spec: capability: requirement]",
+// which TypeScript tests (Vitest, Playwright) use because their JUnit reporters can't
+// write properties (decision record 0017).
+var nameTag = regexp.MustCompile(`\[spec: ([a-z][a-z0-9-]*): ([^\]]+?)\]`)
+
+// ReadJUnitLinks parses a JUnit XML report into requirement links: pytest's spec
+// properties and requirement tags in test names.
 func ReadJUnitLinks(r io.Reader) ([]Link, error) {
 	var doc junitSuites
 	if err := xml.NewDecoder(r).Decode(&doc); err != nil {
@@ -153,6 +159,9 @@ func ReadJUnitLinks(r io.Reader) ([]Link, error) {
 					return nil, fmt.Errorf("junit: test %s.%s has malformed spec property %q", c.Class, c.Name, p.Value)
 				}
 				links = append(links, Link{Requirement: Requirement{Capability: capability, Title: title}, Test: c.Class + " " + c.Name, Passed: passed})
+			}
+			for _, m := range nameTag.FindAllStringSubmatch(c.Name, -1) {
+				links = append(links, Link{Requirement: Requirement{Capability: m[1], Title: m[2]}, Test: c.Class + " " + c.Name, Passed: passed})
 			}
 		}
 	}

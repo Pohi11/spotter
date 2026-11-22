@@ -93,9 +93,44 @@ jobs:
           name: python-test-report
           path: python-test.xml
 
+  dashboard:
+    name: Dashboard
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: dashboard
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 12.11.2
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: dashboard/pnpm-lock.yaml
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Lint and type check
+        run: pnpm lint && pnpm typecheck
+      - name: Unit tests
+        run: pnpm test
+      - name: Browser tests against the recorded gateway
+        run: |
+          pnpm exec playwright install --with-deps chromium
+          pnpm e2e
+      - name: Upload test reports
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: dashboard-test-report
+          path: |
+            dashboard/test-results/junit.xml
+            dashboard/test-results/e2e-junit.xml
+
   spec-coverage:
     name: Every requirement has a passing test
-    needs: [go, python, kubernetes]
+    needs: [go, python, kubernetes, dashboard]
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     steps:
@@ -107,8 +142,8 @@ jobs:
         with:
           pattern: "*-test-report"
           merge-multiple: true
-      - name: Check spec coverage across Go, Kubernetes, and Python
-        run: go run ./tools/speccheck -openspec openspec -go go-test.json,go-kube-test.json -junit python-test.xml
+      - name: Check spec coverage across Go, Kubernetes, Python, and the dashboard
+        run: go run ./tools/speccheck -openspec openspec -go go-test.json,go-kube-test.json -junit python-test.xml,junit.xml,e2e-junit.xml
 
   end-to-end:
     name: Go to Python over NATS
@@ -154,8 +189,10 @@ jobs:
         run: |
           docker build -f deploy/docker/go.Dockerfile -t spotter-go:dev .
           docker build -f deploy/docker/python.Dockerfile -t spotter-python:dev .
+          node dashboard/scripts/sync-content.mjs
+          docker build -f deploy/docker/dashboard.Dockerfile -t spotter-dashboard:dev dashboard
       - name: Load images into kind
-        run: kind load docker-image spotter-go:dev spotter-python:dev --name spotter
+        run: kind load docker-image spotter-go:dev spotter-python:dev spotter-dashboard:dev --name spotter
       - name: Install KEDA
         run: |
           helm repo add kedacore https://kedacore.github.io/charts

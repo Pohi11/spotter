@@ -19,6 +19,7 @@ type fakes struct {
 	mu        sync.Mutex
 	refs      map[string]domain.Reference
 	published []ports.DriftEvent
+	evals     []ports.Evaluation
 	skipped   map[string]int
 	psi       map[string]float64
 }
@@ -33,6 +34,12 @@ func (f *fakes) Publish(_ context.Context, e ports.DriftEvent) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.published = append(f.published, e)
+	return nil
+}
+func (f *fakes) PublishEvaluation(_ context.Context, e ports.Evaluation) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.evals = append(f.evals, e)
 	return nil
 }
 func (f *fakes) PSI(_, v string, feat domain.Feature, psi float64) { f.psi[v+"/"+string(feat)] = psi }
@@ -125,5 +132,52 @@ func TestDetectedEventNamesOnlyDriftedFeatures(t *testing.T) {
 	}
 	if f.published[0].DedupKey == "" {
 		t.Error("no de-duplication key")
+	}
+}
+
+func TestEveryEvaluationIsPublished(t *testing.T) {
+	spectest.Verifies(t, capability, "Every evaluation is published")
+	r := rand.New(rand.NewPCG(5, 6))
+	f := &fakes{refs: map[string]domain.Reference{"v1": ref(r, "v1", 1.0)}, skipped: map[string]int{}, psi: map[string]float64{}}
+	m := newMonitor(f)
+	for i := range 300 {
+		if err := m.Observe(context.Background(), obs(r, "v1", 1.0, uint64(1000+i))); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if len(f.evals) != 3 {
+		t.Fatalf("evaluations = %d, want 3 (at 200, 250, 300 events)", len(f.evals))
+	}
+	for i, e := range f.evals {
+		if len(e.Results) != len(domain.Features) || e.Drifting || e.WindowSize != 200 {
+			t.Errorf("evaluation %d = %+v, want all %d features, not drifting, window 200", i, e, len(domain.Features))
+		}
+	}
+	// Sequence of the triggering completion: the 200th, 250th, and 300th event.
+	for i, want := range []string{"evaluated-v1-1199", "evaluated-v1-1249", "evaluated-v1-1299"} {
+		if f.evals[i].DedupKey != want {
+			t.Errorf("evaluation %d key = %q, want %q", i, f.evals[i].DedupKey, want)
+		}
+	}
+	if len(f.published) != 0 {
+		t.Fatalf("state changes on clean traffic: %+v", f.published)
+	}
+}
+
+func TestEvaluationThatDetectsDriftSaysDrifting(t *testing.T) {
+	spectest.Verifies(t, capability, "Every evaluation is published")
+	r := rand.New(rand.NewPCG(5, 6))
+	f := &fakes{refs: map[string]domain.Reference{"v1": ref(r, "v1", 1.0)}, skipped: map[string]int{}, psi: map[string]float64{}}
+	m := newMonitor(f)
+	for i := range 200 {
+		if err := m.Observe(context.Background(), obs(r, "v1", 0.5, uint64(i))); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if len(f.published) != 1 || f.published[0].Transition != domain.Detected {
+		t.Fatalf("published = %+v, want one Detected", f.published)
+	}
+	if len(f.evals) != 1 || !f.evals[0].Drifting {
+		t.Fatalf("evaluations = %+v, want one saying drifting", f.evals)
 	}
 }

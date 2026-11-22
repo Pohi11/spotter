@@ -1,0 +1,3643 @@
+{
+ "recorded_at": "2026-11-22T22:58:58.921Z",
+ "model": {
+  "model": {
+   "id": "01a2047e-dfc9-7554-856e-55ecbb5b841b",
+   "name": "eurosat-classifier",
+   "description": "EuroSAT land-use classifier (10 classes, 64x64 RGB)",
+   "createdAt": "2026-11-22T18:22:33.417349Z"
+  }
+ },
+ "versions": {
+  "versions": [
+   {
+    "id": "01a20578-95cc-7ed2-afb1-b466c0ae3bbd",
+    "modelId": "01a2047e-dfc9-7554-856e-55ecbb5b841b",
+    "version": 4,
+    "artifactUri": "s3://models/eurosat-classifier/851a27bfbea8b702e063101045c1fa754d954f263c880968e3e015ce5de87442/model.pt",
+    "artifactSha256": "851a27bfbea8b702e063101045c1fa754d954f263c880968e3e015ce5de87442",
+    "framework": "pytorch",
+    "metrics": {
+     "accuracy": 0.9558,
+     "accuracy_blur": 0.7519,
+     "accuracy_darken": 0.8886,
+     "accuracy_haze": 0.878,
+     "accuracy_noise": 0.6447,
+     "val_accuracy": 0.9437
+    },
+    "stage": "MODEL_VERSION_STAGE_SHADOW",
+    "revision": "3",
+    "createdAt": "2026-11-22T22:55:18.476971Z",
+    "updatedAt": "2026-11-22T22:55:18.632469Z"
+   },
+   {
+    "id": "01a204cd-c722-72b8-ae4c-8ca118f6b184",
+    "modelId": "01a2047e-dfc9-7554-856e-55ecbb5b841b",
+    "version": 3,
+    "artifactUri": "s3://models/eurosat-classifier/901f79d317c0d29d48f85eaece450868177be68f93953d11382051256a1d6386/model.pt",
+    "artifactSha256": "901f79d317c0d29d48f85eaece450868177be68f93953d11382051256a1d6386",
+    "framework": "onnx",
+    "metrics": {
+     "accuracy": 0.9654,
+     "macro_f1": 0.964,
+     "p50_ms_batch1": 0.428
+    },
+    "stage": "MODEL_VERSION_STAGE_PRODUCTION",
+    "revision": "6",
+    "createdAt": "2026-11-22T19:48:44.450178Z",
+    "updatedAt": "2026-11-22T20:53:30.305003Z"
+   },
+   {
+    "id": "01a204cd-c6cc-7d6d-9e38-14b81cb60c38",
+    "modelId": "01a2047e-dfc9-7554-856e-55ecbb5b841b",
+    "version": 2,
+    "artifactUri": "s3://models/eurosat-classifier/84a354ae9ae1610f65702c153b713a3c018a2c1d97c1f29bd906a8f92a147bc4/model.pt",
+    "artifactSha256": "84a354ae9ae1610f65702c153b713a3c018a2c1d97c1f29bd906a8f92a147bc4",
+    "framework": "onnx",
+    "metrics": {
+     "accuracy": 0.9657,
+     "macro_f1": 0.9644,
+     "p50_ms_batch1": 0.815
+    },
+    "stage": "MODEL_VERSION_STAGE_ROLLED_BACK",
+    "revision": "5",
+    "createdAt": "2026-11-22T19:48:44.364880Z",
+    "updatedAt": "2026-11-22T20:53:30.305003Z"
+   },
+   {
+    "id": "01a2047e-e022-76cb-b185-554c9c616cc5",
+    "modelId": "01a2047e-dfc9-7554-856e-55ecbb5b841b",
+    "version": 1,
+    "artifactUri": "s3://models/eurosat-classifier/76a5ed42037a4b6040c0f6340cdd866a9b90672a4a2a81486badcbdb5e43944e/model.pt",
+    "artifactSha256": "76a5ed42037a4b6040c0f6340cdd866a9b90672a4a2a81486badcbdb5e43944e",
+    "framework": "pytorch",
+    "metrics": {
+     "accuracy": 0.9657,
+     "macro_f1": 0.9644,
+     "recall_AnnualCrop": 0.9533,
+     "recall_Forest": 0.9933,
+     "recall_HerbaceousVegetation": 0.9667,
+     "recall_Highway": 0.96,
+     "recall_Industrial": 0.968,
+     "recall_Pasture": 0.94,
+     "recall_PermanentCrop": 0.9333,
+     "recall_Residential": 0.9956,
+     "recall_River": 0.936,
+     "recall_SeaLake": 0.9911,
+     "val_accuracy": 0.961
+    },
+    "stage": "MODEL_VERSION_STAGE_RETIRED",
+    "revision": "5",
+    "createdAt": "2026-11-22T18:22:33.506445Z",
+    "updatedAt": "2026-11-22T19:51:59.178969Z"
+   }
+  ]
+ },
+ "perVersion": {
+  "01a20578-95cc-7ed2-afb1-b466c0ae3bbd": {
+   "version": {
+    "version": {
+     "id": "01a20578-95cc-7ed2-afb1-b466c0ae3bbd",
+     "modelId": "01a2047e-dfc9-7554-856e-55ecbb5b841b",
+     "version": 4,
+     "artifactUri": "s3://models/eurosat-classifier/851a27bfbea8b702e063101045c1fa754d954f263c880968e3e015ce5de87442/model.pt",
+     "artifactSha256": "851a27bfbea8b702e063101045c1fa754d954f263c880968e3e015ce5de87442",
+     "framework": "pytorch",
+     "metrics": {
+      "accuracy": 0.9558,
+      "accuracy_blur": 0.7519,
+      "accuracy_darken": 0.8886,
+      "accuracy_haze": 0.878,
+      "accuracy_noise": 0.6447,
+      "val_accuracy": 0.9437
+     },
+     "stage": "MODEL_VERSION_STAGE_SHADOW",
+     "revision": "3",
+     "createdAt": "2026-11-22T22:55:18.476971Z",
+     "updatedAt": "2026-11-22T22:55:18.632469Z"
+    }
+   },
+   "history": {
+    "changes": [
+     {
+      "fromStage": "MODEL_VERSION_STAGE_REGISTERED",
+      "toStage": "MODEL_VERSION_STAGE_VALIDATED",
+      "reason": "retrained; holdout accuracy 0.9558 meets the floor 0.85",
+      "revision": "2",
+      "changedAt": "2026-11-22T22:55:18.596603Z"
+     },
+     {
+      "fromStage": "MODEL_VERSION_STAGE_VALIDATED",
+      "toStage": "MODEL_VERSION_STAGE_SHADOW",
+      "reason": "shadow after retraining: drift detected on version 3 (mean_r PSI 0.22, mean_g PSI 0.43, mean_b PSI 0.39)",
+      "revision": "3",
+      "changedAt": "2026-11-22T22:55:18.632469Z"
+     }
+    ]
+   },
+   "gates": {
+    "gates": [
+     {
+      "name": "accuracy",
+      "passed": true,
+      "detail": "holdout accuracy 0.9558 vs production 0.9654 (tolerance 0.01)"
+     },
+     {
+      "name": "shadow_agreement",
+      "passed": true,
+      "detail": "594 of at least 200 comparisons, agreement 98.5% (need 95%)"
+     },
+     {
+      "name": "shadow_latency",
+      "passed": true,
+      "detail": "mean shadow latency 7.60 ms (budget 25 ms)"
+     },
+     {
+      "name": "approval",
+      "passed": false,
+      "detail": "0 approval(s) recorded"
+     }
+    ],
+    "allPassed": false
+   }
+  },
+  "01a204cd-c722-72b8-ae4c-8ca118f6b184": {
+   "version": {
+    "version": {
+     "id": "01a204cd-c722-72b8-ae4c-8ca118f6b184",
+     "modelId": "01a2047e-dfc9-7554-856e-55ecbb5b841b",
+     "version": 3,
+     "artifactUri": "s3://models/eurosat-classifier/901f79d317c0d29d48f85eaece450868177be68f93953d11382051256a1d6386/model.pt",
+     "artifactSha256": "901f79d317c0d29d48f85eaece450868177be68f93953d11382051256a1d6386",
+     "framework": "onnx",
+     "metrics": {
+      "accuracy": 0.9654,
+      "macro_f1": 0.964,
+      "p50_ms_batch1": 0.428
+     },
+     "stage": "MODEL_VERSION_STAGE_PRODUCTION",
+     "revision": "6",
+     "createdAt": "2026-11-22T19:48:44.450178Z",
+     "updatedAt": "2026-11-22T20:53:30.305003Z"
+    }
+   },
+   "history": {
+    "changes": [
+     {
+      "fromStage": "MODEL_VERSION_STAGE_REGISTERED",
+      "toStage": "MODEL_VERSION_STAGE_VALIDATED",
+      "reason": "holdout accuracy 0.9654 vs parent 0.9657: within tolerance 0.01 (floor 0.85)",
+      "revision": "2",
+      "changedAt": "2026-11-22T19:48:44.454062Z"
+     },
+     {
+      "fromStage": "MODEL_VERSION_STAGE_VALIDATED",
+      "toStage": "MODEL_VERSION_STAGE_SHADOW",
+      "reason": "shadow before promotion",
+      "revision": "3",
+      "changedAt": "2026-11-22T19:51:59.221534Z"
+     },
+     {
+      "fromStage": "MODEL_VERSION_STAGE_SHADOW",
+      "toStage": "MODEL_VERSION_STAGE_PRODUCTION",
+      "reason": "int8 within tolerance of version 1",
+      "revision": "4",
+      "changedAt": "2026-11-22T19:51:59.263134Z"
+     },
+     {
+      "fromStage": "MODEL_VERSION_STAGE_PRODUCTION",
+      "toStage": "MODEL_VERSION_STAGE_RETIRED",
+      "reason": "replaced by version 2",
+      "revision": "5",
+      "changedAt": "2026-11-22T20:53:11.055992Z"
+     },
+     {
+      "fromStage": "MODEL_VERSION_STAGE_RETIRED",
+      "toStage": "MODEL_VERSION_STAGE_PRODUCTION",
+      "reason": "restored by rollback of version 2: rollback drill under load",
+      "revision": "6",
+      "changedAt": "2026-11-22T20:53:30.305003Z"
+     }
+    ]
+   },
+   "gates": {
+    "gates": [
+     {
+      "name": "accuracy",
+      "passed": true,
+      "detail": "holdout accuracy 0.9654 vs production 0.9654 (tolerance 0.01)"
+     },
+     {
+      "name": "shadow_agreement",
+      "passed": false,
+      "detail": "0 of at least 200 comparisons, agreement 0.0% (need 95%)"
+     },
+     {
+      "name": "shadow_latency",
+      "passed": false,
+      "detail": "mean shadow latency 0.00 ms (budget 25 ms)"
+     },
+     {
+      "name": "approval",
+      "passed": false,
+      "detail": "0 approval(s) recorded"
+     }
+    ],
+    "allPassed": false
+   }
+  },
+  "01a204cd-c6cc-7d6d-9e38-14b81cb60c38": {
+   "version": {
+    "version": {
+     "id": "01a204cd-c6cc-7d6d-9e38-14b81cb60c38",
+     "modelId": "01a2047e-dfc9-7554-856e-55ecbb5b841b",
+     "version": 2,
+     "artifactUri": "s3://models/eurosat-classifier/84a354ae9ae1610f65702c153b713a3c018a2c1d97c1f29bd906a8f92a147bc4/model.pt",
+     "artifactSha256": "84a354ae9ae1610f65702c153b713a3c018a2c1d97c1f29bd906a8f92a147bc4",
+     "framework": "onnx",
+     "metrics": {
+      "accuracy": 0.9657,
+      "macro_f1": 0.9644,
+      "p50_ms_batch1": 0.815
+     },
+     "stage": "MODEL_VERSION_STAGE_ROLLED_BACK",
+     "revision": "5",
+     "createdAt": "2026-11-22T19:48:44.364880Z",
+     "updatedAt": "2026-11-22T20:53:30.305003Z"
+    }
+   },
+   "history": {
+    "changes": [
+     {
+      "fromStage": "MODEL_VERSION_STAGE_REGISTERED",
+      "toStage": "MODEL_VERSION_STAGE_VALIDATED",
+      "reason": "holdout accuracy 0.9657 vs parent 0.9657: within tolerance 0.01 (floor 0.85)",
+      "revision": "2",
+      "changedAt": "2026-11-22T19:48:44.399894Z"
+     },
+     {
+      "fromStage": "MODEL_VERSION_STAGE_VALIDATED",
+      "toStage": "MODEL_VERSION_STAGE_SHADOW",
+      "reason": "shadow against production v3 before promotion",
+      "revision": "3",
+      "changedAt": "2026-11-22T20:47:50.538844Z"
+     },
+     {
+      "fromStage": "MODEL_VERSION_STAGE_SHADOW",
+      "toStage": "MODEL_VERSION_STAGE_PRODUCTION",
+      "reason": "promoted: all gates passed",
+      "revision": "4",
+      "changedAt": "2026-11-22T20:53:11.055992Z"
+     },
+     {
+      "fromStage": "MODEL_VERSION_STAGE_PRODUCTION",
+      "toStage": "MODEL_VERSION_STAGE_ROLLED_BACK",
+      "reason": "rollback drill under load",
+      "revision": "5",
+      "changedAt": "2026-11-22T20:53:30.305003Z"
+     }
+    ]
+   },
+   "gates": {
+    "gates": [
+     {
+      "name": "accuracy",
+      "passed": true,
+      "detail": "holdout accuracy 0.9657 vs production 0.9654 (tolerance 0.01)"
+     },
+     {
+      "name": "shadow_agreement",
+      "passed": true,
+      "detail": "819 of at least 200 comparisons, agreement 99.9% (need 95%)"
+     },
+     {
+      "name": "shadow_latency",
+      "passed": true,
+      "detail": "mean shadow latency 4.66 ms (budget 25 ms)"
+     },
+     {
+      "name": "approval",
+      "passed": true,
+      "detail": "1 approval(s) recorded"
+     }
+    ],
+    "allPassed": true
+   }
+  },
+  "01a2047e-e022-76cb-b185-554c9c616cc5": {
+   "version": {
+    "version": {
+     "id": "01a2047e-e022-76cb-b185-554c9c616cc5",
+     "modelId": "01a2047e-dfc9-7554-856e-55ecbb5b841b",
+     "version": 1,
+     "artifactUri": "s3://models/eurosat-classifier/76a5ed42037a4b6040c0f6340cdd866a9b90672a4a2a81486badcbdb5e43944e/model.pt",
+     "artifactSha256": "76a5ed42037a4b6040c0f6340cdd866a9b90672a4a2a81486badcbdb5e43944e",
+     "framework": "pytorch",
+     "metrics": {
+      "accuracy": 0.9657,
+      "macro_f1": 0.9644,
+      "recall_AnnualCrop": 0.9533,
+      "recall_Forest": 0.9933,
+      "recall_HerbaceousVegetation": 0.9667,
+      "recall_Highway": 0.96,
+      "recall_Industrial": 0.968,
+      "recall_Pasture": 0.94,
+      "recall_PermanentCrop": 0.9333,
+      "recall_Residential": 0.9956,
+      "recall_River": 0.936,
+      "recall_SeaLake": 0.9911,
+      "val_accuracy": 0.961
+     },
+     "stage": "MODEL_VERSION_STAGE_RETIRED",
+     "revision": "5",
+     "createdAt": "2026-11-22T18:22:33.506445Z",
+     "updatedAt": "2026-11-22T19:51:59.178969Z"
+    }
+   },
+   "history": {
+    "changes": [
+     {
+      "fromStage": "MODEL_VERSION_STAGE_REGISTERED",
+      "toStage": "MODEL_VERSION_STAGE_VALIDATED",
+      "reason": "holdout accuracy 0.9657 meets the floor 0.85",
+      "revision": "2",
+      "changedAt": "2026-11-22T18:22:33.540063Z"
+     },
+     {
+      "fromStage": "MODEL_VERSION_STAGE_VALIDATED",
+      "toStage": "MODEL_VERSION_STAGE_SHADOW",
+      "reason": "start shadow testing",
+      "revision": "3",
+      "changedAt": "2026-11-22T18:32:21.921207Z"
+     },
+     {
+      "fromStage": "MODEL_VERSION_STAGE_SHADOW",
+      "toStage": "MODEL_VERSION_STAGE_PRODUCTION",
+      "reason": "holdout accuracy 0.9657; promoted by operator for the first end-to-end run",
+      "revision": "4",
+      "changedAt": "2026-11-22T18:32:22.046609Z"
+     },
+     {
+      "fromStage": "MODEL_VERSION_STAGE_PRODUCTION",
+      "toStage": "MODEL_VERSION_STAGE_RETIRED",
+      "reason": "replaced by int8 version 3 (holdout 0.9654, 4.6x faster at batch 1)",
+      "revision": "5",
+      "changedAt": "2026-11-22T19:51:59.178969Z"
+     }
+    ]
+   },
+   "gates": {
+    "gates": [
+     {
+      "name": "accuracy",
+      "passed": true,
+      "detail": "holdout accuracy 0.9657 vs production 0.9654 (tolerance 0.01)"
+     },
+     {
+      "name": "shadow_agreement",
+      "passed": false,
+      "detail": "0 of at least 200 comparisons, agreement 0.0% (need 95%)"
+     },
+     {
+      "name": "shadow_latency",
+      "passed": false,
+      "detail": "mean shadow latency 0.00 ms (budget 25 ms)"
+     },
+     {
+      "name": "approval",
+      "passed": false,
+      "detail": "0 approval(s) recorded"
+     }
+    ],
+    "allPassed": false
+   }
+  }
+ },
+ "job": {
+  "job": {
+   "jobId": "01a2057b-e288-7b08-8062-2da6565c7a50",
+   "modelName": "eurosat-classifier",
+   "status": "JOB_STATUS_SUCCEEDED",
+   "prediction": {
+    "label": "Forest",
+    "confidence": 0.9972019,
+    "scores": [
+     {
+      "label": "AnnualCrop",
+      "score": 0.00061114744
+     },
+     {
+      "label": "Forest",
+      "score": 0.9972019
+     },
+     {
+      "label": "HerbaceousVegetation",
+      "score": 0.0013051104
+     },
+     {
+      "label": "Highway",
+      "score": 0.0002602896
+     },
+     {
+      "label": "Industrial",
+      "score": 0.000015129592
+     },
+     {
+      "label": "Pasture",
+      "score": 0.0000758608
+     },
+     {
+      "label": "PermanentCrop",
+      "score": 0.0000085644915
+     },
+     {
+      "label": "Residential",
+      "score": 0.000026727192
+     },
+     {
+      "label": "River",
+      "score": 0.0004598148
+     },
+     {
+      "label": "SeaLake",
+      "score": 0.00003552355
+     }
+    ],
+    "modelVersionId": "01a204cd-c722-72b8-ae4c-8ca118f6b184",
+    "modelVersion": 3
+   },
+   "error": "",
+   "imageUri": "s3://images/eurosat-classifier/01a2057b-e288-7b08-8062-2da6565c7a50",
+   "submittedAt": "2026-11-22T22:58:54.775064Z",
+   "completedAt": "2026-11-22T22:58:54.810374Z",
+   "inputStats": null,
+   "inferenceMs": 0
+  }
+ },
+ "events": [
+  {
+   "stream": "REGISTRY",
+   "subject": "registry.events.model_version_registered",
+   "sequence": 30,
+   "time": "2026-11-22T22:55:18.779558157Z",
+   "type": "spotter.v1.ModelVersionRegistered",
+   "payload": {
+    "eventId": "01a20578-95ce-71b9-9033-564cafafbaed",
+    "modelId": "01a2047e-dfc9-7554-856e-55ecbb5b841b",
+    "modelName": "eurosat-classifier",
+    "versionId": "01a20578-95cc-7ed2-afb1-b466c0ae3bbd",
+    "version": 4,
+    "artifactUri": "s3://models/eurosat-classifier/851a27bfbea8b702e063101045c1fa754d954f263c880968e3e015ce5de87442/model.pt",
+    "artifactSha256": "851a27bfbea8b702e063101045c1fa754d954f263c880968e3e015ce5de87442",
+    "framework": "pytorch",
+    "metrics": {
+     "accuracy": 0.9558,
+     "accuracy_blur": 0.7519,
+     "accuracy_darken": 0.8886,
+     "accuracy_haze": 0.878,
+     "accuracy_noise": 0.6447,
+     "val_accuracy": 0.9437
+    },
+    "occurredAt": "2026-11-22T22:55:18.476971Z"
+   }
+  },
+  {
+   "stream": "REGISTRY",
+   "subject": "registry.events.model_version_stage_changed",
+   "sequence": 31,
+   "time": "2026-11-22T22:55:18.784022156Z",
+   "type": "spotter.v1.ModelVersionStageChanged",
+   "payload": {
+    "eventId": "01a20578-9646-7338-83ae-7630fb4419f1",
+    "modelId": "01a2047e-dfc9-7554-856e-55ecbb5b841b",
+    "modelName": "eurosat-classifier",
+    "versionId": "01a20578-95cc-7ed2-afb1-b466c0ae3bbd",
+    "version": 4,
+    "fromStage": "MODEL_VERSION_STAGE_REGISTERED",
+    "toStage": "MODEL_VERSION_STAGE_VALIDATED",
+    "reason": "retrained; holdout accuracy 0.9558 meets the floor 0.85",
+    "revision": "2",
+    "occurredAt": "2026-11-22T22:55:18.596603Z"
+   }
+  },
+  {
+   "stream": "REGISTRY",
+   "subject": "registry.events.model_version_stage_changed",
+   "sequence": 32,
+   "time": "2026-11-22T22:55:18.784966792Z",
+   "type": "spotter.v1.ModelVersionStageChanged",
+   "payload": {
+    "eventId": "01a20578-9669-78b3-82a5-90d2e8f6b167",
+    "modelId": "01a2047e-dfc9-7554-856e-55ecbb5b841b",
+    "modelName": "eurosat-classifier",
+    "versionId": "01a20578-95cc-7ed2-afb1-b466c0ae3bbd",
+    "version": 4,
+    "fromStage": "MODEL_VERSION_STAGE_VALIDATED",
+    "toStage": "MODEL_VERSION_STAGE_SHADOW",
+    "reason": "shadow after retraining: drift detected on version 3 (mean_r PSI 0.22, mean_g PSI 0.43, mean_b PSI 0.39)",
+    "revision": "3",
+    "occurredAt": "2026-11-22T22:55:18.632469Z"
+   }
+  },
+  {
+   "stream": "MONITOR",
+   "subject": "monitor.drift.detected.eurosat-classifier",
+   "sequence": 114,
+   "time": "2026-11-22T22:35:05.793443417Z",
+   "type": "spotter.v1.DriftDetected",
+   "payload": {
+    "modelName": "eurosat-classifier",
+    "versionId": "01a204cd-c722-72b8-ae4c-8ca118f6b184",
+    "version": 3,
+    "features": [
+     {
+      "feature": "mean_r",
+      "psi": 0.21430303236461884,
+      "ksStatistic": 0.19345679012345673,
+      "ksPValue": 9.774875612582335e-7,
+      "referenceMean": 0.34292763382716074,
+      "windowMean": 0.4083814899623394
+     },
+     {
+      "feature": "mean_g",
+      "psi": 0.3740820877779149,
+      "ksStatistic": 0.23975308641975313,
+      "ksPValue": 4.056442064254549e-10,
+      "referenceMean": 0.378889520740741,
+      "windowMean": 0.443287040963769
+     },
+     {
+      "feature": "mean_b",
+      "psi": 0.38575988743838585,
+      "ksStatistic": 0.23759259259259258,
+      "ksPValue": 6.054101715698633e-10,
+      "referenceMean": 0.4075579069135806,
+      "windowMean": 0.464887520223856
+     }
+    ],
+    "windowSize": 200,
+    "detectedAt": "2026-11-22T22:35:05.790487500Z"
+   }
+  },
+  {
+   "stream": "MONITOR",
+   "subject": "monitor.drift.evaluated.eurosat-classifier",
+   "sequence": 121,
+   "time": "2026-11-22T22:35:12.376161722Z",
+   "type": "spotter.v1.DriftEvaluated",
+   "payload": {
+    "modelName": "eurosat-classifier",
+    "versionId": "01a204cd-c722-72b8-ae4c-8ca118f6b184",
+    "version": 3,
+    "features": [
+     {
+      "feature": "mean_r",
+      "psi": 2.477339733390594,
+      "ksStatistic": 0.7151851851851851,
+      "ksPValue": 1.1233721325826906e-86,
+      "referenceMean": 0.34292763382716074,
+      "windowMean": 0.5674926456809044
+     },
+     {
+      "feature": "mean_g",
+      "psi": 4.295775963164262,
+      "ksStatistic": 0.7993827160493827,
+      "ksPValue": 3.522460533423541e-108,
+      "referenceMean": 0.378889520740741,
+      "windowMean": 0.5890262486040592
+     },
+     {
+      "feature": "mean_b",
+      "psi": 3.546804694724533,
+      "ksStatistic": 0.8356172839506173,
+      "ksPValue": 3.6045111662775965e-118,
+      "referenceMean": 0.4075579069135806,
+      "windowMean": 0.6024054473638535
+     },
+     {
+      "feature": "contrast",
+      "psi": 1.9858207786536355,
+      "ksStatistic": 0.4276543209876544,
+      "ksPValue": 2.8927739013035794e-31,
+      "referenceMean": 0.07026252691358047,
+      "windowMean": 0.03054591360589258
+     },
+     {
+      "feature": "confidence",
+      "psi": 0.6259229548078147,
+      "ksStatistic": 0.2501851851851852,
+      "ksPValue": 5.5754941271164995e-11,
+      "referenceMean": 0.9536306417283924,
+      "windowMean": 0.8283819408714771
+     }
+    ],
+    "windowSize": 200,
+    "drifting": true,
+    "evaluatedAt": "2026-11-22T22:35:12.376906600Z"
+   }
+  },
+  {
+   "stream": "MONITOR",
+   "subject": "monitor.drift.evaluated.eurosat-classifier",
+   "sequence": 122,
+   "time": "2026-11-22T22:35:13.212512473Z",
+   "type": "spotter.v1.DriftEvaluated",
+   "payload": {
+    "modelName": "eurosat-classifier",
+    "versionId": "01a204cd-c722-72b8-ae4c-8ca118f6b184",
+    "version": 3,
+    "features": [
+     {
+      "feature": "mean_r",
+      "psi": 1.1097677677696756,
+      "ksStatistic": 0.5151851851851852,
+      "ksPValue": 3.507677262672377e-45,
+      "referenceMean": 0.34292763382716074,
+      "windowMean": 0.5053575248271227
+     },
+     {
+      "feature": "mean_g",
+      "psi": 1.7826824952762654,
+      "ksStatistic": 0.5838888888888889,
+      "ksPValue": 6.48619596047812e-58,
+      "referenceMean": 0.378889520740741,
+      "windowMean": 0.5298126940429211
+     },
+     {
+      "feature": "mean_b",
+      "psi": 1.6944235176290352,
+      "ksStatistic": 0.6056172839506173,
+      "ksPValue": 2.842309589484406e-62,
+      "referenceMean": 0.4075579069135806,
+      "windowMean": 0.5465524885058403
+     },
+     {
+      "feature": "contrast",
+      "psi": 0.5470393818848074,
+      "ksStatistic": 0.3264197530864197,
+      "ksPValue": 2.157496712980588e-18,
+      "referenceMean": 0.07026252691358047,
+      "windowMean": 0.040792783274664526
+     },
+     {
+      "feature": "confidence",
+      "psi": 0.3169856196232543,
+      "ksStatistic": 0.18679012345679014,
+      "ksPValue": 0.0000026156207521874796,
+      "referenceMean": 0.9536306417283924,
+      "windowMean": 0.8580977633595467
+     }
+    ],
+    "windowSize": 200,
+    "drifting": true,
+    "evaluatedAt": "2026-11-22T22:35:13.212682800Z"
+   }
+  },
+  {
+   "stream": "MONITOR",
+   "subject": "monitor.drift.evaluated.eurosat-classifier",
+   "sequence": 123,
+   "time": "2026-11-22T22:35:14.078545768Z",
+   "type": "spotter.v1.DriftEvaluated",
+   "payload": {
+    "modelName": "eurosat-classifier",
+    "versionId": "01a204cd-c722-72b8-ae4c-8ca118f6b184",
+    "version": 3,
+    "features": [
+     {
+      "feature": "mean_r",
+      "psi": 0.3663410660222808,
+      "ksStatistic": 0.2951851851851851,
+      "ksPValue": 4.0543325222984655e-15,
+      "referenceMean": 0.34292763382716074,
+      "windowMean": 0.43065116699784994
+     },
+     {
+      "feature": "mean_g",
+      "psi": 0.7879841892409163,
+      "ksStatistic": 0.3488888888888888,
+      "ksPValue": 5.960543154012864e-21,
+      "referenceMean": 0.378889520740741,
+      "windowMean": 0.4662707198411226
+     },
+     {
+      "feature": "mean_b",
+      "psi": 0.7079221974513707,
+      "ksStatistic": 0.3656172839506173,
+      "ksPValue": 5.751433765527913e-23,
+      "referenceMean": 0.4075579069135806,
+      "windowMean": 0.48772856026887895
+     },
+     {
+      "feature": "contrast",
+      "psi": 0.2676839536801614,
+      "ksStatistic": 0.2466666666666667,
+      "ksPValue": 1.0991891686668777e-10,
+      "referenceMean": 0.07026252691358047,
+      "windowMean": 0.04909053827383707
+     },
+     {
+      "feature": "confidence",
+      "psi": 0.14714061967896058,
+      "ksStatistic": 0.10524691358024692,
+      "ksPValue": 0.027112714453844406,
+      "referenceMean": 0.9536306417283924,
+      "windowMean": 0.9026136629283428
+     }
+    ],
+    "windowSize": 200,
+    "drifting": true,
+    "evaluatedAt": "2026-11-22T22:35:14.078750300Z"
+   }
+  },
+  {
+   "stream": "MONITOR",
+   "subject": "monitor.drift.evaluated.eurosat-classifier",
+   "sequence": 124,
+   "time": "2026-11-22T22:35:14.89489917Z",
+   "type": "spotter.v1.DriftEvaluated",
+   "payload": {
+    "modelName": "eurosat-classifier",
+    "versionId": "01a204cd-c722-72b8-ae4c-8ca118f6b184",
+    "version": 3,
+    "features": [
+     {
+      "feature": "mean_r",
+      "psi": 0.053243280249345104,
+      "ksStatistic": 0.10660493827160489,
+      "ksPValue": 0.024247088055481182,
+      "referenceMean": 0.34292763382716074,
+      "windowMean": 0.3684419002011418
+     },
+     {
+      "feature": "mean_g",
+      "psi": 0.21555797773474256,
+      "ksStatistic": 0.13740740740740742,
+      "ksPValue": 0.0013098942978511398,
+      "referenceMean": 0.378889520740741,
+      "windowMean": 0.40891214661300185
+     },
+     {
+      "feature": "mean_b",
+      "psi": 0.14749983182015255,
+      "ksStatistic": 0.1358641975308642,
+      "ksPValue": 0.0015429379284009324,
+      "referenceMean": 0.4075579069135806,
+      "windowMean": 0.43276911213994024
+     },
+     {
+      "feature": "contrast",
+      "psi": 0.08172410960187662,
+      "ksStatistic": 0.1166666666666667,
+      "ksPValue": 0.010135430731265967,
+      "referenceMean": 0.07026252691358047,
+      "windowMean": 0.06078246483734497
+     },
+     {
+      "feature": "confidence",
+      "psi": 0.051348708656681716,
+      "ksStatistic": 0.061790123456790136,
+      "ksPValue": 0.4488488737506205,
+      "referenceMean": 0.9536306417283924,
+      "windowMean": 0.9302438189089298
+     }
+    ],
+    "windowSize": 200,
+    "drifting": true,
+    "evaluatedAt": "2026-11-22T22:35:14.895205Z"
+   }
+  },
+  {
+   "stream": "MONITOR",
+   "subject": "monitor.drift.resolved.eurosat-classifier",
+   "sequence": 125,
+   "time": "2026-11-22T22:35:15.868458029Z",
+   "type": "spotter.v1.DriftResolved",
+   "payload": {
+    "modelName": "eurosat-classifier",
+    "versionId": "01a204cd-c722-72b8-ae4c-8ca118f6b184",
+    "version": 3,
+    "features": [
+     {
+      "feature": "mean_r",
+      "psi": 0.030883853940040784,
+      "ksStatistic": 0.050617283950617264,
+      "ksPValue": 0.7024489917637212,
+      "referenceMean": 0.34292763382716074,
+      "windowMean": 0.3463846044614911
+     },
+     {
+      "feature": "mean_g",
+      "psi": 0.054848456819668136,
+      "ksStatistic": 0.05104938271604939,
+      "ksPValue": 0.6923706881123426,
+      "referenceMean": 0.378889520740741,
+      "windowMean": 0.38601712219417095
+     },
+     {
+      "feature": "mean_b",
+      "psi": 0.030065109618722045,
+      "ksStatistic": 0.033641975308641964,
+      "ksPValue": 0.9805166123100736,
+      "referenceMean": 0.4075579069135806,
+      "windowMean": 0.4102421824634075
+     },
+     {
+      "feature": "contrast",
+      "psi": 0.041474320586333394,
+      "ksStatistic": 0.04487654320987655,
+      "ksPValue": 0.8291468668057552,
+      "referenceMean": 0.07026252691358047,
+      "windowMean": 0.06967945360656205
+     },
+     {
+      "feature": "confidence",
+      "psi": 0.01996678607030964,
+      "ksStatistic": 0.036604938271604937,
+      "ksPValue": 0.9571655574549525,
+      "referenceMean": 0.9536306417283924,
+      "windowMean": 0.9606749963760376
+     }
+    ],
+    "resolvedAt": "2026-11-22T22:35:15.868585900Z"
+   }
+  },
+  {
+   "stream": "MONITOR",
+   "subject": "monitor.drift.evaluated.eurosat-classifier",
+   "sequence": 126,
+   "time": "2026-11-22T22:35:15.870233839Z",
+   "type": "spotter.v1.DriftEvaluated",
+   "payload": {
+    "modelName": "eurosat-classifier",
+    "versionId": "01a204cd-c722-72b8-ae4c-8ca118f6b184",
+    "version": 3,
+    "features": [
+     {
+      "feature": "mean_r",
+      "psi": 0.030883853940040784,
+      "ksStatistic": 0.050617283950617264,
+      "ksPValue": 0.7024489917637212,
+      "referenceMean": 0.34292763382716074,
+      "windowMean": 0.3463846044614911
+     },
+     {
+      "feature": "mean_g",
+      "psi": 0.054848456819668136,
+      "ksStatistic": 0.05104938271604939,
+      "ksPValue": 0.6923706881123426,
+      "referenceMean": 0.378889520740741,
+      "windowMean": 0.38601712219417095
+     },
+     {
+      "feature": "mean_b",
+      "psi": 0.030065109618722045,
+      "ksStatistic": 0.033641975308641964,
+      "ksPValue": 0.9805166123100736,
+      "referenceMean": 0.4075579069135806,
+      "windowMean": 0.4102421824634075
+     },
+     {
+      "feature": "contrast",
+      "psi": 0.041474320586333394,
+      "ksStatistic": 0.04487654320987655,
+      "ksPValue": 0.8291468668057552,
+      "referenceMean": 0.07026252691358047,
+      "windowMean": 0.06967945360656205
+     },
+     {
+      "feature": "confidence",
+      "psi": 0.01996678607030964,
+      "ksStatistic": 0.036604938271604937,
+      "ksPValue": 0.9571655574549525,
+      "referenceMean": 0.9536306417283924,
+      "windowMean": 0.9606749963760376
+     }
+    ],
+    "windowSize": 200,
+    "drifting": false,
+    "evaluatedAt": "2026-11-22T22:35:15.868585900Z"
+   }
+  },
+  {
+   "stream": "MONITOR",
+   "subject": "monitor.drift.evaluated.eurosat-classifier",
+   "sequence": 127,
+   "time": "2026-11-22T22:35:16.715502072Z",
+   "type": "spotter.v1.DriftEvaluated",
+   "payload": {
+    "modelName": "eurosat-classifier",
+    "versionId": "01a204cd-c722-72b8-ae4c-8ca118f6b184",
+    "version": 3,
+    "features": [
+     {
+      "feature": "mean_r",
+      "psi": 0.01864376306027005,
+      "ksStatistic": 0.046666666666666634,
+      "ksPValue": 0.7916684745450635,
+      "referenceMean": 0.34292763382716074,
+      "windowMean": 0.3479952875897288
+     },
+     {
+      "feature": "mean_g",
+      "psi": 0.04956936927468673,
+      "ksStatistic": 0.05604938271604937,
+      "ksPValue": 0.5754162653558496,
+      "referenceMean": 0.378889520740741,
+      "windowMean": 0.38869591765105727
+     },
+     {
+      "feature": "mean_b",
+      "psi": 0.045532792721888544,
+      "ksStatistic": 0.04549382716049383,
+      "ksPValue": 0.8165042661374449,
+      "referenceMean": 0.4075579069135806,
+      "windowMean": 0.41105587020516393
+     },
+     {
+      "feature": "contrast",
+      "psi": 0.034187823098301484,
+      "ksStatistic": 0.04117283950617284,
+      "ksPValue": 0.8971048097431648,
+      "referenceMean": 0.07026252691358047,
+      "windowMean": 0.07001328460096069
+     },
+     {
+      "feature": "confidence",
+      "psi": 0.028475499513894928,
+      "ksStatistic": 0.04283950617283949,
+      "ksPValue": 0.8683642457155022,
+      "referenceMean": 0.9536306417283924,
+      "windowMean": 0.9571742421388626
+     }
+    ],
+    "windowSize": 200,
+    "drifting": false,
+    "evaluatedAt": "2026-11-22T22:35:16.715510900Z"
+   }
+  },
+  {
+   "stream": "MONITOR",
+   "subject": "monitor.drift.evaluated.eurosat-classifier",
+   "sequence": 128,
+   "time": "2026-11-22T22:35:17.563965282Z",
+   "type": "spotter.v1.DriftEvaluated",
+   "payload": {
+    "modelName": "eurosat-classifier",
+    "versionId": "01a204cd-c722-72b8-ae4c-8ca118f6b184",
+    "version": 3,
+    "features": [
+     {
+      "feature": "mean_r",
+      "psi": 0.03040964479513142,
+      "ksStatistic": 0.04444444444444451,
+      "ksPValue": 0.83780076153094,
+      "referenceMean": 0.34292763382716074,
+      "windowMean": 0.34128005243837833
+     },
+     {
+      "feature": "mean_g",
+      "psi": 0.04786735987565886,
+      "ksStatistic": 0.03790123456790123,
+      "ksPValue": 0.9430935200730433,
+      "referenceMean": 0.378889520740741,
+      "windowMean": 0.3826228915899992
+     },
+     {
+      "feature": "mean_b",
+      "psi": 0.04198603434786076,
+      "ksStatistic": 0.03407407407407409,
+      "ksPValue": 0.9778397074281988,
+      "referenceMean": 0.4075579069135806,
+      "windowMean": 0.40849494710564616
+     },
+     {
+      "feature": "contrast",
+      "psi": 0.03320891417239804,
+      "ksStatistic": 0.043827160493827066,
+      "ksPValue": 0.8498625832877271,
+      "referenceMean": 0.07026252691358047,
+      "windowMean": 0.06878187074597614
+     },
+     {
+      "feature": "confidence",
+      "psi": 0.06226616405729436,
+      "ksStatistic": 0.06530864197530867,
+      "ksPValue": 0.37911643409977336,
+      "referenceMean": 0.9536306417283924,
+      "windowMean": 0.9612466207146645
+     }
+    ],
+    "windowSize": 200,
+    "drifting": false,
+    "evaluatedAt": "2026-11-22T22:35:17.564022700Z"
+   }
+  },
+  {
+   "stream": "MONITOR",
+   "subject": "monitor.drift.evaluated.eurosat-classifier",
+   "sequence": 129,
+   "time": "2026-11-22T22:35:18.373121042Z",
+   "type": "spotter.v1.DriftEvaluated",
+   "payload": {
+    "modelName": "eurosat-classifier",
+    "versionId": "01a204cd-c722-72b8-ae4c-8ca118f6b184",
+    "version": 3,
+    "features": [
+     {
+      "feature": "mean_r",
+      "psi": 0.049523112570126815,
+      "ksStatistic": 0.06697530864197532,
+      "ksPValue": 0.34856444662585334,
+      "referenceMean": 0.34292763382716074,
+      "windowMean": 0.33897007133811713
+     },
+     {
+      "feature": "mean_g",
+      "psi": 0.04122293844951857,
+      "ksStatistic": 0.04246913580246911,
+      "ksPValue": 0.8750313236991403,
+      "referenceMean": 0.378889520740741,
+      "windowMean": 0.3809478998929262
+     },
+     {
+      "feature": "mean_b",
+      "psi": 0.03678400325646733,
+      "ksStatistic": 0.036790123456790114,
+      "ksPValue": 0.955302357088046,
+      "referenceMean": 0.4075579069135806,
+      "windowMean": 0.40907354414463043
+     },
+     {
+      "feature": "contrast",
+      "psi": 0.005713386529117773,
+      "ksStatistic": 0.028827160493827164,
+      "ksPValue": 0.9970204700436629,
+      "referenceMean": 0.07026252691358047,
+      "windowMean": 0.06836628372819784
+     },
+     {
+      "feature": "confidence",
+      "psi": 0.08049637604616144,
+      "ksStatistic": 0.06728395061728398,
+      "ksPValue": 0.34308852286065794,
+      "referenceMean": 0.9536306417283924,
+      "windowMean": 0.9635183557868003
+     }
+    ],
+    "windowSize": 200,
+    "drifting": false,
+    "evaluatedAt": "2026-11-22T22:35:18.373184600Z"
+   }
+  },
+  {
+   "stream": "MONITOR",
+   "subject": "monitor.drift.evaluated.eurosat-classifier",
+   "sequence": 130,
+   "time": "2026-11-22T22:35:19.330620996Z",
+   "type": "spotter.v1.DriftEvaluated",
+   "payload": {
+    "modelName": "eurosat-classifier",
+    "versionId": "01a204cd-c722-72b8-ae4c-8ca118f6b184",
+    "version": 3,
+    "features": [
+     {
+      "feature": "mean_r",
+      "psi": 0.04124976367617774,
+      "ksStatistic": 0.07203703703703701,
+      "ksPValue": 0.2660372196104901,
+      "referenceMean": 0.34292763382716074,
+      "windowMean": 0.33398926615715024
+     },
+     {
+      "feature": "mean_g",
+      "psi": 0.04147559116329135,
+      "ksStatistic": 0.04561728395061726,
+      "ksPValue": 0.813938344854655,
+      "referenceMean": 0.378889520740741,
+      "windowMean": 0.3761829311400652
+     },
+     {
+      "feature": "mean_b",
+      "psi": 0.03707702237197634,
+      "ksStatistic": 0.04302469135802467,
+      "ksPValue": 0.8649738034373474,
+      "referenceMean": 0.4075579069135806,
+      "windowMean": 0.4045614619553089
+     },
+     {
+      "feature": "contrast",
+      "psi": 0.036559530398060314,
+      "ksStatistic": 0.06302469135802474,
+      "ksPValue": 0.42360357350871963,
+      "referenceMean": 0.07026252691358047,
+      "windowMean": 0.06641602436856674
+     },
+     {
+      "feature": "confidence",
+      "psi": 0.07629819584925907,
+      "ksStatistic": 0.0576543209876543,
+      "ksPValue": 0.5387549474567948,
+      "referenceMean": 0.9536306417283924,
+      "windowMean": 0.9633998343348503
+     }
+    ],
+    "windowSize": 200,
+    "drifting": false,
+    "evaluatedAt": "2026-11-22T22:35:19.330505700Z"
+   }
+  },
+  {
+   "stream": "MONITOR",
+   "subject": "monitor.drift.evaluated.eurosat-classifier",
+   "sequence": 131,
+   "time": "2026-11-22T22:35:20.234545208Z",
+   "type": "spotter.v1.DriftEvaluated",
+   "payload": {
+    "modelName": "eurosat-classifier",
+    "versionId": "01a204cd-c722-72b8-ae4c-8ca118f6b184",
+    "version": 3,
+    "features": [
+     {
+      "feature": "mean_r",
+      "psi": 0.03151836982337802,
+      "ksStatistic": 0.07598765432098764,
+      "ksPValue": 0.21224681143475485,
+      "referenceMean": 0.34292763382716074,
+      "windowMean": 0.33237858302891254
+     },
+     {
+      "feature": "mean_g",
+      "psi": 0.025525890769224194,
+      "ksStatistic": 0.06061728395061727,
+      "ksPValue": 0.4735577091620754,
+      "referenceMean": 0.378889520740741,
+      "windowMean": 0.3735041356831789
+     },
+     {
+      "feature": "mean_b",
+      "psi": 0.02965445872526981,
+      "ksStatistic": 0.04907407407407405,
+      "ksPValue": 0.7380634378923066,
+      "referenceMean": 0.4075579069135806,
+      "windowMean": 0.40374777421355246
+     },
+     {
+      "feature": "contrast",
+      "psi": 0.023083154510085177,
+      "ksStatistic": 0.06308641975308643,
+      "ksPValue": 0.4223627579171611,
+      "referenceMean": 0.07026252691358047,
+      "windowMean": 0.0660821933741681
+     },
+     {
+      "feature": "confidence",
+      "psi": 0.050446364743132056,
+      "ksStatistic": 0.0626543209876543,
+      "ksPValue": 0.4310919222404238,
+      "referenceMean": 0.9536306417283924,
+      "windowMean": 0.9669005885720253
+     }
+    ],
+    "windowSize": 200,
+    "drifting": false,
+    "evaluatedAt": "2026-11-22T22:35:20.234134100Z"
+   }
+  },
+  {
+   "stream": "MONITOR",
+   "subject": "monitor.drift.evaluated.eurosat-classifier",
+   "sequence": 132,
+   "time": "2026-11-22T22:35:21.123879948Z",
+   "type": "spotter.v1.DriftEvaluated",
+   "payload": {
+    "modelName": "eurosat-classifier",
+    "versionId": "01a204cd-c722-72b8-ae4c-8ca118f6b184",
+    "version": 3,
+    "features": [
+     {
+      "feature": "mean_r",
+      "psi": 0.02270643010632864,
+      "ksStatistic": 0.0730246913580247,
+      "ksPValue": 0.25173393845650854,
+      "referenceMean": 0.34292763382716074,
+      "windowMean": 0.339093818180263
+     },
+     {
+      "feature": "mean_g",
+      "psi": 0.058506990790864216,
+      "ksStatistic": 0.04981481481481487,
+      "ksPValue": 0.721055560840393,
+      "referenceMean": 0.378889520740741,
+      "windowMean": 0.37957716174423695
+     },
+     {
+      "feature": "mean_b",
+      "psi": 0.05371236273940876,
+      "ksStatistic": 0.043703703703703745,
+      "ksPValue": 0.8522304208602371,
+      "referenceMean": 0.4075579069135806,
+      "windowMean": 0.4063086973130703
+     },
+     {
+      "feature": "contrast",
+      "psi": 0.03589158209569375,
+      "ksStatistic": 0.0566666666666667,
+      "ksPValue": 0.5612251372873565,
+      "referenceMean": 0.07026252691358047,
+      "windowMean": 0.06731360722915264
+     },
+     {
+      "feature": "confidence",
+      "psi": 0.03391954252325154,
+      "ksStatistic": 0.06228395061728398,
+      "ksPValue": 0.43865390241910296,
+      "referenceMean": 0.9536306417283924,
+      "windowMean": 0.9628282099962234
+     }
+    ],
+    "windowSize": 200,
+    "drifting": false,
+    "evaluatedAt": "2026-11-22T22:35:21.122970600Z"
+   }
+  },
+  {
+   "stream": "MONITOR",
+   "subject": "monitor.drift.evaluated.eurosat-classifier",
+   "sequence": 136,
+   "time": "2026-11-22T22:48:17.51597678Z",
+   "type": "spotter.v1.DriftEvaluated",
+   "payload": {
+    "modelName": "eurosat-classifier",
+    "versionId": "01a204cd-c722-72b8-ae4c-8ca118f6b184",
+    "version": 3,
+    "features": [
+     {
+      "feature": "mean_r",
+      "psi": 0.03178323045677776,
+      "ksStatistic": 0.06407407407407412,
+      "ksPValue": 0.4027963780045062,
+      "referenceMean": 0.34292763382716074,
+      "windowMean": 0.34181197844445704
+     },
+     {
+      "feature": "mean_g",
+      "psi": 0.09773241981695437,
+      "ksStatistic": 0.05697530864197531,
+      "ksPValue": 0.554170132122129,
+      "referenceMean": 0.378889520740741,
+      "windowMean": 0.3816037177294493
+     },
+     {
+      "feature": "mean_b",
+      "psi": 0.04247736274576714,
+      "ksStatistic": 0.052962962962962934,
+      "ksPValue": 0.6474756213974328,
+      "referenceMean": 0.4075579069135806,
+      "windowMean": 0.4060872575640678
+     },
+     {
+      "feature": "contrast",
+      "psi": 0.03188269248904664,
+      "ksStatistic": 0.0616666666666667,
+      "ksPValue": 0.4514173388574258,
+      "referenceMean": 0.07026252691358047,
+      "windowMean": 0.06675731276355991
+     },
+     {
+      "feature": "confidence",
+      "psi": 0.04032269700663172,
+      "ksStatistic": 0.061790123456790136,
+      "ksPValue": 0.4488488737506205,
+      "referenceMean": 0.9536306417283924,
+      "windowMean": 0.9593046134710312
+     }
+    ],
+    "windowSize": 200,
+    "drifting": false,
+    "evaluatedAt": "2026-11-22T22:48:17.515188100Z"
+   }
+  },
+  {
+   "stream": "MONITOR",
+   "subject": "monitor.drift.detected.eurosat-classifier",
+   "sequence": 137,
+   "time": "2026-11-22T22:48:18.374478013Z",
+   "type": "spotter.v1.DriftDetected",
+   "payload": {
+    "modelName": "eurosat-classifier",
+    "versionId": "01a204cd-c722-72b8-ae4c-8ca118f6b184",
+    "version": 3,
+    "features": [
+     {
+      "feature": "mean_r",
+      "psi": 0.21912936209376266,
+      "ksStatistic": 0.22265432098765436,
+      "ksPValue": 8.737822020248698e-9,
+      "referenceMean": 0.34292763382716074,
+      "windowMean": 0.40805940378457306
+     },
+     {
+      "feature": "mean_g",
+      "psi": 0.42735587980576195,
+      "ksStatistic": 0.2474074074074074,
+      "ksPValue": 9.535831073140097e-11,
+      "referenceMean": 0.378889520740741,
+      "windowMean": 0.4431466559320688
+     },
+     {
+      "feature": "mean_b",
+      "psi": 0.38859491138220037,
+      "ksStatistic": 0.25635802469135804,
+      "ksPValue": 1.655853055120504e-11,
+      "referenceMean": 0.4075579069135806,
+      "windowMean": 0.4644954587519169
+     }
+    ],
+    "windowSize": 200,
+    "detectedAt": "2026-11-22T22:48:18.373864400Z"
+   }
+  },
+  {
+   "stream": "MONITOR",
+   "subject": "monitor.drift.evaluated.eurosat-classifier",
+   "sequence": 138,
+   "time": "2026-11-22T22:48:18.375414316Z",
+   "type": "spotter.v1.DriftEvaluated",
+   "payload": {
+    "modelName": "eurosat-classifier",
+    "versionId": "01a204cd-c722-72b8-ae4c-8ca118f6b184",
+    "version": 3,
+    "features": [
+     {
+      "feature": "mean_r",
+      "psi": 0.21912936209376266,
+      "ksStatistic": 0.22265432098765436,
+      "ksPValue": 8.737822020248698e-9,
+      "referenceMean": 0.34292763382716074,
+      "windowMean": 0.40805940378457306
+     },
+     {
+      "feature": "mean_g",
+      "psi": 0.42735587980576195,
+      "ksStatistic": 0.2474074074074074,
+      "ksPValue": 9.535831073140097e-11,
+      "referenceMean": 0.378889520740741,
+      "windowMean": 0.4431466559320688
+     },
+     {
+      "feature": "mean_b",
+      "psi": 0.38859491138220037,
+      "ksStatistic": 0.25635802469135804,
+      "ksPValue": 1.655853055120504e-11,
+      "referenceMean": 0.4075579069135806,
+      "windowMean": 0.4644954587519169
+     },
+     {
+      "feature": "contrast",
+      "psi": 0.13063889198372336,
+      "ksStatistic": 0.16018518518518515,
+      "ksPValue": 0.00009423343128061756,
+      "referenceMean": 0.07026252691358047,
+      "windowMean": 0.05674877881305293
+     },
+     {
+      "feature": "confidence",
+      "psi": 0.08452445148898667,
+      "ksStatistic": 0.06919753086419753,
+      "ksPValue": 0.31042224221559445,
+      "referenceMean": 0.9536306417283924,
+      "windowMean": 0.936913852095604
+     }
+    ],
+    "windowSize": 200,
+    "drifting": true,
+    "evaluatedAt": "2026-11-22T22:48:18.373864400Z"
+   }
+  },
+  {
+   "stream": "MONITOR",
+   "subject": "monitor.drift.evaluated.eurosat-classifier",
+   "sequence": 139,
+   "time": "2026-11-22T22:48:19.493990995Z",
+   "type": "spotter.v1.DriftEvaluated",
+   "payload": {
+    "modelName": "eurosat-classifier",
+    "versionId": "01a204cd-c722-72b8-ae4c-8ca118f6b184",
+    "version": 3,
+    "features": [
+     {
+      "feature": "mean_r",
+      "psi": 0.7092274087453532,
+      "ksStatistic": 0.41623456790123453,
+      "ksPValue": 1.2200119208015363e-29,
+      "referenceMean": 0.34292763382716074,
+      "windowMean": 0.46882552724331616
+     },
+     {
+      "feature": "mean_g",
+      "psi": 1.1595332886920362,
+      "ksStatistic": 0.4668518518518518,
+      "ksPValue": 3.5389571465466288e-37,
+      "referenceMean": 0.378889520740741,
+      "windowMean": 0.5018334565311671
+     },
+     {
+      "feature": "mean_b",
+      "psi": 1.148735124833581,
+      "ksStatistic": 0.48635802469135797,
+      "ksPValue": 2.591379538612899e-40,
+      "referenceMean": 0.4075579069135806,
+      "windowMean": 0.5199624960124493
+     },
+     {
+      "feature": "contrast",
+      "psi": 0.38852520475274277,
+      "ksStatistic": 0.29240740740740745,
+      "ksPValue": 7.641015149161505e-15,
+      "referenceMean": 0.07026252691358047,
+      "windowMean": 0.045116285620218466
+     },
+     {
+      "feature": "confidence",
+      "psi": 0.2826886885370915,
+      "ksStatistic": 0.14419753086419757,
+      "ksPValue": 0.000623449038912842,
+      "referenceMean": 0.9536306417283924,
+      "windowMean": 0.9045189906656742
+     }
+    ],
+    "windowSize": 200,
+    "drifting": true,
+    "evaluatedAt": "2026-11-22T22:48:19.492932300Z"
+   }
+  },
+  {
+   "stream": "MONITOR",
+   "subject": "monitor.drift.evaluated.eurosat-classifier",
+   "sequence": 140,
+   "time": "2026-11-22T22:48:20.451210619Z",
+   "type": "spotter.v1.DriftEvaluated",
+   "payload": {
+    "modelName": "eurosat-classifier",
+    "versionId": "01a204cd-c722-72b8-ae4c-8ca118f6b184",
+    "version": 3,
+    "features": [
+     {
+      "feature": "mean_r",
+      "psi": 1.7913374570957332,
+      "ksStatistic": 0.6347530864197531,
+      "ksPValue": 2.289094062149572e-68,
+      "referenceMean": 0.34292763382716074,
+      "windowMean": 0.5411563002318144
+     },
+     {
+      "feature": "mean_g",
+      "psi": 2.549488903987762,
+      "ksStatistic": 0.6996913580246914,
+      "ksPValue": 5.5862295994750204e-83,
+      "referenceMean": 0.378889520740741,
+      "windowMean": 0.56339116320014
+     },
+     {
+      "feature": "mean_b",
+      "psi": 2.6343067502066333,
+      "ksStatistic": 0.721358024691358,
+      "ksPValue": 3.5910687128593013e-88,
+      "referenceMean": 0.4075579069135806,
+      "windowMean": 0.5775020571053028
+     },
+     {
+      "feature": "contrast",
+      "psi": 0.7974243107471051,
+      "ksStatistic": 0.3891358024691358,
+      "ksPValue": 5.841847739127586e-26,
+      "referenceMean": 0.07026252691358047,
+      "windowMean": 0.036509005027473895
+     },
+     {
+      "feature": "confidence",
+      "psi": 0.5866299639343765,
+      "ksStatistic": 0.2197530864197531,
+      "ksPValue": 1.4382665428684423e-8,
+      "referenceMean": 0.9536306417283924,
+      "windowMean": 0.8612875014543533
+     }
+    ],
+    "windowSize": 200,
+    "drifting": true,
+    "evaluatedAt": "2026-11-22T22:48:20.449821600Z"
+   }
+  },
+  {
+   "stream": "MONITOR",
+   "subject": "monitor.drift.evaluated.eurosat-classifier",
+   "sequence": 141,
+   "time": "2026-11-22T22:48:21.316960349Z",
+   "type": "spotter.v1.DriftEvaluated",
+   "payload": {
+    "modelName": "eurosat-classifier",
+    "versionId": "01a204cd-c722-72b8-ae4c-8ca118f6b184",
+    "version": 3,
+    "features": [
+     {
+      "feature": "mean_r",
+      "psi": 6.812073827791643,
+      "ksStatistic": 0.8254320987654321,
+      "ksPValue": 2.5684894615445206e-115,
+      "referenceMean": 0.34292763382716074,
+      "windowMean": 0.6054461139440537
+     },
+     {
+      "feature": "mean_g",
+      "psi": 8.283089355027482,
+      "ksStatistic": 0.9112962962962963,
+      "ksPValue": 1.8352390919996748e-140,
+      "referenceMean": 0.378889520740741,
+      "windowMean": 0.6225041997432709
+     },
+     {
+      "feature": "mean_b",
+      "psi": 8.283089355027482,
+      "ksStatistic": 0.946358024691358,
+      "ksPValue": 1.9082939122596986e-151,
+      "referenceMean": 0.4075579069135806,
+      "windowMean": 0.6329610580205918
+     },
+     {
+      "feature": "contrast",
+      "psi": 2.6283302158335915,
+      "ksStatistic": 0.47623456790123453,
+      "ksPValue": 1.1395989747013511e-38,
+      "referenceMean": 0.07026252691358047,
+      "windowMean": 0.027668250541998226
+     },
+     {
+      "feature": "confidence",
+      "psi": 0.9388004895135627,
+      "ksStatistic": 0.26827160493827157,
+      "ksPValue": 1.4624210732882565e-12,
+      "referenceMean": 0.9536306417283924,
+      "windowMean": 0.8356885997951031
+     }
+    ],
+    "windowSize": 200,
+    "drifting": true,
+    "evaluatedAt": "2026-11-22T22:48:21.315677100Z"
+   }
+  },
+  {
+   "stream": "MONITOR",
+   "subject": "monitor.drift.evaluated.eurosat-classifier",
+   "sequence": 142,
+   "time": "2026-11-22T22:48:22.240449834Z",
+   "type": "spotter.v1.DriftEvaluated",
+   "payload": {
+    "modelName": "eurosat-classifier",
+    "versionId": "01a204cd-c722-72b8-ae4c-8ca118f6b184",
+    "version": 3,
+    "features": [
+     {
+      "feature": "mean_r",
+      "psi": 6.820040078628401,
+      "ksStatistic": 0.8281481481481482,
+      "ksPValue": 4.491005468173071e-116,
+      "referenceMean": 0.34292763382716074,
+      "windowMean": 0.6090849336981773
+     },
+     {
+      "feature": "mean_g",
+      "psi": 8.283089355027482,
+      "ksStatistic": 0.9162962962962963,
+      "ksPValue": 5.281948573312131e-142,
+      "referenceMean": 0.378889520740741,
+      "windowMean": 0.6256840425729752
+     },
+     {
+      "feature": "mean_b",
+      "psi": 8.283089355027482,
+      "ksStatistic": 0.9478395061728395,
+      "ksPValue": 6.418650795506565e-152,
+      "referenceMean": 0.4075579069135806,
+      "windowMean": 0.6352254658937454
+     },
+     {
+      "feature": "contrast",
+      "psi": 2.6076753638363566,
+      "ksStatistic": 0.4787037037037037,
+      "ksPValue": 4.561980154277529e-39,
+      "referenceMean": 0.07026252691358047,
+      "windowMean": 0.028122051952814222
+     },
+     {
+      "feature": "confidence",
+      "psi": 0.9154165918211368,
+      "ksStatistic": 0.29888888888888887,
+      "ksPValue": 1.72542394552299e-15,
+      "referenceMean": 0.9536306417283924,
+      "windowMean": 0.811281519383192
+     }
+    ],
+    "windowSize": 200,
+    "drifting": true,
+    "evaluatedAt": "2026-11-22T22:48:22.239312400Z"
+   }
+  },
+  {
+   "stream": "MONITOR",
+   "subject": "monitor.drift.evaluated.eurosat-classifier",
+   "sequence": 143,
+   "time": "2026-11-22T22:48:23.087864698Z",
+   "type": "spotter.v1.DriftEvaluated",
+   "payload": {
+    "modelName": "eurosat-classifier",
+    "versionId": "01a204cd-c722-72b8-ae4c-8ca118f6b184",
+    "version": 3,
+    "features": [
+     {
+      "feature": "mean_r",
+      "psi": 6.823676867480247,
+      "ksStatistic": 0.8281481481481482,
+      "ksPValue": 4.491005468173071e-116,
+      "referenceMean": 0.34292763382716074,
+      "windowMean": 0.6086854714155198
+     },
+     {
+      "feature": "mean_g",
+      "psi": 8.283089355027482,
+      "ksStatistic": 0.9130864197530865,
+      "ksPValue": 5.1639482999688533e-141,
+      "referenceMean": 0.378889520740741,
+      "windowMean": 0.624482335448265
+     },
+     {
+      "feature": "mean_b",
+      "psi": 8.283089355027482,
+      "ksStatistic": 0.9456172839506173,
+      "ksPValue": 3.2882774118756385e-151,
+      "referenceMean": 0.4075579069135806,
+      "windowMean": 0.6349991482496261
+     },
+     {
+      "feature": "contrast",
+      "psi": 2.6509121448569486,
+      "ksStatistic": 0.4787037037037037,
+      "ksPValue": 4.561980154277529e-39,
+      "referenceMean": 0.07026252691358047,
+      "windowMean": 0.02779924399772427
+     },
+     {
+      "feature": "confidence",
+      "psi": 0.8036066365848697,
+      "ksStatistic": 0.2938888888888889,
+      "ksPValue": 5.453617305371017e-15,
+      "referenceMean": 0.9536306417283924,
+      "windowMean": 0.8085951991379261
+     }
+    ],
+    "windowSize": 200,
+    "drifting": true,
+    "evaluatedAt": "2026-11-22T22:48:23.086597200Z"
+   }
+  },
+  {
+   "stream": "MONITOR",
+   "subject": "monitor.drift.evaluated.eurosat-classifier",
+   "sequence": 144,
+   "time": "2026-11-22T22:48:42.012549024Z",
+   "type": "spotter.v1.DriftEvaluated",
+   "payload": {
+    "modelName": "eurosat-classifier",
+    "versionId": "01a204cd-c722-72b8-ae4c-8ca118f6b184",
+    "version": 3,
+    "features": [
+     {
+      "feature": "mean_r",
+      "psi": 1.8041897624304197,
+      "ksStatistic": 0.6431481481481482,
+      "ksPValue": 3.553312766832268e-70,
+      "referenceMean": 0.34292763382716074,
+      "windowMean": 0.5450978914648295
+     },
+     {
+      "feature": "mean_g",
+      "psi": 3.09794755529469,
+      "ksStatistic": 0.7138888888888888,
+      "ksPValue": 2.306237122168601e-86,
+      "referenceMean": 0.378889520740741,
+      "windowMean": 0.567390201613307
+     },
+     {
+      "feature": "mean_b",
+      "psi": 2.6112563990920816,
+      "ksStatistic": 0.7406172839506173,
+      "ksPValue": 6.4164427965432254e-93,
+      "referenceMean": 0.4075579069135806,
+      "windowMean": 0.58173449665308
+     },
+     {
+      "feature": "contrast",
+      "psi": 0.8660915876924464,
+      "ksStatistic": 0.3714197530864197,
+      "ksPValue": 1.093010080589132e-23,
+      "referenceMean": 0.07026252691358047,
+      "windowMean": 0.036522660506986215
+     },
+     {
+      "feature": "confidence",
+      "psi": 0.5024269061545055,
+      "ksStatistic": 0.2151851851851852,
+      "ksPValue": 3.110699160815129e-8,
+      "referenceMean": 0.9536306417283924,
+      "windowMean": 0.8484255327284336
+     }
+    ],
+    "windowSize": 200,
+    "drifting": true,
+    "evaluatedAt": "2026-11-22T22:48:42.015744700Z"
+   }
+  },
+  {
+   "stream": "MONITOR",
+   "subject": "monitor.drift.evaluated.eurosat-classifier",
+   "sequence": 145,
+   "time": "2026-11-22T22:48:42.819085375Z",
+   "type": "spotter.v1.DriftEvaluated",
+   "payload": {
+    "modelName": "eurosat-classifier",
+    "versionId": "01a204cd-c722-72b8-ae4c-8ca118f6b184",
+    "version": 3,
+    "features": [
+     {
+      "feature": "mean_r",
+      "psi": 0.7628558731428781,
+      "ksStatistic": 0.42987654320987656,
+      "ksPValue": 1.3803100272580172e-31,
+      "referenceMean": 0.34292763382716074,
+      "windowMean": 0.4788364079594612
+     },
+     {
+      "feature": "mean_g",
+      "psi": 1.352021581917536,
+      "ksStatistic": 0.4888888888888889,
+      "ksPValue": 9.93860177989648e-41,
+      "referenceMean": 0.378889520740741,
+      "windowMean": 0.5085310298204422
+     },
+     {
+      "feature": "mean_b",
+      "psi": 1.2359029739380012,
+      "ksStatistic": 0.5106172839506173,
+      "ksPValue": 2.163522937898883e-44,
+      "referenceMean": 0.4075579069135806,
+      "windowMean": 0.5261968739330769
+     },
+     {
+      "feature": "contrast",
+      "psi": 0.39624997905426873,
+      "ksStatistic": 0.2894444444444444,
+      "ksPValue": 1.4923245178104188e-14,
+      "referenceMean": 0.07026252691358047,
+      "windowMean": 0.04441445174103137
+     },
+     {
+      "feature": "confidence",
+      "psi": 0.2438817303655289,
+      "ksStatistic": 0.1617901234567901,
+      "ksPValue": 0.00007710231481295563,
+      "referenceMean": 0.9536306417283924,
+      "windowMean": 0.8744506895542145
+     }
+    ],
+    "windowSize": 200,
+    "drifting": true,
+    "evaluatedAt": "2026-11-22T22:48:42.821952600Z"
+   }
+  },
+  {
+   "stream": "MONITOR",
+   "subject": "monitor.drift.evaluated.eurosat-classifier",
+   "sequence": 146,
+   "time": "2026-11-22T22:48:43.647724937Z",
+   "type": "spotter.v1.DriftEvaluated",
+   "payload": {
+    "modelName": "eurosat-classifier",
+    "versionId": "01a204cd-c722-72b8-ae4c-8ca118f6b184",
+    "version": 3,
+    "features": [
+     {
+      "feature": "mean_r",
+      "psi": 0.23255995717211075,
+      "ksStatistic": 0.2348765432098766,
+      "ksPValue": 9.964120984126798e-10,
+      "referenceMean": 0.34292763382716074,
+      "windowMean": 0.4123322267457843
+     },
+     {
+      "feature": "mean_g",
+      "psi": 0.5375765378163585,
+      "ksStatistic": 0.27240740740740743,
+      "ksPValue": 6.137630520711007e-13,
+      "referenceMean": 0.378889520740741,
+      "windowMean": 0.4473054941743612
+     },
+     {
+      "feature": "mean_b",
+      "psi": 0.4535444057251862,
+      "ksStatistic": 0.28061728395061725,
+      "ksPValue": 1.0529165205935795e-13,
+      "referenceMean": 0.4075579069135806,
+      "windowMean": 0.4696593064069748
+     },
+     {
+      "feature": "contrast",
+      "psi": 0.14650121544625325,
+      "ksStatistic": 0.18166666666666664,
+      "ksPValue": 0.000005443802500006288,
+      "referenceMean": 0.07026252691358047,
+      "windowMean": 0.055062357471906596
+     },
+     {
+      "feature": "confidence",
+      "psi": 0.07567146456750798,
+      "ksStatistic": 0.07179012345679014,
+      "ksPValue": 0.26970389438456516,
+      "referenceMean": 0.9536306417283924,
+      "windowMean": 0.9252097129821777
+     }
+    ],
+    "windowSize": 200,
+    "drifting": true,
+    "evaluatedAt": "2026-11-22T22:48:43.650350900Z"
+   }
+  },
+  {
+   "stream": "MONITOR",
+   "subject": "monitor.drift.evaluated.eurosat-classifier",
+   "sequence": 147,
+   "time": "2026-11-22T22:48:44.451899649Z",
+   "type": "spotter.v1.DriftEvaluated",
+   "payload": {
+    "modelName": "eurosat-classifier",
+    "versionId": "01a204cd-c722-72b8-ae4c-8ca118f6b184",
+    "version": 3,
+    "features": [
+     {
+      "feature": "mean_r",
+      "psi": 0.043703215111089766,
+      "ksStatistic": 0.06407407407407412,
+      "ksPValue": 0.4027963780045062,
+      "referenceMean": 0.34292763382716074,
+      "windowMean": 0.34346699248999357
+     },
+     {
+      "feature": "mean_g",
+      "psi": 0.1277236397776818,
+      "ksStatistic": 0.060185185185185175,
+      "ksPValue": 0.4828291979056402,
+      "referenceMean": 0.378889520740741,
+      "windowMean": 0.3866684872657061
+     },
+     {
+      "feature": "mean_b",
+      "psi": 0.05641360026287142,
+      "ksStatistic": 0.06296296296296294,
+      "ksPValue": 0.4248464672929184,
+      "referenceMean": 0.4075579069135806,
+      "windowMean": 0.41079125881195067
+     },
+     {
+      "feature": "contrast",
+      "psi": 0.05849773314953957,
+      "ksStatistic": 0.07166666666666671,
+      "ksPValue": 0.2715509254347233,
+      "referenceMean": 0.07026252691358047,
+      "windowMean": 0.06616566657088702
+     },
+     {
+      "feature": "confidence",
+      "psi": 0.025070347418189105,
+      "ksStatistic": 0.04944444444444451,
+      "ksPValue": 0.7295825130259934,
+      "referenceMean": 0.9536306417283924,
+      "windowMean": 0.9548469333350659
+     }
+    ],
+    "windowSize": 200,
+    "drifting": true,
+    "evaluatedAt": "2026-11-22T22:48:44.454695300Z"
+   }
+  },
+  {
+   "stream": "MONITOR",
+   "subject": "monitor.drift.resolved.eurosat-classifier",
+   "sequence": 148,
+   "time": "2026-11-22T22:48:45.282688647Z",
+   "type": "spotter.v1.DriftResolved",
+   "payload": {
+    "modelName": "eurosat-classifier",
+    "versionId": "01a204cd-c722-72b8-ae4c-8ca118f6b184",
+    "version": 3,
+    "features": [
+     {
+      "feature": "mean_r",
+      "psi": 0.040460394844047745,
+      "ksStatistic": 0.06061728395061727,
+      "ksPValue": 0.4735577091620754,
+      "referenceMean": 0.34292763382716074,
+      "windowMean": 0.34976547535508873
+     },
+     {
+      "feature": "mean_g",
+      "psi": 0.06147760639004732,
+      "ksStatistic": 0.0536419753086419,
+      "ksPValue": 0.6315256938219274,
+      "referenceMean": 0.378889520740741,
+      "windowMean": 0.38928224101662634
+     },
+     {
+      "feature": "mean_b",
+      "psi": 0.036194530052922995,
+      "ksStatistic": 0.04049382716049382,
+      "ksPValue": 0.9078361140967807,
+      "referenceMean": 0.4075579069135806,
+      "windowMean": 0.4121688805520535
+     },
+     {
+      "feature": "contrast",
+      "psi": 0.03530210025788172,
+      "ksStatistic": 0.04635802469135797,
+      "ksPValue": 0.7982998574990607,
+      "referenceMean": 0.07026252691358047,
+      "windowMean": 0.06792377177082627
+     },
+     {
+      "feature": "confidence",
+      "psi": 0.027136089984810235,
+      "ksStatistic": 0.034012345679012346,
+      "ksPValue": 0.9782365840627777,
+      "referenceMean": 0.9536306417283924,
+      "windowMean": 0.9607188758254052
+     }
+    ],
+    "resolvedAt": "2026-11-22T22:48:45.285421200Z"
+   }
+  },
+  {
+   "stream": "MONITOR",
+   "subject": "monitor.drift.evaluated.eurosat-classifier",
+   "sequence": 149,
+   "time": "2026-11-22T22:48:45.283617601Z",
+   "type": "spotter.v1.DriftEvaluated",
+   "payload": {
+    "modelName": "eurosat-classifier",
+    "versionId": "01a204cd-c722-72b8-ae4c-8ca118f6b184",
+    "version": 3,
+    "features": [
+     {
+      "feature": "mean_r",
+      "psi": 0.040460394844047745,
+      "ksStatistic": 0.06061728395061727,
+      "ksPValue": 0.4735577091620754,
+      "referenceMean": 0.34292763382716074,
+      "windowMean": 0.34976547535508873
+     },
+     {
+      "feature": "mean_g",
+      "psi": 0.06147760639004732,
+      "ksStatistic": 0.0536419753086419,
+      "ksPValue": 0.6315256938219274,
+      "referenceMean": 0.378889520740741,
+      "windowMean": 0.38928224101662634
+     },
+     {
+      "feature": "mean_b",
+      "psi": 0.036194530052922995,
+      "ksStatistic": 0.04049382716049382,
+      "ksPValue": 0.9078361140967807,
+      "referenceMean": 0.4075579069135806,
+      "windowMean": 0.4121688805520535
+     },
+     {
+      "feature": "contrast",
+      "psi": 0.03530210025788172,
+      "ksStatistic": 0.04635802469135797,
+      "ksPValue": 0.7982998574990607,
+      "referenceMean": 0.07026252691358047,
+      "windowMean": 0.06792377177082627
+     },
+     {
+      "feature": "confidence",
+      "psi": 0.027136089984810235,
+      "ksStatistic": 0.034012345679012346,
+      "ksPValue": 0.9782365840627777,
+      "referenceMean": 0.9536306417283924,
+      "windowMean": 0.9607188758254052
+     }
+    ],
+    "windowSize": 200,
+    "drifting": false,
+    "evaluatedAt": "2026-11-22T22:48:45.285421200Z"
+   }
+  },
+  {
+   "stream": "MONITOR",
+   "subject": "monitor.drift.evaluated.eurosat-classifier",
+   "sequence": 150,
+   "time": "2026-11-22T22:48:46.09521493Z",
+   "type": "spotter.v1.DriftEvaluated",
+   "payload": {
+    "modelName": "eurosat-classifier",
+    "versionId": "01a204cd-c722-72b8-ae4c-8ca118f6b184",
+    "version": 3,
+    "features": [
+     {
+      "feature": "mean_r",
+      "psi": 0.028663617232731267,
+      "ksStatistic": 0.045370370370370394,
+      "ksPValue": 0.8190580185124416,
+      "referenceMean": 0.34292763382716074,
+      "windowMean": 0.34473198775202035
+     },
+     {
+      "feature": "mean_g",
+      "psi": 0.043991892597419945,
+      "ksStatistic": 0.0406172839506173,
+      "ksPValue": 0.9059292308997758,
+      "referenceMean": 0.378889520740741,
+      "windowMean": 0.3845857667922974
+     },
+     {
+      "feature": "mean_b",
+      "psi": 0.044524807522722885,
+      "ksStatistic": 0.033641975308641964,
+      "ksPValue": 0.9805166123100736,
+      "referenceMean": 0.4075579069135806,
+      "windowMean": 0.4097464768588543
+     },
+     {
+      "feature": "contrast",
+      "psi": 0.027335666436348608,
+      "ksStatistic": 0.03882716049382706,
+      "ksPValue": 0.9315743463047115,
+      "referenceMean": 0.07026252691358047,
+      "windowMean": 0.06862624679459263
+     },
+     {
+      "feature": "confidence",
+      "psi": 0.05260156321710398,
+      "ksStatistic": 0.0478395061728395,
+      "ksPValue": 0.7659273558848027,
+      "referenceMean": 0.9536306417283924,
+      "windowMean": 0.9626818627119065
+     }
+    ],
+    "windowSize": 200,
+    "drifting": false,
+    "evaluatedAt": "2026-11-22T22:48:46.097923400Z"
+   }
+  },
+  {
+   "stream": "MONITOR",
+   "subject": "monitor.drift.evaluated.eurosat-classifier",
+   "sequence": 151,
+   "time": "2026-11-22T22:48:46.912854138Z",
+   "type": "spotter.v1.DriftEvaluated",
+   "payload": {
+    "modelName": "eurosat-classifier",
+    "versionId": "01a204cd-c722-72b8-ae4c-8ca118f6b184",
+    "version": 3,
+    "features": [
+     {
+      "feature": "mean_r",
+      "psi": 0.041384009813931914,
+      "ksStatistic": 0.06697530864197532,
+      "ksPValue": 0.34856444662585334,
+      "referenceMean": 0.34292763382716074,
+      "windowMean": 0.3357781773805618
+     },
+     {
+      "feature": "mean_g",
+      "psi": 0.04688652479040789,
+      "ksStatistic": 0.03962962962962968,
+      "ksPValue": 0.9206177082299181,
+      "referenceMean": 0.378889520740741,
+      "windowMean": 0.3797615973651409
+     },
+     {
+      "feature": "mean_b",
+      "psi": 0.036087906247330374,
+      "ksStatistic": 0.03592592592592592,
+      "ksPValue": 0.9635807577956225,
+      "referenceMean": 0.4075579069135806,
+      "windowMean": 0.4066591690480709
+     },
+     {
+      "feature": "contrast",
+      "psi": 0.01207751942209147,
+      "ksStatistic": 0.043827160493827066,
+      "ksPValue": 0.8498625832877271,
+      "referenceMean": 0.07026252691358047,
+      "windowMean": 0.06741232453690219
+     },
+     {
+      "feature": "confidence",
+      "psi": 0.06568261762379382,
+      "ksStatistic": 0.07783950617283952,
+      "ksPValue": 0.1900871456866889,
+      "referenceMean": 0.9536306417283924,
+      "windowMean": 0.9597250932455063
+     }
+    ],
+    "windowSize": 200,
+    "drifting": false,
+    "evaluatedAt": "2026-11-22T22:48:46.915686100Z"
+   }
+  },
+  {
+   "stream": "MONITOR",
+   "subject": "monitor.drift.evaluated.eurosat-classifier",
+   "sequence": 152,
+   "time": "2026-11-22T22:48:47.776349915Z",
+   "type": "spotter.v1.DriftEvaluated",
+   "payload": {
+    "modelName": "eurosat-classifier",
+    "versionId": "01a204cd-c722-72b8-ae4c-8ca118f6b184",
+    "version": 3,
+    "features": [
+     {
+      "feature": "mean_r",
+      "psi": 0.04469995037722706,
+      "ksStatistic": 0.05314814814814817,
+      "ksPValue": 0.64312378146694,
+      "referenceMean": 0.34292763382716074,
+      "windowMean": 0.34341339241713287
+     },
+     {
+      "feature": "mean_g",
+      "psi": 0.046564944343097874,
+      "ksStatistic": 0.05246913580246909,
+      "ksPValue": 0.6590816369437718,
+      "referenceMean": 0.378889520740741,
+      "windowMean": 0.3831078328937292
+     },
+     {
+      "feature": "mean_b",
+      "psi": 0.032756198290716576,
+      "ksStatistic": 0.05179012345679013,
+      "ksPValue": 0.675026234602655,
+      "referenceMean": 0.4075579069135806,
+      "windowMean": 0.4118018771708012
+     },
+     {
+      "feature": "contrast",
+      "psi": 0.011575550403594431,
+      "ksStatistic": 0.02845679012345681,
+      "ksPValue": 0.9975296865385913,
+      "referenceMean": 0.07026252691358047,
+      "windowMean": 0.06882820684385173
+     },
+     {
+      "feature": "confidence",
+      "psi": 0.08467747723073416,
+      "ksStatistic": 0.05845679012345678,
+      "ksPValue": 0.5207441673544575,
+      "referenceMean": 0.9536306417283924,
+      "windowMean": 0.9652433741092682
+     }
+    ],
+    "windowSize": 200,
+    "drifting": false,
+    "evaluatedAt": "2026-11-22T22:48:47.778794700Z"
+   }
+  },
+  {
+   "stream": "MONITOR",
+   "subject": "monitor.drift.evaluated.eurosat-classifier",
+   "sequence": 153,
+   "time": "2026-11-22T22:48:48.922517419Z",
+   "type": "spotter.v1.DriftEvaluated",
+   "payload": {
+    "modelName": "eurosat-classifier",
+    "versionId": "01a204cd-c722-72b8-ae4c-8ca118f6b184",
+    "version": 3,
+    "features": [
+     {
+      "feature": "mean_r",
+      "psi": 0.03428725000003024,
+      "ksStatistic": 0.06098765432098763,
+      "ksPValue": 0.4656814930454655,
+      "referenceMean": 0.34292763382716074,
+      "windowMean": 0.3306083952635527
+     },
+     {
+      "feature": "mean_g",
+      "psi": 0.026473515913658235,
+      "ksStatistic": 0.049320987654321025,
+      "ksPValue": 0.7324148800528344,
+      "referenceMean": 0.378889520740741,
+      "windowMean": 0.3729178123176098
+     },
+     {
+      "feature": "mean_b",
+      "psi": 0.030411490915692,
+      "ksStatistic": 0.04907407407407405,
+      "ksPValue": 0.7380634378923066,
+      "referenceMean": 0.4075579069135806,
+      "windowMean": 0.40263476386666297
+     },
+     {
+      "feature": "contrast",
+      "psi": 0.018304881055711462,
+      "ksStatistic": 0.04802469135802473,
+      "ksPValue": 0.7617928373686476,
+      "referenceMean": 0.07026252691358047,
+      "windowMean": 0.06817170620430259
+     },
+     {
+      "feature": "confidence",
+      "psi": 0.05733076361868223,
+      "ksStatistic": 0.0576543209876543,
+      "ksPValue": 0.5387549474567948,
+      "referenceMean": 0.9536306417283924,
+      "windowMean": 0.9633559548854828
+     }
+    ],
+    "windowSize": 200,
+    "drifting": false,
+    "evaluatedAt": "2026-11-22T22:48:48.924827500Z"
+   }
+  },
+  {
+   "stream": "MONITOR",
+   "subject": "monitor.drift.evaluated.eurosat-classifier",
+   "sequence": 154,
+   "time": "2026-11-22T22:48:51.042474768Z",
+   "type": "spotter.v1.DriftEvaluated",
+   "payload": {
+    "modelName": "eurosat-classifier",
+    "versionId": "01a204cd-c722-72b8-ae4c-8ca118f6b184",
+    "version": 3,
+    "features": [
+     {
+      "feature": "mean_r",
+      "psi": 0.021503245736024208,
+      "ksStatistic": 0.06802469135802469,
+      "ksPValue": 0.3301805378298777,
+      "referenceMean": 0.34292763382716074,
+      "windowMean": 0.33716757960617544
+     },
+     {
+      "feature": "mean_g",
+      "psi": 0.046592391408380465,
+      "ksStatistic": 0.040617283950617256,
+      "ksPValue": 0.9059292308997764,
+      "referenceMean": 0.378889520740741,
+      "windowMean": 0.378462443202734
+     },
+     {
+      "feature": "mean_b",
+      "psi": 0.032931572272306114,
+      "ksStatistic": 0.039382716049382704,
+      "ksPValue": 0.924083896617823,
+      "referenceMean": 0.4075579069135806,
+      "windowMean": 0.40580237507820127
+     },
+     {
+      "feature": "contrast",
+      "psi": 0.01587939257766226,
+      "ksStatistic": 0.04870370370370375,
+      "ksPValue": 0.7464926684552953,
+      "referenceMean": 0.07026252691358047,
+      "windowMean": 0.06783582312831034
+     },
+     {
+      "feature": "confidence",
+      "psi": 0.03188891227672057,
+      "ksStatistic": 0.0772222222222223,
+      "ksPValue": 0.19726453636880922,
+      "referenceMean": 0.9536306417283924,
+      "windowMean": 0.9630033957958222
+     }
+    ],
+    "windowSize": 200,
+    "drifting": false,
+    "evaluatedAt": "2026-11-22T22:48:51.043769400Z"
+   }
+  },
+  {
+   "stream": "MONITOR",
+   "subject": "monitor.drift.evaluated.eurosat-classifier",
+   "sequence": 155,
+   "time": "2026-11-22T22:55:39.063416323Z",
+   "type": "spotter.v1.DriftEvaluated",
+   "payload": {
+    "modelName": "eurosat-classifier",
+    "versionId": "01a204cd-c722-72b8-ae4c-8ca118f6b184",
+    "version": 3,
+    "features": [
+     {
+      "feature": "mean_r",
+      "psi": 0.02242801006541182,
+      "ksStatistic": 0.06302469135802469,
+      "ksPValue": 0.4236035735087208,
+      "referenceMean": 0.34292763382716074,
+      "windowMean": 0.3353202436491847
+     },
+     {
+      "feature": "mean_g",
+      "psi": 0.11215739607942996,
+      "ksStatistic": 0.07432098765432099,
+      "ksPValue": 0.23383400683927816,
+      "referenceMean": 0.378889520740741,
+      "windowMean": 0.3758015475422144
+     },
+     {
+      "feature": "mean_b",
+      "psi": 0.056331123550693064,
+      "ksStatistic": 0.07537037037037042,
+      "ksPValue": 0.2200574551662454,
+      "referenceMean": 0.4075579069135806,
+      "windowMean": 0.4018017064034939
+     },
+     {
+      "feature": "contrast",
+      "psi": 0.030923834582899122,
+      "ksStatistic": 0.0616666666666667,
+      "ksPValue": 0.4514173388574258,
+      "referenceMean": 0.07026252691358047,
+      "windowMean": 0.0670708790413725
+     },
+     {
+      "feature": "confidence",
+      "psi": 0.033726253942306134,
+      "ksStatistic": 0.082283950617284,
+      "ksPValue": 0.1442643941691455,
+      "referenceMean": 0.9536306417283924,
+      "windowMean": 0.9625055342912674
+     }
+    ],
+    "windowSize": 200,
+    "drifting": false,
+    "evaluatedAt": "2026-11-22T22:55:39.063817700Z"
+   }
+  },
+  {
+   "stream": "MONITOR",
+   "subject": "monitor.drift.evaluated.eurosat-classifier",
+   "sequence": 156,
+   "time": "2026-11-22T22:55:40.781682303Z",
+   "type": "spotter.v1.DriftEvaluated",
+   "payload": {
+    "modelName": "eurosat-classifier",
+    "versionId": "01a204cd-c722-72b8-ae4c-8ca118f6b184",
+    "version": 3,
+    "features": [
+     {
+      "feature": "mean_r",
+      "psi": 0.07682580118717192,
+      "ksStatistic": 0.1032098765432099,
+      "ksPValue": 0.031972506963285525,
+      "referenceMean": 0.34292763382716074,
+      "windowMean": 0.32988062374293803
+     },
+     {
+      "feature": "mean_g",
+      "psi": 0.1846289579949402,
+      "ksStatistic": 0.0998148148148148,
+      "ksPValue": 0.04178354550628589,
+      "referenceMean": 0.378889520740741,
+      "windowMean": 0.37414840631186963
+     },
+     {
+      "feature": "mean_b",
+      "psi": 0.09684719919973295,
+      "ksStatistic": 0.10000000000000003,
+      "ksPValue": 0.0411875377470191,
+      "referenceMean": 0.4075579069135806,
+      "windowMean": 0.3988630647957325
+     },
+     {
+      "feature": "contrast",
+      "psi": 0.059711078532632716,
+      "ksStatistic": 0.08987654320987648,
+      "ksPValue": 0.0868696699069127,
+      "referenceMean": 0.07026252691358047,
+      "windowMean": 0.06367885483661666
+     },
+     {
+      "feature": "confidence",
+      "psi": 0.05721036288754504,
+      "ksStatistic": 0.08425925925925926,
+      "ksPValue": 0.12698063452529412,
+      "referenceMean": 0.9536306417283924,
+      "windowMean": 0.9565589338541031
+     }
+    ],
+    "windowSize": 200,
+    "drifting": false,
+    "evaluatedAt": "2026-11-22T22:55:40.781662900Z"
+   }
+  },
+  {
+   "stream": "MONITOR",
+   "subject": "monitor.drift.evaluated.eurosat-classifier",
+   "sequence": 157,
+   "time": "2026-11-22T22:55:42.086907848Z",
+   "type": "spotter.v1.DriftEvaluated",
+   "payload": {
+    "modelName": "eurosat-classifier",
+    "versionId": "01a204cd-c722-72b8-ae4c-8ca118f6b184",
+    "version": 3,
+    "features": [
+     {
+      "feature": "mean_r",
+      "psi": 0.06421725977514248,
+      "ksStatistic": 0.10259259259259257,
+      "ksPValue": 0.03358910382532892,
+      "referenceMean": 0.34292763382716074,
+      "windowMean": 0.3337098027765751
+     },
+     {
+      "feature": "mean_g",
+      "psi": 0.1371683810778284,
+      "ksStatistic": 0.0948148148148148,
+      "ksPValue": 0.06096703319504107,
+      "referenceMean": 0.378889520740741,
+      "windowMean": 0.37889157347381114
+     },
+     {
+      "feature": "mean_b",
+      "psi": 0.07321837190177463,
+      "ksStatistic": 0.06358024691358027,
+      "ksPValue": 0.4125116577240042,
+      "referenceMean": 0.4075579069135806,
+      "windowMean": 0.4045416022837162
+     },
+     {
+      "feature": "contrast",
+      "psi": 0.0622582792960187,
+      "ksStatistic": 0.08018518518518519,
+      "ksPValue": 0.16465632995750662,
+      "referenceMean": 0.07026252691358047,
+      "windowMean": 0.06509650128893553
+     },
+     {
+      "feature": "confidence",
+      "psi": 0.025494449592661367,
+      "ksStatistic": 0.07728395061728399,
+      "ksPValue": 0.19653747880045538,
+      "referenceMean": 0.9536306417283924,
+      "windowMean": 0.9605136525630951
+     }
+    ],
+    "windowSize": 200,
+    "drifting": false,
+    "evaluatedAt": "2026-11-22T22:55:42.086953400Z"
+   }
+  },
+  {
+   "stream": "MONITOR",
+   "subject": "monitor.drift.evaluated.eurosat-classifier",
+   "sequence": 158,
+   "time": "2026-11-22T22:55:43.296099688Z",
+   "type": "spotter.v1.DriftEvaluated",
+   "payload": {
+    "modelName": "eurosat-classifier",
+    "versionId": "01a204cd-c722-72b8-ae4c-8ca118f6b184",
+    "version": 3,
+    "features": [
+     {
+      "feature": "mean_r",
+      "psi": 0.06491274408705922,
+      "ksStatistic": 0.09407407407407414,
+      "ksPValue": 0.06437046558486909,
+      "referenceMean": 0.34292763382716074,
+      "windowMean": 0.33173061959445477
+     },
+     {
+      "feature": "mean_g",
+      "psi": 0.13931035651589743,
+      "ksStatistic": 0.0901851851851852,
+      "ksPValue": 0.08501568861930474,
+      "referenceMean": 0.378889520740741,
+      "windowMean": 0.37668472319841384
+     },
+     {
+      "feature": "mean_b",
+      "psi": 0.05523742128927017,
+      "ksStatistic": 0.08796296296296297,
+      "ksPValue": 0.09913705370246115,
+      "referenceMean": 0.4075579069135806,
+      "windowMean": 0.40178159713745115
+     },
+     {
+      "feature": "contrast",
+      "psi": 0.0566399555047291,
+      "ksStatistic": 0.07166666666666671,
+      "ksPValue": 0.2715509254347233,
+      "referenceMean": 0.07026252691358047,
+      "windowMean": 0.06653275781388707
+     },
+     {
+      "feature": "confidence",
+      "psi": 0.030133601948609923,
+      "ksStatistic": 0.05487654320987656,
+      "ksPValue": 0.6026301305337924,
+      "referenceMean": 0.9536306417283924,
+      "windowMean": 0.9590028411149979
+     }
+    ],
+    "windowSize": 200,
+    "drifting": false,
+    "evaluatedAt": "2026-11-22T22:55:43.295872400Z"
+   }
+  },
+  {
+   "stream": "MONITOR",
+   "subject": "monitor.drift.evaluated.eurosat-classifier",
+   "sequence": 159,
+   "time": "2026-11-22T22:55:44.474366917Z",
+   "type": "spotter.v1.DriftEvaluated",
+   "payload": {
+    "modelName": "eurosat-classifier",
+    "versionId": "01a204cd-c722-72b8-ae4c-8ca118f6b184",
+    "version": 3,
+    "features": [
+     {
+      "feature": "mean_r",
+      "psi": 0.04280753552893997,
+      "ksStatistic": 0.06061728395061727,
+      "ksPValue": 0.4735577091620754,
+      "referenceMean": 0.34292763382716074,
+      "windowMean": 0.3468504498526454
+     },
+     {
+      "feature": "mean_g",
+      "psi": 0.05876632848180779,
+      "ksStatistic": 0.048641975308641894,
+      "ksPValue": 0.747892111428892,
+      "referenceMean": 0.378889520740741,
+      "windowMean": 0.3872742336988449
+     },
+     {
+      "feature": "mean_b",
+      "psi": 0.029920089435036393,
+      "ksStatistic": 0.033641975308641964,
+      "ksPValue": 0.9805166123100736,
+      "referenceMean": 0.4075579069135806,
+      "windowMean": 0.4101299956440926
+     },
+     {
+      "feature": "contrast",
+      "psi": 0.034661191959952514,
+      "ksStatistic": 0.04635802469135797,
+      "ksPValue": 0.7982998574990607,
+      "referenceMean": 0.07026252691358047,
+      "windowMean": 0.06800888173825417
+     },
+     {
+      "feature": "confidence",
+      "psi": 0.024997548413615386,
+      "ksStatistic": 0.036790123456790114,
+      "ksPValue": 0.955302357088046,
+      "referenceMean": 0.9536306417283924,
+      "windowMean": 0.9606380397081375
+     }
+    ],
+    "windowSize": 200,
+    "drifting": false,
+    "evaluatedAt": "2026-11-22T22:55:44.474142900Z"
+   }
+  },
+  {
+   "stream": "MONITOR",
+   "subject": "monitor.drift.evaluated.eurosat-classifier",
+   "sequence": 160,
+   "time": "2026-11-22T22:55:45.708206486Z",
+   "type": "spotter.v1.DriftEvaluated",
+   "payload": {
+    "modelName": "eurosat-classifier",
+    "versionId": "01a204cd-c722-72b8-ae4c-8ca118f6b184",
+    "version": 3,
+    "features": [
+     {
+      "feature": "mean_r",
+      "psi": 0.03029824029457591,
+      "ksStatistic": 0.04444444444444451,
+      "ksPValue": 0.83780076153094,
+      "referenceMean": 0.34292763382716074,
+      "windowMean": 0.34608814973384144
+     },
+     {
+      "feature": "mean_g",
+      "psi": 0.042842880783834594,
+      "ksStatistic": 0.04413580246913573,
+      "ksPValue": 0.8438772749547355,
+      "referenceMean": 0.378889520740741,
+      "windowMean": 0.3855944083631039
+     },
+     {
+      "feature": "mean_b",
+      "psi": 0.04050789593509742,
+      "ksStatistic": 0.033641975308641964,
+      "ksPValue": 0.9805166123100736,
+      "referenceMean": 0.4075579069135806,
+      "windowMean": 0.4101750484108925
+     },
+     {
+      "feature": "contrast",
+      "psi": 0.021813729207383878,
+      "ksStatistic": 0.03382716049382717,
+      "ksPValue": 0.9793981548669707,
+      "referenceMean": 0.07026252691358047,
+      "windowMean": 0.06961566504867125
+     },
+     {
+      "feature": "confidence",
+      "psi": 0.046244509604874695,
+      "ksStatistic": 0.0478395061728395,
+      "ksPValue": 0.7659273558848027,
+      "referenceMean": 0.9536306417283924,
+      "windowMean": 0.9625860175490379
+     }
+    ],
+    "windowSize": 200,
+    "drifting": false,
+    "evaluatedAt": "2026-11-22T22:55:45.708242800Z"
+   }
+  },
+  {
+   "stream": "MONITOR",
+   "subject": "monitor.drift.evaluated.eurosat-classifier",
+   "sequence": 161,
+   "time": "2026-11-22T22:55:46.932819769Z",
+   "type": "spotter.v1.DriftEvaluated",
+   "payload": {
+    "modelName": "eurosat-classifier",
+    "versionId": "01a204cd-c722-72b8-ae4c-8ca118f6b184",
+    "version": 3,
+    "features": [
+     {
+      "feature": "mean_r",
+      "psi": 0.0451361571416465,
+      "ksStatistic": 0.06197530864197531,
+      "ksPValue": 0.44501088627184393,
+      "referenceMean": 0.34292763382716074,
+      "windowMean": 0.33772981226444243
+     },
+     {
+      "feature": "mean_g",
+      "psi": 0.041040827613596245,
+      "ksStatistic": 0.03790123456790123,
+      "ksPValue": 0.9430935200730433,
+      "referenceMean": 0.378889520740741,
+      "windowMean": 0.3813215596973896
+     },
+     {
+      "feature": "mean_b",
+      "psi": 0.0379519967395377,
+      "ksStatistic": 0.04092592592592592,
+      "ksPValue": 0.901075530428416,
+      "referenceMean": 0.4075579069135806,
+      "windowMean": 0.4078499202430248
+     },
+     {
+      "feature": "contrast",
+      "psi": 0.014346557326756201,
+      "ksStatistic": 0.043827160493827066,
+      "ksPValue": 0.8498625832877271,
+      "referenceMean": 0.07026252691358047,
+      "windowMean": 0.06738090329027424
+     },
+     {
+      "feature": "confidence",
+      "psi": 0.06760986347135681,
+      "ksStatistic": 0.07283950617283952,
+      "ksPValue": 0.2543716899306255,
+      "referenceMean": 0.9536306417283924,
+      "windowMean": 0.9602577927708625
+     }
+    ],
+    "windowSize": 200,
+    "drifting": false,
+    "evaluatedAt": "2026-11-22T22:55:46.932368Z"
+   }
+  },
+  {
+   "stream": "MONITOR",
+   "subject": "monitor.drift.evaluated.eurosat-classifier",
+   "sequence": 162,
+   "time": "2026-11-22T22:55:48.049189619Z",
+   "type": "spotter.v1.DriftEvaluated",
+   "payload": {
+    "modelName": "eurosat-classifier",
+    "versionId": "01a204cd-c722-72b8-ae4c-8ca118f6b184",
+    "version": 3,
+    "features": [
+     {
+      "feature": "mean_r",
+      "psi": 0.05146798422354981,
+      "ksStatistic": 0.05697530864197531,
+      "ksPValue": 0.554170132122129,
+      "referenceMean": 0.34292763382716074,
+      "windowMean": 0.33713301677256824
+     },
+     {
+      "feature": "mean_g",
+      "psi": 0.046209547233998616,
+      "ksStatistic": 0.04246913580246908,
+      "ksPValue": 0.8750313236991407,
+      "referenceMean": 0.378889520740741,
+      "windowMean": 0.37984874956309794
+     },
+     {
+      "feature": "mean_b",
+      "psi": 0.03331669280289497,
+      "ksStatistic": 0.04179012345679012,
+      "ksPValue": 0.8868453468077088,
+      "referenceMean": 0.4075579069135806,
+      "windowMean": 0.40920779064297674
+     },
+     {
+      "feature": "contrast",
+      "psi": 0.012881601582998984,
+      "ksStatistic": 0.03845679012345682,
+      "ksPValue": 0.9363278000115133,
+      "referenceMean": 0.07026252691358047,
+      "windowMean": 0.06795349040146292
+     },
+     {
+      "feature": "confidence",
+      "psi": 0.08125372623539769,
+      "ksStatistic": 0.0576543209876543,
+      "ksPValue": 0.5387549474567948,
+      "referenceMean": 0.9536306417283924,
+      "windowMean": 0.9657338723540306
+     }
+    ],
+    "windowSize": 200,
+    "drifting": false,
+    "evaluatedAt": "2026-11-22T22:55:48.048854800Z"
+   }
+  },
+  {
+   "stream": "MONITOR",
+   "subject": "monitor.drift.evaluated.eurosat-classifier",
+   "sequence": 163,
+   "time": "2026-11-22T22:55:49.217024502Z",
+   "type": "spotter.v1.DriftEvaluated",
+   "payload": {
+    "modelName": "eurosat-classifier",
+    "versionId": "01a204cd-c722-72b8-ae4c-8ca118f6b184",
+    "version": 3,
+    "features": [
+     {
+      "feature": "mean_r",
+      "psi": 0.0377637608874331,
+      "ksStatistic": 0.06098765432098763,
+      "ksPValue": 0.4656814930454655,
+      "referenceMean": 0.34292763382716074,
+      "windowMean": 0.333523420765996
+     },
+     {
+      "feature": "mean_g",
+      "psi": 0.025853907115363776,
+      "ksStatistic": 0.04432098765432102,
+      "ksPValue": 0.8402420960529167,
+      "referenceMean": 0.378889520740741,
+      "windowMean": 0.37492581963539123
+     },
+     {
+      "feature": "mean_b",
+      "psi": 0.025877277837598,
+      "ksStatistic": 0.03907407407407404,
+      "ksPValue": 0.9282983173348536,
+      "referenceMean": 0.4075579069135806,
+      "windowMean": 0.40467364877462386
+     },
+     {
+      "feature": "contrast",
+      "psi": 0.015570642994697802,
+      "ksStatistic": 0.043024691358024725,
+      "ksPValue": 0.8649738034373464,
+      "referenceMean": 0.07026252691358047,
+      "windowMean": 0.06808659623687464
+     },
+     {
+      "feature": "confidence",
+      "psi": 0.05928788736503758,
+      "ksStatistic": 0.0576543209876543,
+      "ksPValue": 0.5387549474567948,
+      "referenceMean": 0.9536306417283924,
+      "windowMean": 0.9634367910027504
+     }
+    ],
+    "windowSize": 200,
+    "drifting": false,
+    "evaluatedAt": "2026-11-22T22:55:49.216908300Z"
+   }
+  },
+  {
+   "stream": "MONITOR",
+   "subject": "monitor.drift.evaluated.eurosat-classifier",
+   "sequence": 164,
+   "time": "2026-11-22T22:55:50.50246478Z",
+   "type": "spotter.v1.DriftEvaluated",
+   "payload": {
+    "modelName": "eurosat-classifier",
+    "versionId": "01a204cd-c722-72b8-ae4c-8ca118f6b184",
+    "version": 3,
+    "features": [
+     {
+      "feature": "mean_r",
+      "psi": 0.025525890769224194,
+      "ksStatistic": 0.0730246913580247,
+      "ksPValue": 0.25173393845650854,
+      "referenceMean": 0.34292763382716074,
+      "windowMean": 0.33428572088479996
+     },
+     {
+      "feature": "mean_g",
+      "psi": 0.052113159347974884,
+      "ksStatistic": 0.050617283950617264,
+      "ksPValue": 0.7024489917637212,
+      "referenceMean": 0.378889520740741,
+      "windowMean": 0.3766056449711323
+     },
+     {
+      "feature": "mean_b",
+      "psi": 0.030991106250081467,
+      "ksStatistic": 0.039382716049382704,
+      "ksPValue": 0.924083896617823,
+      "referenceMean": 0.4075579069135806,
+      "windowMean": 0.40462859600782397
+     },
+     {
+      "feature": "contrast",
+      "psi": 0.019513007155412897,
+      "ksStatistic": 0.05697530864197531,
+      "ksPValue": 0.554170132122129,
+      "referenceMean": 0.07026252691358047,
+      "windowMean": 0.06647981292645755
+     },
+     {
+      "feature": "confidence",
+      "psi": 0.03213968567945739,
+      "ksStatistic": 0.0722222222222223,
+      "ksPValue": 0.26331113320155186,
+      "referenceMean": 0.9536306417283924,
+      "windowMean": 0.96148881316185
+     }
+    ],
+    "windowSize": 200,
+    "drifting": false,
+    "evaluatedAt": "2026-11-22T22:55:50.501811800Z"
+   }
+  },
+  {
+   "stream": "MONITOR",
+   "subject": "monitor.drift.evaluated.eurosat-classifier",
+   "sequence": 165,
+   "time": "2026-11-22T22:55:51.790839311Z",
+   "type": "spotter.v1.DriftEvaluated",
+   "payload": {
+    "modelName": "eurosat-classifier",
+    "versionId": "01a204cd-c722-72b8-ae4c-8ca118f6b184",
+    "version": 3,
+    "features": [
+     {
+      "feature": "mean_r",
+      "psi": 0.017834994386518265,
+      "ksStatistic": 0.05611111111111111,
+      "ksPValue": 0.5739925922469981,
+      "referenceMean": 0.34292763382716074,
+      "windowMean": 0.3426440583541989
+     },
+     {
+      "feature": "mean_g",
+      "psi": 0.07571151549695268,
+      "ksStatistic": 0.05481481481481487,
+      "ksPValue": 0.6040699339825575,
+      "referenceMean": 0.378889520740741,
+      "windowMean": 0.38087849363684656
+     },
+     {
+      "feature": "mean_b",
+      "psi": 0.035772017311640134,
+      "ksStatistic": 0.03808641975308641,
+      "ksPValue": 0.9408870873628694,
+      "referenceMean": 0.4075579069135806,
+      "windowMean": 0.4069537241756916
+     },
+     {
+      "feature": "contrast",
+      "psi": 0.020050164094501628,
+      "ksStatistic": 0.04666666666666669,
+      "ksPValue": 0.7916684745450622,
+      "referenceMean": 0.07026252691358047,
+      "windowMean": 0.06871457468485456
+     },
+     {
+      "feature": "confidence",
+      "psi": 0.036270743967652966,
+      "ksStatistic": 0.07672839506172835,
+      "ksPValue": 0.2031561969297701,
+      "referenceMean": 0.9536306417283924,
+      "windowMean": 0.9638170379400254
+     }
+    ],
+    "windowSize": 200,
+    "drifting": false,
+    "evaluatedAt": "2026-11-22T22:55:51.790042600Z"
+   }
+  },
+  {
+   "stream": "MONITOR",
+   "subject": "monitor.drift.evaluated.eurosat-classifier",
+   "sequence": 166,
+   "time": "2026-11-22T22:55:53.031400076Z",
+   "type": "spotter.v1.DriftEvaluated",
+   "payload": {
+    "modelName": "eurosat-classifier",
+    "versionId": "01a204cd-c722-72b8-ae4c-8ca118f6b184",
+    "version": 3,
+    "features": [
+     {
+      "feature": "mean_r",
+      "psi": 0.04956712812528456,
+      "ksStatistic": 0.07185185185185183,
+      "ksPValue": 0.2687838043219203,
+      "referenceMean": 0.34292763382716074,
+      "windowMean": 0.34324085384607317
+     },
+     {
+      "feature": "mean_g",
+      "psi": 0.119489502486474,
+      "ksStatistic": 0.06518518518518518,
+      "ksPValue": 0.3814447569033475,
+      "referenceMean": 0.378889520740741,
+      "windowMean": 0.3823513037711382
+     },
+     {
+      "feature": "mean_b",
+      "psi": 0.04367694776338067,
+      "ksStatistic": 0.06296296296296294,
+      "ksPValue": 0.4248464672929184,
+      "referenceMean": 0.4075579069135806,
+      "windowMean": 0.40559585377573965
+     },
+     {
+      "feature": "contrast",
+      "psi": 0.04108731948177331,
+      "ksStatistic": 0.05549382716049389,
+      "ksPValue": 0.5882705840611118,
+      "referenceMean": 0.07026252691358047,
+      "windowMean": 0.06814198757366588
+     },
+     {
+      "feature": "confidence",
+      "psi": 0.031601998663505416,
+      "ksStatistic": 0.05179012345679013,
+      "ksPValue": 0.675026234602655,
+      "referenceMean": 0.9536306417283924,
+      "windowMean": 0.9583409583568573
+     }
+    ],
+    "windowSize": 200,
+    "drifting": false,
+    "evaluatedAt": "2026-11-22T22:55:53.030341Z"
+   }
+  },
+  {
+   "stream": "INFERENCE",
+   "subject": "inference.requested.eurosat-classifier",
+   "sequence": 55230,
+   "time": "2026-11-22T22:55:52.941136656Z",
+   "type": "spotter.v1.InferenceRequested",
+   "payload": {
+    "jobId": "01a20579-1c3c-7c2d-b9a9-3990ff72aefd",
+    "modelName": "eurosat-classifier",
+    "imageUri": "s3://images/eurosat-classifier/01a20579-1c3c-7c2d-b9a9-3990ff72aefd",
+    "submittedAt": "2026-11-22T22:55:52.939335Z"
+   }
+  },
+  {
+   "stream": "INFERENCE",
+   "subject": "inference.requested.eurosat-classifier",
+   "sequence": 55234,
+   "time": "2026-11-22T22:55:52.968466514Z",
+   "type": "spotter.v1.InferenceRequested",
+   "payload": {
+    "jobId": "01a20579-1c57-71bb-a1e6-41a5fc02a1b0",
+    "modelName": "eurosat-classifier",
+    "imageUri": "s3://images/eurosat-classifier/01a20579-1c57-71bb-a1e6-41a5fc02a1b0",
+    "submittedAt": "2026-11-22T22:55:52.966941Z"
+   }
+  },
+  {
+   "stream": "INFERENCE",
+   "subject": "inference.completed.eurosat-classifier",
+   "sequence": 55236,
+   "time": "2026-11-22T22:55:52.990845429Z",
+   "type": "spotter.v1.InferenceCompleted",
+   "payload": {
+    "jobId": "01a20579-1c3c-7c2d-b9a9-3990ff72aefd",
+    "modelName": "eurosat-classifier",
+    "prediction": {
+     "label": "Pasture",
+     "confidence": 0.9944423,
+     "scores": [
+      {
+       "label": "AnnualCrop",
+       "score": 0.0025278847
+      },
+      {
+       "label": "Forest",
+       "score": 0.00060945615
+      },
+      {
+       "label": "HerbaceousVegetation",
+       "score": 0.000024241646
+      },
+      {
+       "label": "Highway",
+       "score": 0.0002595693
+      },
+      {
+       "label": "Industrial",
+       "score": 0.00001658868
+      },
+      {
+       "label": "Pasture",
+       "score": 0.9944423
+      },
+      {
+       "label": "PermanentCrop",
+       "score": 0.00004708427
+      },
+      {
+       "label": "Residential",
+       "score": 0.0000093904355
+      },
+      {
+       "label": "River",
+       "score": 0.0019019287
+      },
+      {
+       "label": "SeaLake",
+       "score": 0.00016155311
+      }
+     ],
+     "modelVersionId": "01a204cd-c722-72b8-ae4c-8ca118f6b184",
+     "modelVersion": 3
+    },
+    "inputStats": {
+     "channelMean": [
+      0.18063994,
+      0.31071573,
+      0.29948756
+     ],
+     "channelStd": [
+      0.050618295,
+      0.029919691,
+      0.026609853
+     ]
+    },
+    "inferenceMs": 1.7069,
+    "completedAt": "2026-11-22T22:55:52.989035Z"
+   }
+  },
+  {
+   "stream": "INFERENCE",
+   "subject": "inference.requested.eurosat-classifier",
+   "sequence": 55237,
+   "time": "2026-11-22T22:55:52.992619552Z",
+   "type": "spotter.v1.InferenceRequested",
+   "payload": {
+    "jobId": "01a20579-1c6f-79cb-ae99-bd5c9116e2ab",
+    "modelName": "eurosat-classifier",
+    "imageUri": "s3://images/eurosat-classifier/01a20579-1c6f-79cb-ae99-bd5c9116e2ab",
+    "submittedAt": "2026-11-22T22:55:52.991253Z"
+   }
+  },
+  {
+   "stream": "INFERENCE",
+   "subject": "inference.shadow.eurosat-classifier",
+   "sequence": 55238,
+   "time": "2026-11-22T22:55:53.000694515Z",
+   "type": "spotter.v1.ShadowCompared",
+   "payload": {
+    "jobId": "01a20579-1c3c-7c2d-b9a9-3990ff72aefd",
+    "modelName": "eurosat-classifier",
+    "productionVersionId": "01a204cd-c722-72b8-ae4c-8ca118f6b184",
+    "shadowVersionId": "01a20578-95cc-7ed2-afb1-b466c0ae3bbd",
+    "productionLabel": "Pasture",
+    "shadowLabel": "Pasture",
+    "agree": true,
+    "productionMs": 1.7069,
+    "shadowMs": 6.6423,
+    "comparedAt": "2026-11-22T22:55:53.000110Z"
+   }
+  },
+  {
+   "stream": "INFERENCE",
+   "subject": "inference.completed.eurosat-classifier",
+   "sequence": 55239,
+   "time": "2026-11-22T22:55:53.012582113Z",
+   "type": "spotter.v1.InferenceCompleted",
+   "payload": {
+    "jobId": "01a20579-1c57-71bb-a1e6-41a5fc02a1b0",
+    "modelName": "eurosat-classifier",
+    "prediction": {
+     "label": "Pasture",
+     "confidence": 0.9994766,
+     "scores": [
+      {
+       "label": "AnnualCrop",
+       "score": 0.00006289729
+      },
+      {
+       "label": "Forest",
+       "score": 0.000003655964
+      },
+      {
+       "label": "HerbaceousVegetation",
+       "score": 6.631694e-7
+      },
+      {
+       "label": "Highway",
+       "score": 0.000032383083
+      },
+      {
+       "label": "Industrial",
+       "score": 0.0000022754323
+      },
+      {
+       "label": "Pasture",
+       "score": 0.9994766
+      },
+      {
+       "label": "PermanentCrop",
+       "score": 0.000039146555
+      },
+      {
+       "label": "Residential",
+       "score": 4.5380966e-7
+      },
+      {
+       "label": "River",
+       "score": 0.000381239
+      },
+      {
+       "label": "SeaLake",
+       "score": 7.291421e-7
+      }
+     ],
+     "modelVersionId": "01a204cd-c722-72b8-ae4c-8ca118f6b184",
+     "modelVersion": 3
+    },
+    "inputStats": {
+     "channelMean": [
+      0.2259044,
+      0.34459627,
+      0.33277857
+     ],
+     "channelStd": [
+      0.060747877,
+      0.02784946,
+      0.023003219
+     ]
+    },
+    "inferenceMs": 1.2806,
+    "completedAt": "2026-11-22T22:55:53.010833Z"
+   }
+  },
+  {
+   "stream": "INFERENCE",
+   "subject": "inference.shadow.eurosat-classifier",
+   "sequence": 55240,
+   "time": "2026-11-22T22:55:53.023076222Z",
+   "type": "spotter.v1.ShadowCompared",
+   "payload": {
+    "jobId": "01a20579-1c57-71bb-a1e6-41a5fc02a1b0",
+    "modelName": "eurosat-classifier",
+    "productionVersionId": "01a204cd-c722-72b8-ae4c-8ca118f6b184",
+    "shadowVersionId": "01a20578-95cc-7ed2-afb1-b466c0ae3bbd",
+    "productionLabel": "Pasture",
+    "shadowLabel": "Pasture",
+    "agree": true,
+    "productionMs": 1.2806,
+    "shadowMs": 7.2851,
+    "comparedAt": "2026-11-22T22:55:53.022333Z"
+   }
+  },
+  {
+   "stream": "INFERENCE",
+   "subject": "inference.completed.eurosat-classifier",
+   "sequence": 55241,
+   "time": "2026-11-22T22:55:53.036313108Z",
+   "type": "spotter.v1.InferenceCompleted",
+   "payload": {
+    "jobId": "01a20579-1c6f-79cb-ae99-bd5c9116e2ab",
+    "modelName": "eurosat-classifier",
+    "prediction": {
+     "label": "Industrial",
+     "confidence": 0.99897575,
+     "scores": [
+      {
+       "label": "AnnualCrop",
+       "score": 6.6283707e-7
+      },
+      {
+       "label": "Forest",
+       "score": 9.686291e-7
+      },
+      {
+       "label": "HerbaceousVegetation",
+       "score": 0.00034657074
+      },
+      {
+       "label": "Highway",
+       "score": 0.00013425032
+      },
+      {
+       "label": "Industrial",
+       "score": 0.99897575
+      },
+      {
+       "label": "Pasture",
+       "score": 0.0000017111308
+      },
+      {
+       "label": "PermanentCrop",
+       "score": 0.000062865714
+      },
+      {
+       "label": "Residential",
+       "score": 0.00038104795
+      },
+      {
+       "label": "River",
+       "score": 0.00009186807
+      },
+      {
+       "label": "SeaLake",
+       "score": 0.0000044173275
+      }
+     ],
+     "modelVersionId": "01a204cd-c722-72b8-ae4c-8ca118f6b184",
+     "modelVersion": 3
+    },
+    "inputStats": {
+     "channelMean": [
+      0.41571015,
+      0.43280932,
+      0.46266353
+     ],
+     "channelStd": [
+      0.19102316,
+      0.16492768,
+      0.15821557
+     ]
+    },
+    "inferenceMs": 1.998,
+    "completedAt": "2026-11-22T22:55:53.034509Z"
+   }
+  },
+  {
+   "stream": "INFERENCE",
+   "subject": "inference.shadow.eurosat-classifier",
+   "sequence": 55242,
+   "time": "2026-11-22T22:55:53.048099415Z",
+   "type": "spotter.v1.ShadowCompared",
+   "payload": {
+    "jobId": "01a20579-1c6f-79cb-ae99-bd5c9116e2ab",
+    "modelName": "eurosat-classifier",
+    "productionVersionId": "01a204cd-c722-72b8-ae4c-8ca118f6b184",
+    "shadowVersionId": "01a20578-95cc-7ed2-afb1-b466c0ae3bbd",
+    "productionLabel": "Industrial",
+    "shadowLabel": "Industrial",
+    "agree": true,
+    "productionMs": 1.998,
+    "shadowMs": 7.9532,
+    "comparedAt": "2026-11-22T22:55:53.047324Z"
+   }
+  },
+  {
+   "stream": "INFERENCE",
+   "subject": "inference.requested.eurosat-classifier",
+   "sequence": 55243,
+   "time": "2026-11-22T22:58:08.982452192Z",
+   "type": "spotter.v1.InferenceRequested",
+   "payload": {
+    "jobId": "01a2057b-2fc8-79d5-bda1-4c0bc6bd65db",
+    "modelName": "eurosat-classifier",
+    "imageUri": "s3://images/eurosat-classifier/01a2057b-2fc8-79d5-bda1-4c0bc6bd65db",
+    "submittedAt": "2026-11-22T22:58:08.979393Z"
+   }
+  },
+  {
+   "stream": "INFERENCE",
+   "subject": "inference.completed.eurosat-classifier",
+   "sequence": 55244,
+   "time": "2026-11-22T22:58:09.015171629Z",
+   "type": "spotter.v1.InferenceCompleted",
+   "payload": {
+    "jobId": "01a2057b-2fc8-79d5-bda1-4c0bc6bd65db",
+    "modelName": "eurosat-classifier",
+    "prediction": {
+     "label": "AnnualCrop",
+     "confidence": 0.99913824,
+     "scores": [
+      {
+       "label": "AnnualCrop",
+       "score": 0.99913824
+      },
+      {
+       "label": "Forest",
+       "score": 1.9321355e-7
+      },
+      {
+       "label": "HerbaceousVegetation",
+       "score": 0.0000022746601
+      },
+      {
+       "label": "Highway",
+       "score": 0.00021573667
+      },
+      {
+       "label": "Industrial",
+       "score": 8.014056e-7
+      },
+      {
+       "label": "Pasture",
+       "score": 0.000024356095
+      },
+      {
+       "label": "PermanentCrop",
+       "score": 0.00019621683
+      },
+      {
+       "label": "Residential",
+       "score": 1.0937324e-7
+      },
+      {
+       "label": "River",
+       "score": 0.00041902266
+      },
+      {
+       "label": "SeaLake",
+       "score": 0.000003023288
+      }
+     ],
+     "modelVersionId": "01a204cd-c722-72b8-ae4c-8ca118f6b184",
+     "modelVersion": 3
+    },
+    "inputStats": {
+     "channelMean": [
+      0.46480697,
+      0.4673628,
+      0.447618
+     ],
+     "channelStd": [
+      0.17316066,
+      0.06756655,
+      0.056798495
+     ]
+    },
+    "inferenceMs": 1.6032,
+    "completedAt": "2026-11-22T22:58:09.014086Z"
+   }
+  },
+  {
+   "stream": "INFERENCE",
+   "subject": "inference.shadow.eurosat-classifier",
+   "sequence": 55245,
+   "time": "2026-11-22T22:58:09.025902404Z",
+   "type": "spotter.v1.ShadowCompared",
+   "payload": {
+    "jobId": "01a2057b-2fc8-79d5-bda1-4c0bc6bd65db",
+    "modelName": "eurosat-classifier",
+    "productionVersionId": "01a204cd-c722-72b8-ae4c-8ca118f6b184",
+    "shadowVersionId": "01a20578-95cc-7ed2-afb1-b466c0ae3bbd",
+    "productionLabel": "AnnualCrop",
+    "shadowLabel": "AnnualCrop",
+    "agree": true,
+    "productionMs": 1.6032,
+    "shadowMs": 7.5403,
+    "comparedAt": "2026-11-22T22:58:09.025693Z"
+   }
+  },
+  {
+   "stream": "INFERENCE",
+   "subject": "inference.requested.eurosat-classifier",
+   "sequence": 55246,
+   "time": "2026-11-22T22:58:24.944301764Z",
+   "type": "spotter.v1.InferenceRequested",
+   "payload": {
+    "jobId": "01a2057b-6dfb-717c-83d7-56b7e648476a",
+    "modelName": "eurosat-classifier",
+    "imageUri": "s3://images/eurosat-classifier/01a2057b-6dfb-717c-83d7-56b7e648476a",
+    "submittedAt": "2026-11-22T22:58:24.940685Z"
+   }
+  },
+  {
+   "stream": "INFERENCE",
+   "subject": "inference.completed.eurosat-classifier",
+   "sequence": 55247,
+   "time": "2026-11-22T22:58:24.959065734Z",
+   "type": "spotter.v1.InferenceCompleted",
+   "payload": {
+    "jobId": "01a2057b-6dfb-717c-83d7-56b7e648476a",
+    "modelName": "eurosat-classifier",
+    "prediction": {
+     "label": "AnnualCrop",
+     "confidence": 0.99913824,
+     "scores": [
+      {
+       "label": "AnnualCrop",
+       "score": 0.99913824
+      },
+      {
+       "label": "Forest",
+       "score": 1.9321355e-7
+      },
+      {
+       "label": "HerbaceousVegetation",
+       "score": 0.0000022746601
+      },
+      {
+       "label": "Highway",
+       "score": 0.00021573667
+      },
+      {
+       "label": "Industrial",
+       "score": 8.014056e-7
+      },
+      {
+       "label": "Pasture",
+       "score": 0.000024356095
+      },
+      {
+       "label": "PermanentCrop",
+       "score": 0.00019621683
+      },
+      {
+       "label": "Residential",
+       "score": 1.0937324e-7
+      },
+      {
+       "label": "River",
+       "score": 0.00041902266
+      },
+      {
+       "label": "SeaLake",
+       "score": 0.000003023288
+      }
+     ],
+     "modelVersionId": "01a204cd-c722-72b8-ae4c-8ca118f6b184",
+     "modelVersion": 3
+    },
+    "inputStats": {
+     "channelMean": [
+      0.46480697,
+      0.4673628,
+      0.447618
+     ],
+     "channelStd": [
+      0.17316066,
+      0.06756655,
+      0.056798495
+     ]
+    },
+    "inferenceMs": 1.3551,
+    "completedAt": "2026-11-22T22:58:24.956844Z"
+   }
+  },
+  {
+   "stream": "INFERENCE",
+   "subject": "inference.shadow.eurosat-classifier",
+   "sequence": 55248,
+   "time": "2026-11-22T22:58:24.969338141Z",
+   "type": "spotter.v1.ShadowCompared",
+   "payload": {
+    "jobId": "01a2057b-6dfb-717c-83d7-56b7e648476a",
+    "modelName": "eurosat-classifier",
+    "productionVersionId": "01a204cd-c722-72b8-ae4c-8ca118f6b184",
+    "shadowVersionId": "01a20578-95cc-7ed2-afb1-b466c0ae3bbd",
+    "productionLabel": "AnnualCrop",
+    "shadowLabel": "AnnualCrop",
+    "agree": true,
+    "productionMs": 1.3551,
+    "shadowMs": 7.118,
+    "comparedAt": "2026-11-22T22:58:24.968058Z"
+   }
+  },
+  {
+   "stream": "INFERENCE",
+   "subject": "inference.requested.eurosat-classifier",
+   "sequence": 55249,
+   "time": "2026-11-22T22:58:54.793063789Z",
+   "type": "spotter.v1.InferenceRequested",
+   "payload": {
+    "jobId": "01a2057b-e288-7b08-8062-2da6565c7a50",
+    "modelName": "eurosat-classifier",
+    "imageUri": "s3://images/eurosat-classifier/01a2057b-e288-7b08-8062-2da6565c7a50",
+    "submittedAt": "2026-11-22T22:58:54.775064Z"
+   }
+  },
+  {
+   "stream": "INFERENCE",
+   "subject": "inference.completed.eurosat-classifier",
+   "sequence": 55250,
+   "time": "2026-11-22T22:58:54.812865398Z",
+   "type": "spotter.v1.InferenceCompleted",
+   "payload": {
+    "jobId": "01a2057b-e288-7b08-8062-2da6565c7a50",
+    "modelName": "eurosat-classifier",
+    "prediction": {
+     "label": "Forest",
+     "confidence": 0.9972019,
+     "scores": [
+      {
+       "label": "AnnualCrop",
+       "score": 0.00061114744
+      },
+      {
+       "label": "Forest",
+       "score": 0.9972019
+      },
+      {
+       "label": "HerbaceousVegetation",
+       "score": 0.0013051104
+      },
+      {
+       "label": "Highway",
+       "score": 0.0002602896
+      },
+      {
+       "label": "Industrial",
+       "score": 0.000015129592
+      },
+      {
+       "label": "Pasture",
+       "score": 0.0000758608
+      },
+      {
+       "label": "PermanentCrop",
+       "score": 0.0000085644915
+      },
+      {
+       "label": "Residential",
+       "score": 0.000026727192
+      },
+      {
+       "label": "River",
+       "score": 0.0004598148
+      },
+      {
+       "label": "SeaLake",
+       "score": 0.00003552355
+      }
+     ],
+     "modelVersionId": "01a204cd-c722-72b8-ae4c-8ca118f6b184",
+     "modelVersion": 3
+    },
+    "inputStats": {
+     "channelMean": [
+      0.1524962,
+      0.23744567,
+      0.30304715
+     ],
+     "channelStd": [
+      0.02377142,
+      0.021936368,
+      0.013591783
+     ]
+    },
+    "inferenceMs": 1.7172,
+    "completedAt": "2026-11-22T22:58:54.810374Z"
+   }
+  },
+  {
+   "stream": "INFERENCE",
+   "subject": "inference.shadow.eurosat-classifier",
+   "sequence": 55251,
+   "time": "2026-11-22T22:58:54.824475387Z",
+   "type": "spotter.v1.ShadowCompared",
+   "payload": {
+    "jobId": "01a2057b-e288-7b08-8062-2da6565c7a50",
+    "modelName": "eurosat-classifier",
+    "productionVersionId": "01a204cd-c722-72b8-ae4c-8ca118f6b184",
+    "shadowVersionId": "01a20578-95cc-7ed2-afb1-b466c0ae3bbd",
+    "productionLabel": "Forest",
+    "shadowLabel": "Forest",
+    "agree": true,
+    "productionMs": 1.7172,
+    "shadowMs": 8.3566,
+    "comparedAt": "2026-11-22T22:58:54.823223Z"
+   }
+  }
+ ]
+}

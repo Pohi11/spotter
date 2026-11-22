@@ -272,6 +272,103 @@ func (x *DriftResolved) GetResolvedAt() *timestamppb.Timestamp {
 	return nil
 }
 
+// Published by the monitor on monitor.drift.evaluated.<model_name> at every evaluation of a
+// version's window (every 50 events once it holds 200), whether or not the state changed.
+// Message id: evaluated-<version_id>-<stream sequence of the completion that triggered it>.
+type DriftEvaluated struct {
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	ModelName string                 `protobuf:"bytes,1,opt,name=model_name,json=modelName,proto3" json:"model_name,omitempty"`
+	VersionId string                 `protobuf:"bytes,2,opt,name=version_id,json=versionId,proto3" json:"version_id,omitempty"`
+	Version   int32                  `protobuf:"varint,3,opt,name=version,proto3" json:"version,omitempty"`
+	// Every feature's comparison.
+	Features   []*FeatureDrift `protobuf:"bytes,4,rep,name=features,proto3" json:"features,omitempty"`
+	WindowSize int32           `protobuf:"varint,5,opt,name=window_size,json=windowSize,proto3" json:"window_size,omitempty"`
+	// Whether the version is drifting after this evaluation.
+	Drifting      bool                   `protobuf:"varint,6,opt,name=drifting,proto3" json:"drifting,omitempty"`
+	EvaluatedAt   *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=evaluated_at,json=evaluatedAt,proto3" json:"evaluated_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DriftEvaluated) Reset() {
+	*x = DriftEvaluated{}
+	mi := &file_spotter_v1_monitor_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DriftEvaluated) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DriftEvaluated) ProtoMessage() {}
+
+func (x *DriftEvaluated) ProtoReflect() protoreflect.Message {
+	mi := &file_spotter_v1_monitor_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DriftEvaluated.ProtoReflect.Descriptor instead.
+func (*DriftEvaluated) Descriptor() ([]byte, []int) {
+	return file_spotter_v1_monitor_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *DriftEvaluated) GetModelName() string {
+	if x != nil {
+		return x.ModelName
+	}
+	return ""
+}
+
+func (x *DriftEvaluated) GetVersionId() string {
+	if x != nil {
+		return x.VersionId
+	}
+	return ""
+}
+
+func (x *DriftEvaluated) GetVersion() int32 {
+	if x != nil {
+		return x.Version
+	}
+	return 0
+}
+
+func (x *DriftEvaluated) GetFeatures() []*FeatureDrift {
+	if x != nil {
+		return x.Features
+	}
+	return nil
+}
+
+func (x *DriftEvaluated) GetWindowSize() int32 {
+	if x != nil {
+		return x.WindowSize
+	}
+	return 0
+}
+
+func (x *DriftEvaluated) GetDrifting() bool {
+	if x != nil {
+		return x.Drifting
+	}
+	return false
+}
+
+func (x *DriftEvaluated) GetEvaluatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.EvaluatedAt
+	}
+	return nil
+}
+
 var File_spotter_v1_monitor_proto protoreflect.FileDescriptor
 
 const file_spotter_v1_monitor_proto_rawDesc = "" +
@@ -306,7 +403,18 @@ const file_spotter_v1_monitor_proto_rawDesc = "" +
 	"\aversion\x18\x03 \x01(\x05R\aversion\x124\n" +
 	"\bfeatures\x18\x04 \x03(\v2\x18.spotter.v1.FeatureDriftR\bfeatures\x12;\n" +
 	"\vresolved_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"resolvedAtB\x9e\x01\n" +
+	"resolvedAt\"\x9a\x02\n" +
+	"\x0eDriftEvaluated\x12\x1d\n" +
+	"\n" +
+	"model_name\x18\x01 \x01(\tR\tmodelName\x12\x1d\n" +
+	"\n" +
+	"version_id\x18\x02 \x01(\tR\tversionId\x12\x18\n" +
+	"\aversion\x18\x03 \x01(\x05R\aversion\x124\n" +
+	"\bfeatures\x18\x04 \x03(\v2\x18.spotter.v1.FeatureDriftR\bfeatures\x12\x1f\n" +
+	"\vwindow_size\x18\x05 \x01(\x05R\n" +
+	"windowSize\x12\x1a\n" +
+	"\bdrifting\x18\x06 \x01(\bR\bdrifting\x12=\n" +
+	"\fevaluated_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\vevaluatedAtB\x9e\x01\n" +
 	"\x0ecom.spotter.v1B\fMonitorProtoP\x01Z5github.com/Pohi11/spotter/gen/go/spotter/v1;spotterv1\xa2\x02\x03SXX\xaa\x02\n" +
 	"Spotter.V1\xca\x02\n" +
 	"Spotter\\V1\xe2\x02\x16Spotter\\V1\\GPBMetadata\xea\x02\vSpotter::V1b\x06proto3"
@@ -323,23 +431,26 @@ func file_spotter_v1_monitor_proto_rawDescGZIP() []byte {
 	return file_spotter_v1_monitor_proto_rawDescData
 }
 
-var file_spotter_v1_monitor_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_spotter_v1_monitor_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_spotter_v1_monitor_proto_goTypes = []any{
 	(*FeatureDrift)(nil),          // 0: spotter.v1.FeatureDrift
 	(*DriftDetected)(nil),         // 1: spotter.v1.DriftDetected
 	(*DriftResolved)(nil),         // 2: spotter.v1.DriftResolved
-	(*timestamppb.Timestamp)(nil), // 3: google.protobuf.Timestamp
+	(*DriftEvaluated)(nil),        // 3: spotter.v1.DriftEvaluated
+	(*timestamppb.Timestamp)(nil), // 4: google.protobuf.Timestamp
 }
 var file_spotter_v1_monitor_proto_depIdxs = []int32{
 	0, // 0: spotter.v1.DriftDetected.features:type_name -> spotter.v1.FeatureDrift
-	3, // 1: spotter.v1.DriftDetected.detected_at:type_name -> google.protobuf.Timestamp
+	4, // 1: spotter.v1.DriftDetected.detected_at:type_name -> google.protobuf.Timestamp
 	0, // 2: spotter.v1.DriftResolved.features:type_name -> spotter.v1.FeatureDrift
-	3, // 3: spotter.v1.DriftResolved.resolved_at:type_name -> google.protobuf.Timestamp
-	4, // [4:4] is the sub-list for method output_type
-	4, // [4:4] is the sub-list for method input_type
-	4, // [4:4] is the sub-list for extension type_name
-	4, // [4:4] is the sub-list for extension extendee
-	0, // [0:4] is the sub-list for field type_name
+	4, // 3: spotter.v1.DriftResolved.resolved_at:type_name -> google.protobuf.Timestamp
+	0, // 4: spotter.v1.DriftEvaluated.features:type_name -> spotter.v1.FeatureDrift
+	4, // 5: spotter.v1.DriftEvaluated.evaluated_at:type_name -> google.protobuf.Timestamp
+	6, // [6:6] is the sub-list for method output_type
+	6, // [6:6] is the sub-list for method input_type
+	6, // [6:6] is the sub-list for extension type_name
+	6, // [6:6] is the sub-list for extension extendee
+	0, // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_spotter_v1_monitor_proto_init() }
@@ -353,7 +464,7 @@ func file_spotter_v1_monitor_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_spotter_v1_monitor_proto_rawDesc), len(file_spotter_v1_monitor_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   3,
+			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

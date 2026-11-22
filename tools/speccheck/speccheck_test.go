@@ -131,3 +131,29 @@ func TestCheckPassesWhenEverythingIsCovered(t *testing.T) {
 		t.Fatalf("report not OK: %+v", rep)
 	}
 }
+
+func TestReadJUnitLinksFromTestNames(t *testing.T) {
+	const vitest = `<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites name="vitest tests"><testsuite name="lib/proxy.test.ts">
+  <testcase classname="lib/proxy.test.ts" name="forwards listed routes [spec: dashboard: The browser reaches the gateway only through an allowlisted proxy]"></testcase>
+  <testcase classname="lib/proxy.test.ts" name="two tags [spec: dashboard: A] [spec: event-feed: B]"><failure message="x"/></testcase>
+  <testcase classname="lib/proxy.test.ts" name="no tag"></testcase>
+</testsuite></testsuites>`
+	links, err := ReadJUnitLinks(strings.NewReader(vitest))
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := map[string]bool{
+		"dashboard: The browser reaches the gateway only through an allowlisted proxy": true,
+		"dashboard: A":  false,
+		"event-feed: B": false,
+	}
+	if len(links) != len(want) {
+		t.Fatalf("links = %+v, want %d", links, len(want))
+	}
+	for _, l := range links {
+		if got, ok := want[l.Requirement.String()]; !ok || got != l.Passed {
+			t.Errorf("link %s passed=%v, want %v", l.Requirement, l.Passed, got)
+		}
+	}
+}

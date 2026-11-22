@@ -1,0 +1,16 @@
+{
+  "date": "2026-11-22",
+  "model": "eurosat-classifier",
+  "report": "2026-11-22-promotion-run.md",
+  "method": "Registry stage-change timestamps against the worker's reload log line; spotterload with 4 closed-loop clients over 600 holdout tiles",
+  "shadow": {
+    "production_version": 3,
+    "shadow_version": 2,
+    "comparisons": 819,
+    "agreeing": 818,
+    "mean_shadow_ms": 4.66
+  },
+  "promote_to_serving_ms": 232,
+  "rollback_to_serving_ms": 457,
+  "rollback_under_load": { "submitted": 496, "failed": 0, "lost": 0, "on_v2_before_reload": 196, "in_flight_on_v2": 1, "on_v3_after": 299 }
+}

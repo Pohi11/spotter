@@ -1,0 +1,7 @@
+/test-results/
+/playwright-report/
+/content/benchmarks/
+next-env.d.ts
+/.next-e2e/
+# Written by `next dev` for coding tools; not part of the project
+AGENTS.md

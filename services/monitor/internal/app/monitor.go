@@ -65,19 +65,29 @@ func (m *Monitor) Observe(ctx context.Context, o Observation) error {
 	}
 
 	tr, results := det.Observe(o.Sample)
+	if len(results) == 0 { // not an evaluation step
+		return nil
+	}
 	for _, r := range results {
 		m.metrics.PSI(o.Model, o.VersionID, r.Feature, r.PSI)
 	}
-	if tr == domain.NoChange {
-		return nil
+	now := m.clock.Now()
+	// The state change first, so a reader of the evaluation stream never sees "drifting"
+	// before the DriftDetected that announces it.
+	if tr != domain.NoChange {
+		e := ports.DriftEvent{Transition: tr, Model: o.Model, VersionID: o.VersionID, Version: o.Version,
+			Results: results, WindowSize: m.cfg.Window, At: now,
+			DedupKey: fmt.Sprintf("drift-%s-%d-%d", o.VersionID, tr, o.Sequence)}
+		if tr == domain.Detected {
+			e.Results = m.cfg.Drifted(results)
+		}
+		if err := m.pub.Publish(ctx, e); err != nil {
+			return err
+		}
 	}
-	e := ports.DriftEvent{Transition: tr, Model: o.Model, VersionID: o.VersionID, Version: o.Version,
-		Results: results, WindowSize: m.cfg.Window, At: m.clock.Now(),
-		DedupKey: fmt.Sprintf("drift-%s-%d-%d", o.VersionID, tr, o.Sequence)}
-	if tr == domain.Detected {
-		e.Results = m.cfg.Drifted(results)
-	}
-	return m.pub.Publish(ctx, e)
+	return m.pub.PublishEvaluation(ctx, ports.Evaluation{Model: o.Model, VersionID: o.VersionID, Version: o.Version,
+		Results: results, WindowSize: m.cfg.Window, Drifting: det.Drifting(), At: now,
+		DedupKey: fmt.Sprintf("evaluated-%s-%d", o.VersionID, o.Sequence)})
 }
 
 // Drifting reports whether a version is drifting and whether it is tracked at all.

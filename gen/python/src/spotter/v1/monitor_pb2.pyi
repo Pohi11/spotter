@@ -54,3 +54,21 @@ class DriftResolved(_message.Message):
     features: _containers.RepeatedCompositeFieldContainer[FeatureDrift]
     resolved_at: _timestamp_pb2.Timestamp
     def __init__(self, model_name: _Optional[str] = ..., version_id: _Optional[str] = ..., version: _Optional[int] = ..., features: _Optional[_Iterable[_Union[FeatureDrift, _Mapping]]] = ..., resolved_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ...) -> None: ...
+
+class DriftEvaluated(_message.Message):
+    __slots__ = ("model_name", "version_id", "version", "features", "window_size", "drifting", "evaluated_at")
+    MODEL_NAME_FIELD_NUMBER: _ClassVar[int]
+    VERSION_ID_FIELD_NUMBER: _ClassVar[int]
+    VERSION_FIELD_NUMBER: _ClassVar[int]
+    FEATURES_FIELD_NUMBER: _ClassVar[int]
+    WINDOW_SIZE_FIELD_NUMBER: _ClassVar[int]
+    DRIFTING_FIELD_NUMBER: _ClassVar[int]
+    EVALUATED_AT_FIELD_NUMBER: _ClassVar[int]
+    model_name: str
+    version_id: str
+    version: int
+    features: _containers.RepeatedCompositeFieldContainer[FeatureDrift]
+    window_size: int
+    drifting: bool
+    evaluated_at: _timestamp_pb2.Timestamp
+    def __init__(self, model_name: _Optional[str] = ..., version_id: _Optional[str] = ..., version: _Optional[int] = ..., features: _Optional[_Iterable[_Union[FeatureDrift, _Mapping]]] = ..., window_size: _Optional[int] = ..., drifting: _Optional[bool] = ..., evaluated_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ...) -> None: ...

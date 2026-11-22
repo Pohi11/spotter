@@ -147,9 +147,18 @@ func envVar(container any, name string) any {
 func TestDefaultRender(t *testing.T) {
 	spectest.Verifies(t, capability, "One chart declares the platform")
 	objs := render(t)
-	for _, name := range []string{"registry", "gateway", "monitor", "worker"} {
+	for _, name := range []string{"registry", "gateway", "monitor", "worker", "dashboard"} {
 		if find(objs, "Deployment", "spotter-"+name) == nil {
 			t.Errorf("no Deployment spotter-%s", name)
+		}
+	}
+	if d := find(objs, "Deployment", "spotter-dashboard"); d != nil {
+		env := map[string]string{}
+		for _, e := range list(containers(d)[0], "env") {
+			env[str(e, "name")] = str(e, "value")
+		}
+		if env["GATEWAY_URL"] != "http://spotter-gateway:8080" {
+			t.Errorf("dashboard GATEWAY_URL %q", env["GATEWAY_URL"])
 		}
 	}
 	for _, name := range []string{"postgres", "seaweedfs", "nats"} {
@@ -160,6 +169,14 @@ func TestDefaultRender(t *testing.T) {
 	natsConfig := find(objs, "ConfigMap", "spotter-nats-config")
 	if natsConfig == nil || !strings.Contains(str(natsConfig, "data", "nats.conf"), "jetstream") {
 		t.Errorf("NATS config without JetStream: %v", natsConfig)
+	}
+}
+
+func TestWithoutDashboard(t *testing.T) {
+	spectest.Verifies(t, capability, "One chart declares the platform")
+	objs := render(t, "dashboard.enabled=false")
+	if find(objs, "Deployment", "spotter-dashboard") != nil || find(objs, "Service", "spotter-dashboard") != nil {
+		t.Fatal("dashboard rendered with dashboard.enabled=false")
 	}
 }
 
@@ -231,8 +248,8 @@ func TestProbesAndResources(t *testing.T) {
 	spectest.Verifies(t, capability, "Every workload reports health and declares resources")
 	objs := render(t)
 	workloads := ofKind(objs, "Deployment", "StatefulSet")
-	if len(workloads) != 7 {
-		t.Fatalf("%d workloads, want 7", len(workloads))
+	if len(workloads) != 8 {
+		t.Fatalf("%d workloads, want 8", len(workloads))
 	}
 	for _, o := range workloads {
 		for _, c := range containers(o) {
