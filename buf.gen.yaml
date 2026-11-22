@@ -3,6 +3,10 @@
 version: v2
 managed:
   enabled: true
+  disable:
+    # googleapis ships its own Go packages (google.golang.org/genproto/...).
+    - file_option: go_package
+      module: buf.build/googleapis/googleapis
   override:
     - file_option: go_package_prefix
       value: github.com/Pohi11/spotter/gen/go
@@ -11,7 +15,17 @@ plugins:
   - remote: buf.build/protocolbuffers/go:v1.36.12
     out: gen/go
     opt: paths=source_relative
+  - remote: buf.build/grpc/go:v1.6.2
+    out: gen/go
+    opt: paths=source_relative
+  - remote: buf.build/grpc-ecosystem/gateway:v2.34.0
+    out: gen/go
+    opt: paths=source_relative
+  - remote: buf.build/grpc-ecosystem/openapiv2:v2.34.0
+    out: gen/openapi
   - remote: buf.build/protocolbuffers/python:v36.2
     out: gen/python/src
   - remote: buf.build/protocolbuffers/pyi:v36.2
+    out: gen/python/src
+  - remote: buf.build/grpc/python:v1.85.3
     out: gen/python/src

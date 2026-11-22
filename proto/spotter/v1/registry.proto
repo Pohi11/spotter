@@ -1,0 +1,153 @@
+syntax = "proto3";
+
+package spotter.v1;
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+import "spotter/v1/registry_events.proto";
+
+// The model registry: models, their versions, and each version's lifecycle stage.
+// Served over gRPC by the registry and over REST (the paths below) by the gateway.
+service RegistryService {
+  // Creates a model with a unique name.
+  rpc RegisterModel(RegisterModelRequest) returns (RegisterModelResponse) {
+    option (google.api.http) = {
+      post: "/v1/models"
+      body: "*"
+    };
+  }
+
+  // Returns a model by name.
+  rpc GetModel(GetModelRequest) returns (GetModelResponse) {
+    option (google.api.http) = {get: "/v1/models/{name}"};
+  }
+
+  // Stores a new version of a model, numbered after its latest version.
+  rpc RegisterVersion(RegisterVersionRequest) returns (RegisterVersionResponse) {
+    option (google.api.http) = {
+      post: "/v1/models/{model_name}/versions"
+      body: "*"
+    };
+  }
+
+  // Lists a model's versions, newest first.
+  rpc ListVersions(ListVersionsRequest) returns (ListVersionsResponse) {
+    option (google.api.http) = {get: "/v1/models/{model_name}/versions"};
+  }
+
+  // Returns a version by id.
+  rpc GetVersion(GetVersionRequest) returns (GetVersionResponse) {
+    option (google.api.http) = {get: "/v1/versions/{version_id}"};
+  }
+
+  // Moves a version to another stage. Fails with ABORTED if expected_revision is stale.
+  rpc TransitionVersion(TransitionVersionRequest) returns (TransitionVersionResponse) {
+    option (google.api.http) = {
+      post: "/v1/versions/{version_id}:transition"
+      body: "*"
+    };
+  }
+
+  // Lists a version's stage changes, oldest first.
+  rpc GetVersionHistory(GetVersionHistoryRequest) returns (GetVersionHistoryResponse) {
+    option (google.api.http) = {get: "/v1/versions/{version_id}/history"};
+  }
+}
+
+message Model {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  google.protobuf.Timestamp created_at = 4;
+}
+
+message ModelVersion {
+  string id = 1;
+  string model_id = 2;
+  int32 version = 3;
+  // s3://<bucket>/<key>
+  string artifact_uri = 4;
+  // 64 lowercase hex characters.
+  string artifact_sha256 = 5;
+  // "pytorch" or "onnx".
+  string framework = 6;
+  map<string, double> metrics = 7;
+  ModelVersionStage stage = 8;
+  // Increases by one on every transition; send it back as expected_revision.
+  int64 revision = 9;
+  google.protobuf.Timestamp created_at = 10;
+  google.protobuf.Timestamp updated_at = 11;
+}
+
+message StageChange {
+  ModelVersionStage from_stage = 1;
+  ModelVersionStage to_stage = 2;
+  string reason = 3;
+  // The version's revision after the change.
+  int64 revision = 4;
+  google.protobuf.Timestamp changed_at = 5;
+}
+
+message RegisterModelRequest {
+  string name = 1;
+  string description = 2;
+}
+
+message RegisterModelResponse {
+  Model model = 1;
+}
+
+message GetModelRequest {
+  string name = 1;
+}
+
+message GetModelResponse {
+  Model model = 1;
+}
+
+message RegisterVersionRequest {
+  string model_name = 1;
+  string artifact_uri = 2;
+  string artifact_sha256 = 3;
+  string framework = 4;
+  map<string, double> metrics = 5;
+}
+
+message RegisterVersionResponse {
+  ModelVersion version = 1;
+}
+
+message ListVersionsRequest {
+  string model_name = 1;
+}
+
+message ListVersionsResponse {
+  repeated ModelVersion versions = 1;
+}
+
+message GetVersionRequest {
+  string version_id = 1;
+}
+
+message GetVersionResponse {
+  ModelVersion version = 1;
+}
+
+message TransitionVersionRequest {
+  string version_id = 1;
+  ModelVersionStage to_stage = 2;
+  string reason = 3;
+  int64 expected_revision = 4;
+}
+
+message TransitionVersionResponse {
+  ModelVersion version = 1;
+}
+
+message GetVersionHistoryRequest {
+  string version_id = 1;
+}
+
+message GetVersionHistoryResponse {
+  repeated StageChange changes = 1;
+}

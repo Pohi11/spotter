@@ -101,6 +101,11 @@ func (s *Service) TransitionVersion(ctx context.Context, versionID uuid.UUID, to
 	return next, nil
 }
 
+// Model returns a model by name.
+func (s *Service) Model(ctx context.Context, name string) (domain.Model, error) {
+	return s.repo.ModelByName(ctx, name)
+}
+
 // Version returns one version.
 func (s *Service) Version(ctx context.Context, id uuid.UUID) (domain.ModelVersion, error) {
 	return s.repo.Version(ctx, id)

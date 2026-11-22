@@ -5,7 +5,7 @@ version = "0.1.0"
 description = "Generated protobuf messages for Spotter"
 requires-python = ">=3.13"
 # The generated code checks the runtime version; it must be at least the generator's version.
-dependencies = ["protobuf>=7.36.2,<8"]
+dependencies = ["protobuf>=7.36.2,<8", "googleapis-common-protos>=1.70", "grpcio>=1.85"]
 
 [build-system]
 requires = ["hatchling>=1.27"]

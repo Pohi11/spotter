@@ -1,0 +1,501 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "spotter/v1/registry.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "RegistryService",
+      "description": "The model registry: models, their versions, and each version's lifecycle stage.\nServed over gRPC by the registry and over REST (the paths below) by the gateway."
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v1/models": {
+      "post": {
+        "summary": "Creates a model with a unique name.",
+        "operationId": "RegistryService_RegisterModel",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1RegisterModelResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1RegisterModelRequest"
+            }
+          }
+        ],
+        "tags": [
+          "RegistryService"
+        ]
+      }
+    },
+    "/v1/models/{modelName}/versions": {
+      "get": {
+        "summary": "Lists a model's versions, newest first.",
+        "operationId": "RegistryService_ListVersions",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListVersionsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "modelName",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "RegistryService"
+        ]
+      },
+      "post": {
+        "summary": "Stores a new version of a model, numbered after its latest version.",
+        "operationId": "RegistryService_RegisterVersion",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1RegisterVersionResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "modelName",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/RegistryServiceRegisterVersionBody"
+            }
+          }
+        ],
+        "tags": [
+          "RegistryService"
+        ]
+      }
+    },
+    "/v1/models/{name}": {
+      "get": {
+        "summary": "Returns a model by name.",
+        "operationId": "RegistryService_GetModel",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetModelResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "RegistryService"
+        ]
+      }
+    },
+    "/v1/versions/{versionId}": {
+      "get": {
+        "summary": "Returns a version by id.",
+        "operationId": "RegistryService_GetVersion",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetVersionResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "versionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "RegistryService"
+        ]
+      }
+    },
+    "/v1/versions/{versionId}/history": {
+      "get": {
+        "summary": "Lists a version's stage changes, oldest first.",
+        "operationId": "RegistryService_GetVersionHistory",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetVersionHistoryResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "versionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "RegistryService"
+        ]
+      }
+    },
+    "/v1/versions/{versionId}:transition": {
+      "post": {
+        "summary": "Moves a version to another stage. Fails with ABORTED if expected_revision is stale.",
+        "operationId": "RegistryService_TransitionVersion",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1TransitionVersionResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "versionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/RegistryServiceTransitionVersionBody"
+            }
+          }
+        ],
+        "tags": [
+          "RegistryService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "RegistryServiceRegisterVersionBody": {
+      "type": "object",
+      "properties": {
+        "artifactUri": {
+          "type": "string"
+        },
+        "artifactSha256": {
+          "type": "string"
+        },
+        "framework": {
+          "type": "string"
+        },
+        "metrics": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      }
+    },
+    "RegistryServiceTransitionVersionBody": {
+      "type": "object",
+      "properties": {
+        "toStage": {
+          "$ref": "#/definitions/v1ModelVersionStage"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "expectedRevision": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "v1GetModelResponse": {
+      "type": "object",
+      "properties": {
+        "model": {
+          "$ref": "#/definitions/v1Model"
+        }
+      }
+    },
+    "v1GetVersionHistoryResponse": {
+      "type": "object",
+      "properties": {
+        "changes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1StageChange"
+          }
+        }
+      }
+    },
+    "v1GetVersionResponse": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "$ref": "#/definitions/v1ModelVersion"
+        }
+      }
+    },
+    "v1ListVersionsResponse": {
+      "type": "object",
+      "properties": {
+        "versions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1ModelVersion"
+          }
+        }
+      }
+    },
+    "v1Model": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "v1ModelVersion": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "modelId": {
+          "type": "string"
+        },
+        "version": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "artifactUri": {
+          "type": "string",
+          "title": "s3://\u003cbucket\u003e/\u003ckey\u003e"
+        },
+        "artifactSha256": {
+          "type": "string",
+          "description": "64 lowercase hex characters."
+        },
+        "framework": {
+          "type": "string",
+          "description": "\"pytorch\" or \"onnx\"."
+        },
+        "metrics": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "stage": {
+          "$ref": "#/definitions/v1ModelVersionStage"
+        },
+        "revision": {
+          "type": "string",
+          "format": "int64",
+          "description": "Increases by one on every transition; send it back as expected_revision."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "v1ModelVersionStage": {
+      "type": "string",
+      "enum": [
+        "MODEL_VERSION_STAGE_UNSPECIFIED",
+        "MODEL_VERSION_STAGE_REGISTERED",
+        "MODEL_VERSION_STAGE_VALIDATED",
+        "MODEL_VERSION_STAGE_SHADOW",
+        "MODEL_VERSION_STAGE_PRODUCTION",
+        "MODEL_VERSION_STAGE_RETIRED",
+        "MODEL_VERSION_STAGE_REJECTED",
+        "MODEL_VERSION_STAGE_ROLLED_BACK"
+      ],
+      "default": "MODEL_VERSION_STAGE_UNSPECIFIED",
+      "description": "Lifecycle stage of a model version. Mirrors the registry's transition table."
+    },
+    "v1RegisterModelRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "v1RegisterModelResponse": {
+      "type": "object",
+      "properties": {
+        "model": {
+          "$ref": "#/definitions/v1Model"
+        }
+      }
+    },
+    "v1RegisterVersionResponse": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "$ref": "#/definitions/v1ModelVersion"
+        }
+      }
+    },
+    "v1StageChange": {
+      "type": "object",
+      "properties": {
+        "fromStage": {
+          "$ref": "#/definitions/v1ModelVersionStage"
+        },
+        "toStage": {
+          "$ref": "#/definitions/v1ModelVersionStage"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "revision": {
+          "type": "string",
+          "format": "int64",
+          "description": "The version's revision after the change."
+        },
+        "changedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "v1TransitionVersionResponse": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "$ref": "#/definitions/v1ModelVersion"
+        }
+      }
+    }
+  }
+}
