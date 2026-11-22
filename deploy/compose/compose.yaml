@@ -53,6 +53,24 @@ services:
       timeout: 3s
       retries: 15
 
+  # Traces (decision record 0010): OTLP gRPC on 4317, UI on http://localhost:16686.
+  jaeger:
+    image: jaegertracing/jaeger:2.23.0
+    ports:
+      - "4317:4317"
+      - "16686:16686"
+
+  # Metrics: UI on http://localhost:9090; scrapes the services on the host.
+  prometheus:
+    image: prom/prometheus:v3.16.0
+    command: ["--config.file=/etc/prometheus/prometheus.yml"]
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
 volumes:
   pgdata:
   natsdata:
