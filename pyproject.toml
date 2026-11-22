@@ -1,7 +1,18 @@
 # uv workspace root (decision record 0002). It has no package of its own; it ties the
 # Python members together under one lock file and holds the shared dev tools.
 [tool.uv.workspace]
-members = ["gen/python", "workers/inference"]
+members = ["gen/python", "workers/model", "workers/inference", "workers/trainer"]
+
+# CPU-only PyTorch on every platform: PyPI's Linux wheels bundle CUDA (gigabytes) that
+# neither CI nor the laptop uses.
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }
+torchvision = { index = "pytorch-cpu" }
 
 [dependency-groups]
 dev = ["pytest>=9", "pytest-asyncio>=1.2", "ruff>=0.14"]
@@ -18,4 +29,8 @@ select = ["E", "F", "I", "B", "UP", "ASYNC"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 testpaths = ["workers"]
-markers = ["integration: needs a running NATS server at NATS_URL"]
+addopts = ["--strict-markers", "--import-mode=importlib"]
+markers = [
+  "integration: needs running infrastructure (NATS_URL, S3_ENDPOINT)",
+  "spec(capability, requirement): the OpenSpec requirement this test verifies (decision record 0001)",
+]

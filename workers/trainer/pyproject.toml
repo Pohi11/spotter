@@ -1,0 +1,28 @@
+[project]
+name = "spotter-trainer"
+version = "0.1.0"
+description = "Trains, evaluates, publishes, and registers EuroSAT model versions"
+requires-python = ">=3.13"
+dependencies = [
+  "spotter-model",
+  "spotter-proto",
+  "torch>=2.9",
+  "torchvision>=0.24",
+  "numpy>=2.1",
+  "boto3>=1.40",
+  "grpcio>=1.85",
+]
+
+[project.scripts]
+spotter-train = "spotter_trainer.cli:main"
+
+[tool.uv.sources]
+spotter-model = { workspace = true }
+spotter-proto = { workspace = true }
+
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/spotter_trainer"]
