@@ -2,7 +2,7 @@
 
 ## Context
 
-Shadow is already a lifecycle stage (change `phase-01-registry-domain`) but nothing ran shadow versions. The promotion rules are recorded in decision record [0013](../../../docs/decisions/0013-gated-promotion-shadow-traffic-human-approval.md).
+Shadow is already a lifecycle stage (change `phase-01-registry-domain`) but nothing ran shadow versions. The promotion rules are recorded in decision record [0013](../../../../docs/decisions/0013-gated-promotion-shadow-traffic-human-approval.md).
 
 ## Decisions
 
