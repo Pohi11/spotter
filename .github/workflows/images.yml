@@ -1,0 +1,71 @@
+name: Images
+
+# Builds the three images for linux/amd64 and linux/arm64 on every pull request, and on
+# pushes to main also publishes them to GitHub Container Registry (decision record 0020):
+#   ghcr.io/<owner>/spotter-go, spotter-python, spotter-dashboard
+# tagged with the commit SHA and "main".
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: images-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build ${{ matrix.image }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - image: spotter-go
+            dockerfile: deploy/docker/go.Dockerfile
+            context: .
+          - image: spotter-python
+            dockerfile: deploy/docker/python.Dockerfile
+            context: .
+          - image: spotter-dashboard
+            dockerfile: deploy/docker/dashboard.Dockerfile
+            context: dashboard
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        if: matrix.image == 'spotter-dashboard'
+        with:
+          node-version: 24
+      - name: Copy the benchmark reports into the dashboard's build context
+        if: matrix.image == 'spotter-dashboard'
+        run: node dashboard/scripts/sync-content.mjs
+      - uses: docker/setup-qemu-action@v4
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/login-action@v4
+        if: github.event_name == 'push'
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}
+          tags: |
+            type=sha,format=long
+            type=raw,value=main,enable=${{ github.ref == 'refs/heads/main' }}
+      - uses: docker/build-push-action@v7
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event_name == 'push' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image }}
