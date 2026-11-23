@@ -262,6 +262,17 @@ Spec-driven, one change at a time:
 
 Requirements: Docker Desktop, Go 1.27+, [uv](https://docs.astral.sh/uv/), and [buf](https://buf.build/) (only to regenerate code).
 
+**Demo on one machine** (any x86 or ARM machine with Docker; images from GitHub Container Registry, [0020](docs/decisions/0020-ghcr-images-and-a-compose-demo.md)):
+
+```bash
+cd deploy/demo
+cp demo.env.example demo.env                       # set real secrets in demo.env
+docker compose --env-file demo.env up -d --wait    # the platform; only the dashboard is exposed, on :8000
+docker compose --env-file demo.env --profile bootstrap run --rm bootstrap   # trains version 1 into shadow
+```
+
+Then open the dashboard's Model page, approve version 1 with your name and reason, and promote it. With no production version yet, the approval is the only gate (decision record [0015](docs/decisions/0015-first-promotion-without-shadow-evidence.md)). The demo has no authentication; put it behind a reverse proxy before sharing it.
+
 **On Kubernetes** (also needs [k3d](https://k3d.io/), [Tilt](https://tilt.dev/), Helm, and kubectl):
 
 ```bash
