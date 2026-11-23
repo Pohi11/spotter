@@ -50,3 +50,18 @@ class RegistryClient:
             timeout=self._timeout,
         )
         return True
+
+    def to_shadow(self, version: pb.ModelVersion, reason: str) -> pb.ModelVersion:
+        """Move a validated version to shadow; promotion still needs the gates and a person."""
+        current = self._stub.GetVersion(
+            pb.GetVersionRequest(version_id=version.id), timeout=self._timeout
+        ).version
+        return self._stub.TransitionVersion(
+            pb.TransitionVersionRequest(
+                version_id=version.id,
+                to_stage=events.MODEL_VERSION_STAGE_SHADOW,
+                reason=reason,
+                expected_revision=current.revision,
+            ),
+            timeout=self._timeout,
+        ).version

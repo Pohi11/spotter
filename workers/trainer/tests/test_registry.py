@@ -43,6 +43,13 @@ class FakeRegistry(rpc.RegistryServiceServicer):
         vs.append(v)
         return pb.RegisterVersionResponse(version=v)
 
+    def GetVersion(self, request, context):
+        for vs in self.versions.values():
+            for v in vs:
+                if v.id == request.version_id:
+                    return pb.GetVersionResponse(version=v)
+        context.abort(grpc.StatusCode.NOT_FOUND, "no such version")
+
     def TransitionVersion(self, request, context):
         self.transitions.append(request)
         for vs in self.versions.values():
@@ -111,3 +118,23 @@ def test_below_the_floor_stays_registered(registry):
     v = client.register_version("eurosat-classifier", "s3://m/k", SHA, "pytorch", METRICS)
     assert not client.validate_if_accurate(v, accuracy=0.80, floor=0.85)
     assert fake.transitions == []
+
+
+SHADOW_ON_REQUEST = ("model-publishing", "A trained version can go to shadow on request")
+
+
+@pytest.mark.spec(*SHADOW_ON_REQUEST)
+def test_validated_version_goes_to_shadow(registry):
+    fake, client = registry
+    client.ensure_model("eurosat-classifier", "test")
+    v = client.register_version(
+        "eurosat-classifier", "s3://models/x/model.pt", SHA, "pytorch", METRICS
+    )
+    assert client.validate_if_accurate(v, 0.93, 0.85)
+    shadowed = client.to_shadow(v, "demo")
+    assert [t.to_stage for t in fake.transitions] == [
+        events.MODEL_VERSION_STAGE_VALIDATED,
+        events.MODEL_VERSION_STAGE_SHADOW,
+    ]
+    assert shadowed.stage == events.MODEL_VERSION_STAGE_SHADOW
+    assert fake.transitions[1].expected_revision == 2  # read back after validation
