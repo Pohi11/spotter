@@ -2,7 +2,7 @@
 
 Configuration from environment variables:
   DATA_DIR (data), MODEL_NAME (eurosat-classifier), EPOCHS (12), SEED (42),
-  MIN_ACCURACY (0.85), REGISTRY_ADDR (localhost:9090),
+  MIN_ACCURACY (0.85), REGISTRY_ADDR (localhost:9090), SHADOW_AFTER_VALIDATION (false),
   S3_ENDPOINT, S3_ACCESS_KEY, S3_SECRET_KEY, S3_REGION (us-east-1), S3_BUCKET (models).
 """
 
@@ -115,10 +115,19 @@ def main() -> None:
             model_name, published.uri, published.sha256, "pytorch", metrics
         )
         validated = registry.validate_if_accurate(version, report.accuracy, floor)
+        shadow = validated and _env("SHADOW_AFTER_VALIDATION", "false").lower() == "true"
+        if shadow:
+            registry.to_shadow(version, "shadow after training (SHADOW_AFTER_VALIDATION)")
     # The reference the drift monitor compares live traffic with (decision record 0012).
     ref = build_reference(torch_predictor(model), val_set.images, version.id)
     print(f"reference {write_reference(s3, published.uri, ref)}", flush=True)
-    stage = "validated" if validated else "registered (below the accuracy floor)"
+    stage = (
+        "shadow"
+        if shadow
+        else "validated"
+        if validated
+        else "registered (below the accuracy floor)"
+    )
     print(f"registered {model_name} version {version.version}: {stage}", flush=True)
 
 
