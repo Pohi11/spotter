@@ -1,0 +1,147 @@
+# The whole platform on one machine from the published images (decision record 0020):
+# dependencies, the three Go services, the inference worker, and the dashboard. Only the
+# dashboard is published, on DASHBOARD_PORT (default 8000); everything else stays on the
+# Compose network.
+#
+#   cp demo.env.example demo.env      # then set real secrets in demo.env
+#   docker compose --env-file demo.env up -d --wait
+#   docker compose --env-file demo.env --profile bootstrap run --rm bootstrap   # train version 1
+#
+# IMAGE_PREFIX (default ghcr.io/pohi11) and IMAGE_TAG (default main) pick the images.
+name: spotter-demo
+
+x-images:
+  go: &go ${IMAGE_PREFIX:-ghcr.io/pohi11}/spotter-go:${IMAGE_TAG:-main}
+  python: &python ${IMAGE_PREFIX:-ghcr.io/pohi11}/spotter-python:${IMAGE_TAG:-main}
+  dashboard: &dashboard ${IMAGE_PREFIX:-ghcr.io/pohi11}/spotter-dashboard:${IMAGE_TAG:-main}
+
+x-s3: &s3
+  S3_ENDPOINT: http://seaweedfs:8333
+  S3_ACCESS_KEY: ${S3_ACCESS_KEY:?set S3_ACCESS_KEY in demo.env}
+  S3_SECRET_KEY: ${S3_SECRET_KEY:?set S3_SECRET_KEY in demo.env}
+  S3_REGION: us-east-1
+
+services:
+  postgres:
+    image: postgres:18
+    environment:
+      POSTGRES_USER: spotter
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in demo.env}
+      POSTGRES_DB: spotter
+    volumes:
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U spotter -d spotter"]
+      interval: 2s
+      retries: 30
+    restart: unless-stopped
+
+  nats:
+    image: nats:2.15.3-alpine
+    command: ["--jetstream", "--store_dir=/data", "--http_port=8222"]
+    volumes:
+      - natsdata:/data
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8222/healthz?js-enabled-only=true"]
+      interval: 2s
+      retries: 30
+    restart: unless-stopped
+
+  seaweedfs:
+    image: chrislusf/seaweedfs:4.54
+    environment:
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY}
+      S3_SECRET_KEY: ${S3_SECRET_KEY}
+    entrypoint: ["/bin/sh", "/entrypoint-spotter.sh"]
+    volumes:
+      - ../helm/spotter/files/seaweedfs-entrypoint.sh:/entrypoint-spotter.sh:ro
+      - seaweeddata:/data
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8333/healthz"]
+      interval: 2s
+      retries: 30
+    restart: unless-stopped
+
+  registry:
+    image: *go
+    command: ["registry"]
+    environment:
+      DATABASE_URL: postgres://spotter:${POSTGRES_PASSWORD}@postgres:5432/spotter?sslmode=disable
+      NATS_URL: nats://nats:4222
+      HTTP_ADDR: ":8081"
+      GRPC_ADDR: ":9090"
+    depends_on:
+      postgres: { condition: service_healthy }
+      nats: { condition: service_healthy }
+    restart: unless-stopped
+
+  gateway:
+    image: *go
+    command: ["gateway"]
+    environment:
+      <<: *s3
+      REGISTRY_ADDR: registry:9090
+      NATS_URL: nats://nats:4222
+    depends_on:
+      registry: { condition: service_started }
+      seaweedfs: { condition: service_healthy }
+    restart: unless-stopped
+
+  monitor:
+    image: *go
+    command: ["monitor"]
+    environment:
+      <<: *s3
+      REGISTRY_ADDR: registry:9090
+      NATS_URL: nats://nats:4222
+    depends_on:
+      gateway: { condition: service_started }
+    restart: unless-stopped
+
+  worker:
+    image: *python
+    command: ["spotter-inference"]
+    environment:
+      <<: *s3
+      REGISTRY_ADDR: registry:9090
+      NATS_URL: nats://nats:4222
+      MODEL_THREADS: "1"
+      HOME: /tmp
+    depends_on:
+      gateway: { condition: service_started }
+    restart: unless-stopped
+
+  dashboard:
+    image: *dashboard
+    environment:
+      GATEWAY_URL: http://gateway:8080
+    ports:
+      - "${DASHBOARD_PORT:-8000}:3000"
+    depends_on:
+      gateway: { condition: service_started }
+    restart: unless-stopped
+
+  # One-off: downloads EuroSAT, trains version 1, validates it, and puts it in shadow. A
+  # person then approves and promotes it in the dashboard (see the README's demo section).
+  bootstrap:
+    image: *python
+    profiles: [bootstrap]
+    command: ["spotter-train"]
+    environment:
+      <<: *s3
+      REGISTRY_ADDR: registry:9090
+      EPOCHS: ${BOOTSTRAP_EPOCHS:-3}
+      SHADOW_AFTER_VALIDATION: "true"
+      DATA_DIR: /data
+      HOME: /tmp
+    volumes:
+      - traindata:/data
+    depends_on:
+      registry: { condition: service_started }
+      seaweedfs: { condition: service_healthy }
+
+volumes:
+  pgdata:
+  natsdata:
+  seaweeddata:
+  traindata:
