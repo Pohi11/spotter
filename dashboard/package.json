@@ -14,7 +14,8 @@
     "record": "node scripts/record.mjs",
     "predev": "node scripts/sync-content.mjs",
     "prebuild": "node scripts/sync-content.mjs",
-    "pretest": "node scripts/sync-content.mjs"
+    "pretest": "node scripts/sync-content.mjs",
+    "pretypecheck": "node scripts/sync-content.mjs"
   },
   "dependencies": {
     "next": "16.4.6",
