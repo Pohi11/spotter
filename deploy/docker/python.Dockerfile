@@ -22,6 +22,9 @@ COPY gen/python gen/python
 COPY workers workers
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --locked --no-dev --all-packages \
- && useradd --uid 10001 --no-create-home spotter
+ && useradd --uid 10001 --no-create-home spotter \
+ && mkdir -p /data && chown 10001 /data
+# /data belongs to the user, so a new named volume mounted there (the demo's training data)
+# starts out writable; in Kubernetes an emptyDir is mounted there instead.
 USER 10001
 CMD ["spotter-inference"]
