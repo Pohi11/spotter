@@ -55,3 +55,10 @@ Each published version SHALL have a `reference.json` next to its artifact holdin
 #### Scenario: Same features as serving
 - **WHEN** the reference features of an image are compared with the input statistics the worker computes for the same JPEG
 - **THEN** they agree to within 1e-6
+
+### Requirement: A trained version can go to shadow on request
+When `SHADOW_AFTER_VALIDATION` is `true` and the version was validated, `spotter-train` SHALL move it to `shadow` using its current revision, and SHALL request no other stage.
+
+#### Scenario: Validated then shadow
+- **WHEN** training validates a version with `SHADOW_AFTER_VALIDATION=true`
+- **THEN** the transitions requested are to `validated` and then to `shadow`, the second with the revision read after validation
