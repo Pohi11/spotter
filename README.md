@@ -2,7 +2,7 @@
 
 A small, cloud-neutral platform for deploying and monitoring computer-vision models on overhead imagery. Register a model version, serve it behind REST and gRPC, run inference through an event bus, watch live traffic for drift, retrain, shadow-test the new version, and promote it through code-checked gates and a human approval, with rollback.
 
-Status: registry and API, a trained EuroSAT model, event-driven inference, tracing and metrics, optimized model variants with load tests, drift monitoring, retraining on drift, shadow testing with gated promotion and rollback, Kubernetes deployment, and an operator dashboard are built.
+Status: registry and API, a trained EuroSAT model, event-driven inference, tracing and metrics, optimized model variants with load tests, drift monitoring, retraining on drift, shadow testing with gated promotion and rollback, a failure lab, Kubernetes deployment, published multi-arch images with a one-machine demo, and an operator dashboard are built. A retrospective ([0021](docs/decisions/0021-retrospective-off-the-shelf-alternatives.md)) weighs what KServe, Triton, BentoML, MLflow, Kafka, RabbitMQ, and Temporal would have given instead.
 
 ## Model registry
 
@@ -256,7 +256,8 @@ Spec-driven, one change at a time:
 
 - Each change is an [OpenSpec](openspec/) change: proposal, requirements with WHEN/THEN scenarios, design, and tasks, archived once done.
 - Decisions that outlive a change get a [decision record](docs/decisions/).
-- Every test names the requirement it verifies, in Go, Python, and TypeScript ([0001](docs/decisions/0001-adopt-openspec-with-cross-language-traceability.md)).
+- Every test names the requirement it verifies, in Go, Python, and TypeScript ([0001](docs/decisions/0001-adopt-openspec-with-cross-language-traceability.md), [0006](docs/decisions/0006-go-spec-test-traceability.md), [0017](docs/decisions/0017-typescript-spec-test-traceability.md)); CI fails when a requirement has no passing test.
+- The dashboard's "How it was built" pages are generated from the archived changes, the specs, the decision records, and the latest test reports (`go run ./tools/walkthrough`).
 
 ## Run it
 
