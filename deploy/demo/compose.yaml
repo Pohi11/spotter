@@ -6,6 +6,7 @@
 #   cp demo.env.example demo.env      # then set real secrets in demo.env
 #   docker compose --env-file demo.env up -d --wait
 #   docker compose --env-file demo.env --profile bootstrap run --rm bootstrap   # train version 1
+#   docker compose --env-file demo.env --profile retrain up -d                  # optional: retrain on drift
 #
 # IMAGE_PREFIX (default ghcr.io/pohi11) and IMAGE_TAG (default main) pick the images.
 name: spotter-demo
@@ -139,6 +140,27 @@ services:
     depends_on:
       registry: { condition: service_started }
       seaweedfs: { condition: service_healthy }
+
+  # Optional: retrains on every DriftDetected and takes the new version to shadow
+  # (decision record 0018), so the dashboard's demo page closes the loop on its own. It
+  # reuses the dataset the bootstrap downloaded. Start with --profile retrain up -d.
+  retrainer:
+    image: *python
+    profiles: [retrain]
+    command: ["spotter-retrain", "--watch"]
+    environment:
+      <<: *s3
+      REGISTRY_ADDR: registry:9090
+      NATS_URL: nats://nats:4222
+      DATA_DIR: /data
+      HOME: /tmp
+    volumes:
+      - traindata:/data
+    depends_on:
+      registry: { condition: service_started }
+      nats: { condition: service_healthy }
+      seaweedfs: { condition: service_healthy }
+    restart: unless-stopped
 
 volumes:
   pgdata:
