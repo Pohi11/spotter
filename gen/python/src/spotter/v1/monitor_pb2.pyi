@@ -10,20 +10,26 @@ from typing import ClassVar as _ClassVar, Optional as _Optional, Union as _Union
 DESCRIPTOR: _descriptor.FileDescriptor
 
 class FeatureDrift(_message.Message):
-    __slots__ = ("feature", "psi", "ks_statistic", "ks_p_value", "reference_mean", "window_mean")
+    __slots__ = ("feature", "psi", "ks_statistic", "ks_p_value", "reference_mean", "window_mean", "bin_edges", "reference_shares", "window_shares")
     FEATURE_FIELD_NUMBER: _ClassVar[int]
     PSI_FIELD_NUMBER: _ClassVar[int]
     KS_STATISTIC_FIELD_NUMBER: _ClassVar[int]
     KS_P_VALUE_FIELD_NUMBER: _ClassVar[int]
     REFERENCE_MEAN_FIELD_NUMBER: _ClassVar[int]
     WINDOW_MEAN_FIELD_NUMBER: _ClassVar[int]
+    BIN_EDGES_FIELD_NUMBER: _ClassVar[int]
+    REFERENCE_SHARES_FIELD_NUMBER: _ClassVar[int]
+    WINDOW_SHARES_FIELD_NUMBER: _ClassVar[int]
     feature: str
     psi: float
     ks_statistic: float
     ks_p_value: float
     reference_mean: float
     window_mean: float
-    def __init__(self, feature: _Optional[str] = ..., psi: _Optional[float] = ..., ks_statistic: _Optional[float] = ..., ks_p_value: _Optional[float] = ..., reference_mean: _Optional[float] = ..., window_mean: _Optional[float] = ...) -> None: ...
+    bin_edges: _containers.RepeatedScalarFieldContainer[float]
+    reference_shares: _containers.RepeatedScalarFieldContainer[float]
+    window_shares: _containers.RepeatedScalarFieldContainer[float]
+    def __init__(self, feature: _Optional[str] = ..., psi: _Optional[float] = ..., ks_statistic: _Optional[float] = ..., ks_p_value: _Optional[float] = ..., reference_mean: _Optional[float] = ..., window_mean: _Optional[float] = ..., bin_edges: _Optional[_Iterable[float]] = ..., reference_shares: _Optional[_Iterable[float]] = ..., window_shares: _Optional[_Iterable[float]] = ...) -> None: ...
 
 class DriftDetected(_message.Message):
     __slots__ = ("model_name", "version_id", "version", "features", "window_size", "detected_at")
