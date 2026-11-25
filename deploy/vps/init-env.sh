@@ -1,12 +1,14 @@
 #!/bin/sh
-# Writes vps.env on the host with random secrets (decision record 0023). Run once, on the
-# host, from deploy/vps/:  sh init-env.sh <site-address>
+# Writes ~/spotter/deploy/vps/vps.env on the host with random secrets (decision record 0023).
+# Run once, from the repository root on a workstation:
+#   ssh ubuntu@<host> 'sh -s <site-address>' < deploy/vps/init-env.sh
 # An existing vps.env is never overwritten. The site password is generated here and stored
 # only on the host, in ~/spotter-site-password.txt (mode 600); vps.env holds its bcrypt hash.
 set -eu
 
 site=${1:?usage: init-env.sh <site-address>}
-cd "$(dirname "$0")"
+mkdir -p "$HOME/spotter/deploy/vps"
+cd "$HOME/spotter/deploy/vps"
 if [ -e vps.env ]; then
   echo "vps.env exists; leaving it as it is"
   exit 0
