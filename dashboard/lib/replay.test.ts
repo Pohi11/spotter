@@ -43,3 +43,11 @@ test(`replaying a saved run reaches the same state ${SAVED}`, () => {
   expect(replayed.steps).toEqual(live.steps);
   expect(replayed.current).toBe(live.current);
 });
+
+test(`a shortened wait is attributed to the step it happened in ${REPLAY}`, () => {
+  let s = initialState();
+  s = step(s, { kind: "start", step: "retrain" });
+  s = step(s, { kind: "skipped", ms: 300_000 });
+  s = step(s, { kind: "skipped", ms: 60_000 });
+  expect(s.skips).toEqual({ retrain: 360_000 });
+});

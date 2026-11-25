@@ -26,6 +26,8 @@ export interface Explained {
 }
 
 type P = Record<string, unknown>;
+/** A recorded reason without its own closing punctuation, so the sentence ends once. */
+export const quoted = (s: string) => s.trim().replace(/[.!?]+$/, "");
 const pctOf = (n: unknown) => (typeof n === "number" ? `${(n * 100).toFixed(1)}%` : "?");
 const feats = (p: P) => (p.features ?? []) as FeatureDrift[];
 const list = (fs: FeatureDrift[]) => fs.map((f) => `${featureName(f.feature)} (PSI ${f.psi.toFixed(2)})`).join(", ");
@@ -83,7 +85,7 @@ export function explain(ev: FeedEvent): Explained {
       return {
         publisher: "registry",
         title: `Version ${p.version}: ${stageName(p.fromStage as Stage)} → ${stageName(to)}`,
-        why: `${STAGE_WHY[to] ?? "A stage change."}${p.reason ? ` Reason recorded: “${p.reason}”.` : ""}`,
+        why: `${STAGE_WHY[to] ?? "A stage change."}${p.reason ? ` Reason recorded: “${quoted(p.reason as string)}”.` : ""}`,
         story: true,
       };
     }

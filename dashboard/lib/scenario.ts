@@ -4,7 +4,7 @@
 // complete only on the platform's evidence (spec: dashboard "Demo steps complete on the
 // platform's evidence").
 
-import { compact, explain } from "@/lib/explain";
+import { compact, explain, quoted } from "@/lib/explain";
 import type { DriftEvaluated, FeatureDrift, FeedEvent, Gate, Stage } from "@/lib/types";
 
 export type StepId = "normal" | "haze" | "retrain" | "shadow" | "decide" | "after";
@@ -83,7 +83,8 @@ export interface State {
   recent: string[];
   /** The production version when the haze step started: the one whose drift we wait for. */
   watched?: { id: string; version: number };
-  skippedMs?: number;
+  /** Replay only: how much recorded waiting was shortened, per step. */
+  skips: Partial<Record<StepId, number>>;
 }
 
 export const EVENT_LIMIT = 150;
@@ -94,7 +95,7 @@ const freshStep = (status: StepStatus = "pending"): StepState => ({ status, sent
 export function initialState(): State {
   const steps = Object.fromEntries(STEP_ORDER.map((s) => [s, freshStep()])) as Record<StepId, StepState>;
   steps.normal.status = "ready";
-  return { current: "normal", steps, jobs: {}, orphans: {}, seen: new Set(), events: [], published: {}, foreign: 0, versions: [], evaluations: {}, recent: [] };
+  return { current: "normal", steps, jobs: {}, orphans: {}, seen: new Set(), events: [], published: {}, foreign: 0, versions: [], evaluations: {}, recent: [], skips: {} };
 }
 
 export const production = (s: State) => s.versions.find((v) => v.stage === "MODEL_VERSION_STAGE_PRODUCTION");
@@ -203,7 +204,7 @@ function onEvent(s0: State, raw: FeedEvent): State {
         return finish(s, "retrain", `Version ${version} reached shadow without anyone starting it: registered, validated against the accuracy floor, then moved to shadow.`);
       }
       if (to === "MODEL_VERSION_STAGE_PRODUCTION" && s.current === "decide" && s.candidate?.id === p.versionId) {
-        return finish(s, "decide", `Version ${version} is in production. ${p.reason ? `Recorded reason: “${p.reason}”.` : ""}`.trim());
+        return finish(s, "decide", `Version ${version} is in production. ${p.reason ? `Recorded reason: “${quoted(p.reason as string)}”.` : ""}`.trim());
       }
       return s;
     }
@@ -249,7 +250,8 @@ export function reduce(s: State, input: Input): State {
     case "approved":
       return { ...s, approval: { versionId: input.versionId, approver: input.approver, reason: input.reason } };
     case "skipped":
-      return { ...s, skippedMs: input.ms };
+      if (s.current === "end") return s;
+      return { ...s, skips: { ...s.skips, [s.current]: (s.skips[s.current] ?? 0) + input.ms } };
   }
 }
 

@@ -148,6 +148,11 @@ function StepCard({ id, n, state, live, feed, rate, setRate, error, recent }: St
       )}
       {current && plan && recent}
 
+      {!live && state.skips[id] !== undefined && (
+        <p className="mt-3 rounded-lg bg-wait-soft px-3 py-2 text-sm text-wait" data-testid={`skipped-${id}`}>
+          Replay shortened: {fmtDuration(state.skips[id]!)} of waiting in this step in the recording plays here in a few seconds.
+        </p>
+      )}
       {current && st.note && <p className="mt-3 rounded-lg bg-wait-soft px-3 py-2 text-sm text-wait">{st.note}</p>}
       {current && error && (
         <p role="alert" className="mt-3 rounded-lg bg-fail-soft px-3 py-2 text-sm text-fail">
@@ -235,11 +240,6 @@ function RetrainWait({ state, live, feed }: { state: State; live: boolean; feed:
       {live && (
         <p className="text-muted">
           Waiting for the registry to announce a new version in shadow: <span className="font-mono text-ink">{fmtDuration(now - waitingSince)}</span> so far.
-        </p>
-      )}
-      {!live && state.skippedMs !== undefined && (
-        <p className="rounded-lg bg-wait-soft px-3 py-2 text-wait" data-testid="skipped-wait">
-          Replay shortened: this wait took {fmtDuration(state.skippedMs)} in the recording.
         </p>
       )}
       {registered.length > 0 && (

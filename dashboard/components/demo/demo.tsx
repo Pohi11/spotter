@@ -226,12 +226,11 @@ function Scenario({ model, live, recording }: { model: string; live: boolean; re
     let timer: ReturnType<typeof setInterval> | undefined;
     void loadBundle(variant).then((bundle) => {
       if (stopped) return;
-      timer = setInterval(() => {
-        const s = stateRef.current;
-        const p = sending(s);
-        if (stopped || !p || s.current !== stepId || inFlight >= MAX_IN_FLIGHT) return;
-        // Requests answered so far plus the step's remaining quota bound what may be issued.
-        if (issued >= s.steps[stepId as StepId].sent + p.remaining) return;
+      // Paced by elapsed time, not by tick count: a hidden tab's timers fire at most once a
+      // second, and each tick then sends what is due, up to the in-flight limit.
+      const began = performance.now();
+      const first = issued;
+      const submit = () => {
         const tile = bundle.tiles[issued % bundle.tiles.length];
         issued++;
         inFlight++;
@@ -251,7 +250,18 @@ function Scenario({ model, live, recording }: { model: string; live: boolean; re
             setError(e.message);
           })
           .finally(() => inFlight--);
-      }, 1000 / rate);
+      };
+      timer = setInterval(() => {
+        const due = first + Math.floor(((performance.now() - began) * rate) / 1000) + 1;
+        for (;;) {
+          const s = stateRef.current;
+          const p = sending(s);
+          if (stopped || !p || s.current !== stepId || inFlight >= MAX_IN_FLIGHT || issued >= due) return;
+          // Requests answered so far plus the step's remaining quota bound what may be issued.
+          if (issued >= s.steps[stepId as StepId].sent + p.remaining) return;
+          submit();
+        }
+      }, Math.min(100, 1000 / rate));
     });
     return () => {
       stopped = true;
