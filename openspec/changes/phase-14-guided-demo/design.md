@@ -47,7 +47,7 @@ The sender submits at a chosen rate (2, 5, 10, or 20 tiles a second; default 10)
 Step 5 reuses the model page's promotion form: name and reason, then a separate promote action. Nothing in the page or its tests approves on a timer or by default. A replay shows the recorded stage change and approval as recorded.
 
 ### D8. Recording and replay
-A live run appends every reducer input with its time since the run began, and the page can save the log as JSON. `content/demo-recording.json` is one such log from a run on the live stack. Replay feeds the log through the same reducer at the recorded pace; a gap longer than 20 seconds is cut to 3 seconds with a note of its real length (the training wait). The page checks the gateway once on load; on 502 it offers the replay instead of the live run. A replay never calls the proxy.
+A live run appends every reducer input with its time since the run began, and the page can save the log as JSON. `public/recordings/demo.json` is one such log from a run on the live stack. Replay feeds the log through the same reducer at the recorded pace; a gap longer than 20 seconds is cut to 3 seconds with a note of its real length (the training wait). The page checks the gateway once on load; on 502 it offers the replay instead of the live run. A replay never calls the proxy.
 
 ### D9. Compose demo retrainer
 A `retrainer` service in the `retrain` profile runs `spotter-retrain --watch` with the bootstrap's dataset volume (the bootstrap downloaded EuroSAT into it), so `--profile retrain up -d` closes the loop.

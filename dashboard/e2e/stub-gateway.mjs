@@ -14,7 +14,7 @@ const PORT = Number(process.argv[2] ?? process.env.STUB_PORT ?? 8099);
 
 let state;
 function reset() {
-  state = structuredClone({ versions: fixtures.versions.versions, perVersion: fixtures.perVersion, events: fixtures.events, polls: {} });
+  state = structuredClone({ versions: fixtures.versions.versions, perVersion: fixtures.perVersion, events: fixtures.events, polls: {}, down: false, uniqueJobs: false, jobs: 0 });
 }
 reset();
 const clients = new Set();
@@ -85,7 +85,12 @@ const server = createServer(async (req, res) => {
     return json(res, 200, {});
   }
 
+  // The demo page's tests: a gateway that fails like an unreachable one, and one job id per submission.
+  if (req.method === "POST" && p === "/__down") return (state.down = true), json(res, 200, {});
+  if (req.method === "POST" && p === "/__unique-jobs") return (state.uniqueJobs = true), json(res, 200, {});
+
   if (req.method === "GET" && p === "/readyz") return res.end("ok\n");
+  if (state.down) return json(res, 502, { message: "stub: down" });
   if (req.method === "GET" && p === "/v1/events") {
     res.writeHead(200, { "content-type": "text/event-stream", "cache-control": "no-cache" });
     res.write(": connected\n\n");
@@ -132,7 +137,8 @@ const server = createServer(async (req, res) => {
   }
   if (req.method === "POST" && (g = m(/^\/v1\/models\/([^/:]+)\/inferences$/))) {
     await body(req);
-    const jobId = fixtures.job.job.jobId;
+    const n = ++state.jobs;
+    const jobId = state.uniqueJobs ? `00000000-0000-7000-8000-${String(n).padStart(12, "0")}` : fixtures.job.job.jobId;
     state.polls[jobId] = 0;
     return json(res, 200, { jobId });
   }

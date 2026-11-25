@@ -22,7 +22,7 @@
 
 ## 5. Real run
 
-- [ ] 5.1 Run the scenario on the live stack, a person approves, save the recording to `content/demo-recording.json`.
+- [ ] 5.1 Run the scenario on the live stack, a person approves, save the recording to `dashboard/public/recordings/demo.json`.
 
 ## 6. Docs
 

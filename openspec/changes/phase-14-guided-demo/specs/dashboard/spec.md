@@ -63,7 +63,7 @@ A live run of the demo page SHALL log every input it reacts to (events, tiles se
 - **THEN** the file lists every input in the order the page received it, each with its time, and replaying it reaches the same steps
 
 ### Requirement: The demo page replays a recording when the platform is unreachable
-When the gateway can't be reached, the demo page SHALL offer a replay of the recording committed in `content/`, labeled throughout as a recording with its date. The replay SHALL feed the recorded inputs through the same logic as a live run at their recorded pace, except that a gap longer than 20 seconds SHALL be shortened, saying how long it really took. A replay SHALL send nothing to the gateway.
+When the gateway can't be reached, the demo page SHALL offer a replay of the recording committed at `dashboard/public/recordings/demo.json`, labeled throughout as a recording with its date. The replay SHALL feed the recorded inputs through the same logic as a live run at their recorded pace, except that a gap longer than 20 seconds SHALL be shortened, saying how long it really took. A replay SHALL send nothing to the gateway.
 
 #### Scenario: Static host
 - **WHEN** the demo page opens and the gateway answers 502 through the proxy

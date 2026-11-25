@@ -26,6 +26,6 @@ None.
 
 - **Protobuf:** three fields added to `FeatureDrift`; `buf breaking` passes (additive).
 - **Monitor:** the domain returns bins with each result; detection, thresholds, and events are otherwise unchanged.
-- **Dashboard:** a new page, a recording in `content/`, scenario bundles in `public/scenario/`.
+- **Dashboard:** a new page, a recording in `public/recordings/`, scenario bundles in `public/scenario/`.
 - **Decision record:** 0022 (a guided demo driven from the browser through the public API, with a labeled recorded fallback).
 - **Out of scope:** automating the approval in any mode, and any demo-only endpoint in the services.
