@@ -95,9 +95,8 @@ def export_scenario(images_dir: Path, out: Path, count: int = SCENARIO_TILES) ->
             "strength": 0.0 if variant == "clean" else 1.0,
             "tiles": tiles,
         }
-        (out / f"{variant}.json").write_text(
-            json.dumps(bundle, separators=(",", ":")) + "\n", encoding="utf-8"
-        )
+        text = json.dumps(bundle, separators=(",", ":")) + "\n"
+        (out / f"{variant}.json").write_text(text, encoding="utf-8", newline="\n")
         bundles[variant] = bundle
     return bundles
 
