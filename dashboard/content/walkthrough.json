@@ -1,22 +1,22 @@
 {
- "generated_at": "2026-11-23T00:15:58Z",
+ "generated_at": "2026-11-25T15:52:07Z",
  "reports": {
-  "dashboard": "2026-11-22T23:52:42Z",
-  "e2e": "2026-11-22T23:51:01Z",
-  "go": "2026-11-23T00:14:32Z",
-  "python": "2026-11-23T00:15:32Z"
+  "dashboard": "2026-11-25T15:49:33Z",
+  "e2e": "2026-11-25T15:49:32Z",
+  "go": "2026-11-25T15:47:01Z",
+  "python": "2026-11-25T15:51:12Z"
  },
  "totals": {
-  "changes": 15,
-  "requirements": 111,
-  "verified": 111,
+  "changes": 16,
+  "requirements": 122,
+  "verified": 122,
   "tests": {
-   "dashboard": 20,
-   "e2e": 17,
-   "go": 327,
-   "python": 77
+   "dashboard": 43,
+   "e2e": 21,
+   "go": 330,
+   "python": 78
   },
-  "linked_tests": 371
+  "linked_tests": 402
  },
  "changes": [
   {
@@ -1623,7 +1623,7 @@
    "slug": "phase-13-retrospective",
    "title": "Phase 13: Retrospective",
    "date": "2026-11-22",
-   "archived_at": null,
+   "archived_at": "2026-11-22T19:16:00-05:00",
    "why": "Spotter builds its serving, registry, monitoring, promotion, and messaging from small parts. Each has a mature off-the-shelf alternative, and the measurements gathered while building it (load tests, the failure lab, promotion and rollback timing) make it possible to say concretely what adopting those alternatives would have given and cost, instead of arguing from preference.",
    "what_changes": "- Decision record 0021 compares the design with KServe, Triton, and BentoML (serving), MLflow (tracking and registry), Kafka and RabbitMQ (messaging), and Temporal (workflows), citing the measured numbers, and states when each would be worth adopting.\n- No code or behavior changes.",
    "tasks": [
@@ -1641,6 +1641,157 @@
    "requirements": [],
    "decisions": [
     "0021"
+   ]
+  },
+  {
+   "id": "2026-11-25-phase-14-guided-demo",
+   "slug": "phase-14-guided-demo",
+   "title": "Phase 14: Guided demo",
+   "date": "2026-11-25",
+   "archived_at": null,
+   "why": "The dashboard shows each part of the platform on its own page, but nothing shows the loop the platform exists for, end to end, while it happens: traffic shifts, the monitor notices, a new version is trained and shadowed, gates fill up, a person approves, and the new version serves. Showing it today takes a terminal, a load generator, and someone explaining. The drift monitor also publishes only its final PSI per feature, so a page can say *that* a feature drifted but not *why the number is what it is*.",
+   "what_changes": "- **Guided demo page** (`/demo`): a scenario in steps (normal traffic, haze rolls in, drift detected, retraining, shadow traffic, human approval, the new version on hazed tiles). Each step sends real tiles through the public inference API, follows the event feed, and explains in plain language which component acted, on which subject, and why. Because the page knows each tile's true class, it also shows accuracy, labeled as something production can't measure.\n- **The arithmetic behind each drift evaluation:** `FeatureDrift` gains the bin edges and the reference and window shares behind its PSI (additive protobuf fields). The demo page draws reference against window per feature and lists each bin's contribution to the sum.\n- **Scenario tiles:** `spotter-demo-samples` also writes a fixed, seeded set of holdout tiles (the split's class mix), clean and with each degradation at full strength, as one bundle per variant.\n- **Recorded replay:** when the platform can't be reached (a static host, or the stack is down), the page replays a recorded run of the same scenario, labeled as a recording with its date. A recording is the log of a live run of the same page, so the replay runs the same code.\n- **Compose demo:** an optional `retrain` profile runs `spotter-retrain --watch`, so the demo closes the loop without a terminal.",
+   "tasks": [
+    {
+     "title": "1. Decision",
+     "items": [
+      {
+       "id": "1.1",
+       "done": true,
+       "text": "Decision record 0022."
+      }
+     ]
+    },
+    {
+     "title": "2. Drift arithmetic in events",
+     "items": [
+      {
+       "id": "2.1",
+       "done": true,
+       "text": "`FeatureDrift.bin_edges`, `reference_shares`, `window_shares`; regenerate; `buf breaking` passes."
+      },
+      {
+       "id": "2.2",
+       "done": true,
+       "text": "`domain.Compare` and PSI from it; results and the adapter carry the bins (domain test: bins reproduce the PSI; adapter test: published with the evaluation)."
+      }
+     ]
+    },
+    {
+     "title": "3. Scenario tiles and the Compose retrainer",
+     "items": [
+      {
+       "id": "3.1",
+       "done": true,
+       "text": "`spotter-demo-samples` scenario bundles (`test_demo_samples.py`: same tiles in every bundle, deterministic)."
+      },
+      {
+       "id": "3.2",
+       "done": true,
+       "text": "`retrainer` service in the `retrain` profile (`compose_test.go`)."
+      }
+     ]
+    },
+    {
+     "title": "4. Demo page",
+     "items": [
+      {
+       "id": "4.1",
+       "done": true,
+       "text": "`lib/scenario.ts` reducer, `lib/explain.ts`, `lib/psi.ts`, `lib/replay.ts` (Vitest: drift ends the haze step, new version in shadow, accuracy by version, contributions add up, drift event explained, shortened wait)."
+      },
+      {
+       "id": "4.2",
+       "done": true,
+       "text": "Live sender, feed and polling, recording log; `/demo` page and its panels; nav link."
+      },
+      {
+       "id": "4.3",
+       "done": true,
+       "text": "Replay mode; stub gateway and Playwright tests (static host offers the replay, approval waits for a person)."
+      }
+     ]
+    },
+    {
+     "title": "5. Real run",
+     "items": [
+      {
+       "id": "5.1",
+       "done": true,
+       "text": "Run the scenario on the live stack, a person approves, save the recording to `dashboard/public/recordings/demo.json`."
+      }
+     ]
+    },
+    {
+     "title": "6. Docs",
+     "items": [
+      {
+       "id": "6.1",
+       "done": true,
+       "text": "README, walkthrough regenerated, specs synced and change archived."
+      }
+     ]
+    }
+   ],
+   "requirements": [
+    {
+     "capability": "dashboard",
+     "kind": "added",
+     "name": "Scenario tiles are a fixed sample of the holdout split"
+    },
+    {
+     "capability": "dashboard",
+     "kind": "added",
+     "name": "The demo page walks through the loop step by step"
+    },
+    {
+     "capability": "dashboard",
+     "kind": "added",
+     "name": "Demo steps complete on the platform's evidence"
+    },
+    {
+     "capability": "dashboard",
+     "kind": "added",
+     "name": "The demo page shows accuracy only for its own labeled tiles"
+    },
+    {
+     "capability": "dashboard",
+     "kind": "added",
+     "name": "The demo page explains every event it sees"
+    },
+    {
+     "capability": "dashboard",
+     "kind": "added",
+     "name": "The demo page shows the arithmetic behind each drift evaluation"
+    },
+    {
+     "capability": "dashboard",
+     "kind": "added",
+     "name": "The demo page never approves"
+    },
+    {
+     "capability": "dashboard",
+     "kind": "added",
+     "name": "A live demo run can be saved as a recording"
+    },
+    {
+     "capability": "dashboard",
+     "kind": "added",
+     "name": "The demo page replays a recording when the platform is unreachable"
+    },
+    {
+     "capability": "drift-monitoring",
+     "kind": "added",
+     "name": "Each comparison carries the bins behind its PSI"
+    },
+    {
+     "capability": "platform-delivery",
+     "kind": "added",
+     "name": "The demo can retrain on drift without a terminal"
+    }
+   ],
+   "decisions": [
+    "0022"
    ]
   }
  ],
@@ -1666,7 +1817,7 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/tools/walkthrough TestEveryArchivedChangeIsOnTheTimeline",
        "status": "passed",
-       "seconds": 0.11
+       "seconds": 0.2
       }
      ],
      "status": "verified"
@@ -1707,7 +1858,7 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/tools/walkthrough TestRequirementsLinkToTheirTests",
        "status": "passed",
-       "seconds": 1.33
+       "seconds": 0.25
       }
      ],
      "status": "verified"
@@ -1729,7 +1880,7 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/tools/walkthrough TestDecisionRecordsAreIncludedWhole",
        "status": "passed",
-       "seconds": 0.1
+       "seconds": 0.15
       }
      ],
      "status": "verified"
@@ -1751,7 +1902,7 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/tools/walkthrough TestPrivateNotesAreNeverRead",
        "status": "passed",
-       "seconds": 0.11
+       "seconds": 0.13
       }
      ],
      "status": "verified"
@@ -1780,31 +1931,31 @@
        "suite": "dashboard",
        "id": "lib/walkthrough.test.ts anchors are stable slugs",
        "status": "passed",
-       "seconds": 0.0021625
+       "seconds": 0.0016654
       },
       {
        "suite": "dashboard",
        "id": "lib/walkthrough.test.ts every requirement a change names resolves or is known to be gone",
        "status": "passed",
-       "seconds": 0.0005023
+       "seconds": 0.0004471
       },
       {
        "suite": "e2e",
        "id": "build.spec.ts the timeline lists every change and the totals",
        "status": "passed",
-       "seconds": 0.808
+       "seconds": 0.68
       },
       {
        "suite": "e2e",
        "id": "build.spec.ts a requirement link opens the requirement with its tests",
        "status": "passed",
-       "seconds": 0.79
+       "seconds": 0.883
       },
       {
        "suite": "e2e",
        "id": "build.spec.ts each decision record is shown at its anchor",
        "status": "passed",
-       "seconds": 0.353
+       "seconds": 0.368
       }
      ],
      "status": "verified"
@@ -1839,31 +1990,31 @@
        "suite": "dashboard",
        "id": "lib/proxy.test.ts forwards the routes the pages need",
        "status": "passed",
-       "seconds": 0.0028883
+       "seconds": 0.002017
       },
       {
        "suite": "dashboard",
        "id": "lib/proxy.test.ts refuses everything else",
        "status": "passed",
-       "seconds": 0.0003713
+       "seconds": 0.0003038
       },
       {
        "suite": "dashboard",
        "id": "lib/proxy.test.ts answers 404 without calling the gateway",
        "status": "passed",
-       "seconds": 0.0054877
+       "seconds": 0.0042913
       },
       {
        "suite": "dashboard",
        "id": "lib/proxy.test.ts passes the gateway's status and body through",
        "status": "passed",
-       "seconds": 0.0018395
+       "seconds": 0.0017525
       },
       {
        "suite": "dashboard",
        "id": "lib/proxy.test.ts says so when the gateway is unreachable",
        "status": "passed",
-       "seconds": 0.0007042
+       "seconds": 0.0006907
       }
      ],
      "status": "verified"
@@ -1885,7 +2036,7 @@
        "suite": "e2e",
        "id": "dashboard.spec.ts the home page follows the recorded tile",
        "status": "passed",
-       "seconds": 0.383
+       "seconds": 0.484
       }
      ],
      "status": "verified"
@@ -1914,13 +2065,13 @@
        "suite": "e2e",
        "id": "dashboard.spec.ts a sample tile is classified",
        "status": "passed",
-       "seconds": 0.582
+       "seconds": 0.723
       },
       {
        "suite": "e2e",
        "id": "dashboard.spec.ts an unreachable platform is reported and the panel stays usable",
        "status": "passed",
-       "seconds": 0.368
+       "seconds": 0.416
       }
      ],
      "status": "verified"
@@ -1942,13 +2093,13 @@
        "suite": "python",
        "id": "workers.trainer.tests.test_demo_samples test_manifest_matches_files_and_degradations",
        "status": "passed",
-       "seconds": 1.348
+       "seconds": 0.566
       },
       {
        "suite": "python",
        "id": "workers.trainer.tests.test_demo_samples test_samples_come_from_the_holdout_split",
        "status": "passed",
-       "seconds": 0.257
+       "seconds": 0.412
       }
      ],
      "status": "verified"
@@ -1977,43 +2128,43 @@
        "suite": "dashboard",
        "id": "lib/events.test.ts a completion names the job, class, confidence, and version",
        "status": "passed",
-       "seconds": 0.0032438
+       "seconds": 0.0037243
       },
       {
        "suite": "dashboard",
        "id": "lib/events.test.ts a stage change names the version, stages, and reason",
        "status": "passed",
-       "seconds": 0.0004467
+       "seconds": 0.0005058
       },
       {
        "suite": "dashboard",
        "id": "lib/events.test.ts drift events name the drifting features",
        "status": "passed",
-       "seconds": 0.0005538
+       "seconds": 0.0005295
       },
       {
        "suite": "dashboard",
        "id": "lib/events.test.ts an unknown type still shows its subject",
        "status": "passed",
-       "seconds": 0.0003433
+       "seconds": 0.0003159
       },
       {
        "suite": "dashboard",
        "id": "lib/events.test.ts new events go first, repeats are ignored, and streams are counted",
        "status": "passed",
-       "seconds": 0.000682
+       "seconds": 0.0005133
       },
       {
        "suite": "e2e",
        "id": "dashboard.spec.ts new events appear first and are counted",
        "status": "passed",
-       "seconds": 0.479
+       "seconds": 0.528
       },
       {
        "suite": "e2e",
        "id": "dashboard.spec.ts a lost connection shows reconnecting",
        "status": "passed",
-       "seconds": 3.768
+       "seconds": 3.726
       }
      ],
      "status": "verified"
@@ -2035,7 +2186,7 @@
        "suite": "e2e",
        "id": "dashboard.spec.ts every version is listed with its stage",
        "status": "passed",
-       "seconds": 0.43
+       "seconds": 0.509
       }
      ],
      "status": "verified"
@@ -2064,25 +2215,25 @@
        "suite": "dashboard",
        "id": "lib/model.test.ts promote is offered only when every gate passes",
        "status": "passed",
-       "seconds": 0.002807
+       "seconds": 0.0021973
       },
       {
        "suite": "dashboard",
        "id": "lib/model.test.ts a failed gate other than approval is reported as blocking",
        "status": "passed",
-       "seconds": 0.0013067
+       "seconds": 0.0008284
       },
       {
        "suite": "e2e",
        "id": "dashboard.spec.ts a failed gate disables promotion",
        "status": "passed",
-       "seconds": 0.354
+       "seconds": 0.31
       },
       {
        "suite": "e2e",
        "id": "dashboard.spec.ts approval then promotion puts the version in production",
        "status": "passed",
-       "seconds": 0.614
+       "seconds": 0.564
       }
      ],
      "status": "verified"
@@ -2104,19 +2255,19 @@
        "suite": "dashboard",
        "id": "lib/model.test.ts rollback restores the version most recently retired from production",
        "status": "passed",
-       "seconds": 0.000694
+       "seconds": 0.0003398
       },
       {
        "suite": "dashboard",
        "id": "lib/model.test.ts no rollback without a production version",
        "status": "passed",
-       "seconds": 0.0004426
+       "seconds": 0.0002293
       },
       {
        "suite": "e2e",
        "id": "dashboard.spec.ts rollback names the version it restores and asks first",
        "status": "passed",
-       "seconds": 0.433
+       "seconds": 0.497
       }
      ],
      "status": "verified"
@@ -2138,13 +2289,13 @@
        "suite": "dashboard",
        "id": "lib/drift.test.ts series are per version, oldest first, with the latest state",
        "status": "passed",
-       "seconds": 0.0035269
+       "seconds": 0.003907
       },
       {
        "suite": "e2e",
        "id": "dashboard.spec.ts a drifting version is marked and charted",
        "status": "passed",
-       "seconds": 0.451
+       "seconds": 0.494
       }
      ],
      "status": "verified"
@@ -2166,13 +2317,13 @@
        "suite": "dashboard",
        "id": "lib/results.test.ts every result is read from its dated report",
        "status": "passed",
-       "seconds": 0.0390069
+       "seconds": 0.0305196
       },
       {
        "suite": "e2e",
        "id": "dashboard.spec.ts results come from the dated reports",
        "status": "passed",
-       "seconds": 0.346
+       "seconds": 0.329
       }
      ],
      "status": "verified"
@@ -2194,7 +2345,7 @@
        "suite": "e2e",
        "id": "dashboard.spec.ts every diagram has a title and a description",
        "status": "passed",
-       "seconds": 0.509
+       "seconds": 0.528
       }
      ],
      "status": "verified"
@@ -2216,13 +2367,339 @@
        "suite": "e2e",
        "id": "dashboard.spec.ts no page scrolls sideways at phone width",
        "status": "passed",
-       "seconds": 6.337
+       "seconds": 6.667
       },
       {
        "suite": "e2e",
        "id": "dashboard.spec.ts keyboard focus is visible",
        "status": "passed",
-       "seconds": 1.914
+       "seconds": 1.647
+      }
+     ],
+     "status": "verified"
+    },
+    {
+     "name": "Scenario tiles are a fixed sample of the holdout split",
+     "text": "`spotter-demo-samples` SHALL also write a scenario set: a seeded random sample of the EuroSAT holdout split (default 300 tiles, so the class mix follows the split's), with one bundle per variant (`clean`, and each degradation at full strength) listing every tile's id, true class, and JPEG bytes. Each degraded tile SHALL equal `degrade_jpeg`'s output for its source tile, and every bundle SHALL list the same tiles in the same order.",
+     "scenarios": [
+      {
+       "name": "Same tiles in every bundle",
+       "steps": [
+        "**WHEN** the scenario set is exported",
+        "**THEN** the clean bundle and each degradation's bundle list the same tile ids in the same order, each degraded tile equals the degradation function's output, and running the export again writes identical bundles"
+       ]
+      }
+     ],
+     "tests": [
+      {
+       "suite": "python",
+       "id": "workers.trainer.tests.test_demo_samples test_scenario_bundles_list_the_same_holdout_tiles",
+       "status": "passed",
+       "seconds": 1.122
+      }
+     ],
+     "status": "verified"
+    },
+    {
+     "name": "The demo page walks through the loop step by step",
+     "text": "The demo page SHALL present the scenario as ordered steps: normal traffic, haze rolls in, retraining, shadow traffic, human approval, and the new version on hazed tiles. Each sending step SHALL say what it sends and what to watch for, and SHALL send its tiles through the inference API at a visible, adjustable pace with a progress count.",
+     "scenarios": [
+      {
+       "name": "Paced sending",
+       "steps": [
+        "**WHEN** a sending step runs at 10 tiles a second",
+        "**THEN** the page submits about 10 scenario tiles a second through the proxy and shows how many it has sent and how many have completed"
+       ]
+      }
+     ],
+     "tests": [
+      {
+       "suite": "dashboard",
+       "id": "lib/scenario.test.ts steps \u003e a sending step sends until its evidence arrives",
+       "status": "passed",
+       "seconds": 0.005144
+      },
+      {
+       "suite": "dashboard",
+       "id": "lib/scenario.test.ts steps \u003e skipping ahead marks earlier steps skipped",
+       "status": "passed",
+       "seconds": 0.0002459
+      },
+      {
+       "suite": "dashboard",
+       "id": "lib/scenario.test.ts steps \u003e the haze-again step ends when its 100 tiles are answered",
+       "status": "passed",
+       "seconds": 0.0013927
+      },
+      {
+       "suite": "e2e",
+       "id": "demo.spec.ts sending steps submit tiles at the chosen pace",
+       "status": "passed",
+       "seconds": 2.43
+      }
+     ],
+     "status": "verified"
+    },
+    {
+     "name": "Demo steps complete on the platform's evidence",
+     "text": "Steps SHALL complete on the platform's evidence, not on a timer: the normal step on a not-drifting evaluation of the production version after 200 of its tiles completed, the haze step on a `DriftDetected` for the production version, the retraining step on a newer version reaching `shadow`, the shadow step when the agreement gate passes, and the approval step on that version's stage change to `production`.",
+     "scenarios": [
+      {
+       "name": "Drift ends the haze step",
+       "steps": [
+        "**WHEN** the haze step is sending and a `DriftDetected` arrives for the production version",
+        "**THEN** the page stops sending, marks the step done with the number of hazed tiles sent, and moves to the retraining step"
+       ]
+      },
+      {
+       "name": "A new version reaches shadow",
+       "steps": [
+        "**WHEN** the retraining step is waiting and a stage change to `shadow` arrives for a version newer than production",
+        "**THEN** that version becomes the candidate and the shadow step is next"
+       ]
+      }
+     ],
+     "tests": [
+      {
+       "suite": "dashboard",
+       "id": "lib/scenario.test.ts steps \u003e normal traffic ends on a clean evaluation after a full window",
+       "status": "passed",
+       "seconds": 0.0105924
+      },
+      {
+       "suite": "dashboard",
+       "id": "lib/scenario.test.ts steps \u003e drift ends the haze step",
+       "status": "passed",
+       "seconds": 0.0156218
+      },
+      {
+       "suite": "dashboard",
+       "id": "lib/scenario.test.ts steps \u003e a new version reaching shadow becomes the candidate",
+       "status": "passed",
+       "seconds": 0.0059984
+      },
+      {
+       "suite": "dashboard",
+       "id": "lib/scenario.test.ts steps \u003e the shadow step ends when the agreement gate passes, then waits for promotion",
+       "status": "passed",
+       "seconds": 0.0008472
+      }
+     ],
+     "status": "verified"
+    },
+    {
+     "name": "The demo page shows accuracy only for its own labeled tiles",
+     "text": "The page SHALL show, for the tiles it sent, accuracy per step and serving version, labeled as known only because the demo knows each tile's true class. Completions of jobs it didn't send SHALL be shown but not counted.",
+     "scenarios": [
+      {
+       "name": "Accuracy by version",
+       "steps": [
+        "**WHEN** a completed job for a scenario tile arrives",
+        "**THEN** it counts towards the accuracy of the version that served it in the current step, right or wrong against the tile's true class"
+       ]
+      }
+     ],
+     "tests": [
+      {
+       "suite": "dashboard",
+       "id": "lib/scenario.test.ts accuracy \u003e counts own tiles per step and serving version",
+       "status": "passed",
+       "seconds": 0.004804
+      },
+      {
+       "suite": "dashboard",
+       "id": "lib/scenario.test.ts accuracy \u003e a tile still in flight when its step ends counts for that step",
+       "status": "passed",
+       "seconds": 0.0041207
+      },
+      {
+       "suite": "dashboard",
+       "id": "lib/scenario.test.ts accuracy \u003e a completion that arrives before its job id is matched later",
+       "status": "passed",
+       "seconds": 0.0003681
+      },
+      {
+       "suite": "dashboard",
+       "id": "lib/scenario.test.ts accuracy \u003e repeated events are ignored",
+       "status": "passed",
+       "seconds": 0.0001587
+      }
+     ],
+     "status": "verified"
+    },
+    {
+     "name": "The demo page explains every event it sees",
+     "text": "The demo page SHALL show the events of the scenario as they arrive, newest first, each with the component that published it, its subject, and one sentence on why it happened and what reacts to it. It SHALL show the production and candidate versions and, for the candidate, each promotion gate with its reason as reported by the registry.",
+     "scenarios": [
+      {
+       "name": "A drift event explained",
+       "steps": [
+        "**WHEN** a `DriftDetected` arrives",
+        "**THEN** the page names the monitor as its publisher, the subject `monitor.drift.detected.\u003cmodel\u003e`, the drifted features, and the retrainer as the component that consumes it"
+       ]
+      }
+     ],
+     "tests": [
+      {
+       "suite": "dashboard",
+       "id": "lib/explain.test.ts a drift event names its publisher, subject, features, and consumer",
+       "status": "passed",
+       "seconds": 0.0035537
+      },
+      {
+       "suite": "dashboard",
+       "id": "lib/explain.test.ts every event type the platform publishes has a publisher and a reason",
+       "status": "passed",
+       "seconds": 0.0013524
+      },
+      {
+       "suite": "dashboard",
+       "id": "lib/explain.test.ts a stage change to shadow says what the worker does next",
+       "status": "passed",
+       "seconds": 0.0010443
+      },
+      {
+       "suite": "dashboard",
+       "id": "lib/explain.test.ts compacted completions drop only the fields the demo never reads",
+       "status": "passed",
+       "seconds": 0.0009306
+      }
+     ],
+     "status": "verified"
+    },
+    {
+     "name": "The demo page shows the arithmetic behind each drift evaluation",
+     "text": "For the latest `DriftEvaluated` of the version under watch, the demo page SHALL show each feature's PSI against the 0.2 threshold and its reference and window means and, for a chosen feature, the reference share and window share in each of the 10 bins, each bin's contribution `(w − r) · ln(w / r)`, and their sum, which equals the published PSI.",
+     "scenarios": [
+      {
+       "name": "Contributions add up",
+       "steps": [
+        "**WHEN** an evaluation's feature has shares for 10 bins",
+        "**THEN** the page lists 10 contributions whose sum, shown to three decimals, equals the feature's PSI to three decimals"
+       ]
+      }
+     ],
+     "tests": [
+      {
+       "suite": "dashboard",
+       "id": "lib/psi.test.ts contributions add up to the published PSI",
+       "status": "passed",
+       "seconds": 0.0041625
+      },
+      {
+       "suite": "dashboard",
+       "id": "lib/psi.test.ts outer bins are open-ended and labeled by their edges",
+       "status": "passed",
+       "seconds": 0.0019142
+      },
+      {
+       "suite": "dashboard",
+       "id": "lib/psi.test.ts events without bins have no breakdown",
+       "status": "passed",
+       "seconds": 0.0005805
+      },
+      {
+       "suite": "e2e",
+       "id": "demo.spec.ts the drift panel's contributions add up to the PSI",
+       "status": "passed",
+       "seconds": 3.913
+      }
+     ],
+     "status": "verified"
+    },
+    {
+     "name": "The demo page never approves",
+     "text": "The demo page SHALL not approve or promote on its own. The approval step SHALL show the gates and a form where a person enters their name and reason, and promotion SHALL be a separate action that person takes. In a replay, the step SHALL show the recorded approval as a person's, with the name and reason as recorded.",
+     "scenarios": [
+      {
+       "name": "Approval waits for a person",
+       "steps": [
+        "**WHEN** the scenario reaches the approval step with every other gate passed",
+        "**THEN** no approval or promotion request is sent until a person submits the form, and promotion is sent only when that person asks for it"
+       ]
+      }
+     ],
+     "tests": [
+      {
+       "suite": "dashboard",
+       "id": "lib/scenario.test.ts no input approves or promotes on its own",
+       "status": "passed",
+       "seconds": 0.0001731
+      },
+      {
+       "suite": "e2e",
+       "id": "demo.spec.ts the decision waits for a person",
+       "status": "passed",
+       "seconds": 4.597
+      }
+     ],
+     "status": "verified"
+    },
+    {
+     "name": "A live demo run can be saved as a recording",
+     "text": "A live run of the demo page SHALL log every input it reacts to (events, tiles sent, version lists, gate reports, step changes) with its time since the run began, and SHALL let the visitor save that log as a JSON recording.",
+     "scenarios": [
+      {
+       "name": "Saved run",
+       "steps": [
+        "**WHEN** a visitor saves a live run",
+        "**THEN** the file lists every input in the order the page received it, each with its time, and replaying it reaches the same steps"
+       ]
+      }
+     ],
+     "tests": [
+      {
+       "suite": "dashboard",
+       "id": "lib/replay.test.ts replaying a saved run reaches the same state",
+       "status": "passed",
+       "seconds": 0.0013283
+      }
+     ],
+     "status": "verified"
+    },
+    {
+     "name": "The demo page replays a recording when the platform is unreachable",
+     "text": "When the gateway can't be reached, the demo page SHALL offer a replay of the recording committed at `dashboard/public/recordings/demo.json`, labeled throughout as a recording with its date. The replay SHALL feed the recorded inputs through the same logic as a live run at their recorded pace, except that a gap longer than 20 seconds SHALL be shortened, saying how long it really took. A replay SHALL send nothing to the gateway.",
+     "scenarios": [
+      {
+       "name": "Static host",
+       "steps": [
+        "**WHEN** the demo page opens and the gateway answers 502 through the proxy",
+        "**THEN** the page says the platform isn't reachable and offers the recorded run, labeled with its date"
+       ]
+      },
+      {
+       "name": "Shortened training wait",
+       "steps": [
+        "**WHEN** the recording has a 7-minute gap while the new version trains",
+        "**THEN** the replay shortens it and says that the wait took 7 minutes in the recording"
+       ]
+      }
+     ],
+     "tests": [
+      {
+       "suite": "dashboard",
+       "id": "lib/replay.test.ts a long wait is shortened and its real length announced",
+       "status": "passed",
+       "seconds": 0.0042114
+      },
+      {
+       "suite": "dashboard",
+       "id": "lib/replay.test.ts gaps up to 20 seconds keep their recorded pace",
+       "status": "passed",
+       "seconds": 0.0005292
+      },
+      {
+       "suite": "dashboard",
+       "id": "lib/replay.test.ts a shortened wait is attributed to the step it happened in",
+       "status": "passed",
+       "seconds": 0.0004371
+      },
+      {
+       "suite": "e2e",
+       "id": "demo.spec.ts a static host offers the dated recording and replays it without the gateway",
+       "status": "passed",
+       "seconds": 3.715
       }
      ],
      "status": "verified"
@@ -2264,7 +2741,7 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/monitor/internal/domain TestPSISameDistribution",
        "status": "passed",
-       "seconds": 0.01
+       "seconds": 0.02
       },
       {
        "suite": "go",
@@ -2333,7 +2810,7 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/monitor/internal/app TestDetectedEventNamesOnlyDriftedFeatures",
        "status": "passed",
-       "seconds": 0.02
+       "seconds": 0.03
       },
       {
        "suite": "go",
@@ -2382,7 +2859,7 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/monitor/internal/domain TestCleanTrafficRaisesNothing",
        "status": "passed",
-       "seconds": 0.21
+       "seconds": 0.22
       },
       {
        "suite": "go",
@@ -2394,13 +2871,13 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/monitor/internal/domain TestReturnToNormalResolvesOnce",
        "status": "passed",
-       "seconds": 0.08
+       "seconds": 0.09
       },
       {
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/monitor/cmd/monitor TestDarkenedTrafficRaisesDriftDetectedAndPSIGauge",
        "status": "passed",
-       "seconds": 20.43
+       "seconds": 24.03
       }
      ],
      "status": "verified"
@@ -2429,7 +2906,7 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/monitor/internal/app TestTwoVersionsAreTrackedSeparately",
        "status": "passed",
-       "seconds": 0.12
+       "seconds": 0.16
       },
       {
        "suite": "go",
@@ -2470,7 +2947,7 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/monitor/cmd/monitor TestDarkenedTrafficRaisesDriftDetectedAndPSIGauge",
        "status": "passed",
-       "seconds": 20.43
+       "seconds": 24.03
       }
      ],
      "status": "verified"
@@ -2499,7 +2976,7 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/monitor/internal/app TestEveryEvaluationIsPublished",
        "status": "passed",
-       "seconds": 0.02
+       "seconds": 0.01
       },
       {
        "suite": "go",
@@ -2511,7 +2988,48 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/monitor/cmd/monitor TestDarkenedTrafficRaisesDriftDetectedAndPSIGauge",
        "status": "passed",
-       "seconds": 20.43
+       "seconds": 24.03
+      }
+     ],
+     "status": "verified"
+    },
+    {
+     "name": "Each comparison carries the bins behind its PSI",
+     "text": "Every feature comparison the monitor publishes (in `DriftEvaluated`, `DriftDetected`, and `DriftResolved`) SHALL include the 9 inner bin edges (the reference's deciles), the reference's share of values in each of the 10 bins, and the window's share in each bin, exactly as used in the PSI, so that summing `(window − reference) · ln(window / reference)` over the bins gives the published PSI.",
+     "scenarios": [
+      {
+       "name": "Bins reproduce the PSI",
+       "steps": [
+        "**WHEN** a window is compared with a reference",
+        "**THEN** the comparison has 9 non-decreasing edges and 10 reference and 10 window shares, and the PSI recomputed from the shares equals the reported PSI"
+       ]
+      },
+      {
+       "name": "Published with the evaluation",
+       "steps": [
+        "**WHEN** the monitor publishes a `DriftEvaluated`",
+        "**THEN** each of its features has the edges and both sets of shares"
+       ]
+      }
+     ],
+     "tests": [
+      {
+       "suite": "go",
+       "id": "github.com/Pohi11/spotter/services/monitor/internal/domain TestBinsReproduceThePSI",
+       "status": "passed",
+       "seconds": 0
+      },
+      {
+       "suite": "go",
+       "id": "github.com/Pohi11/spotter/services/monitor/internal/domain TestDetectorResultsCarryBins",
+       "status": "passed",
+       "seconds": 0
+      },
+      {
+       "suite": "go",
+       "id": "github.com/Pohi11/spotter/services/monitor/cmd/monitor TestDarkenedTrafficRaisesDriftDetectedAndPSIGauge",
+       "status": "passed",
+       "seconds": 24.03
       }
      ],
      "status": "verified"
@@ -2546,13 +3064,13 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/gateway/internal/restapi TestLiveCompletionIsStreamedDecoded",
        "status": "passed",
-       "seconds": 0.21
+       "seconds": 0.3
       },
       {
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/gateway/internal/restapi TestUnknownTypeKeepsTheEnvelope",
        "status": "passed",
-       "seconds": 0.16
+       "seconds": 0.17
       }
      ],
      "status": "verified"
@@ -2581,7 +3099,7 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/gateway/internal/restapi TestStreamsLimitTheFeed",
        "status": "passed",
-       "seconds": 0.42
+       "seconds": 0.39
       },
       {
        "suite": "go",
@@ -2616,13 +3134,13 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/gateway/internal/restapi TestRecentPastThenLive",
        "status": "passed",
-       "seconds": 0.15
+       "seconds": 0.13
       },
       {
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/gateway/internal/restapi TestBadWindowIsRejected",
        "status": "passed",
-       "seconds": 0.14
+       "seconds": 0.1
       }
      ],
      "status": "verified"
@@ -2651,13 +3169,13 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/gateway/internal/restapi TestDisconnectRemovesConsumers",
        "status": "passed",
-       "seconds": 0.09
+       "seconds": 0.1
       },
       {
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/gateway/internal/restapi TestIdleConnectionGetsKeepAlive",
        "status": "passed",
-       "seconds": 0.24
+       "seconds": 0.29
       }
      ],
      "status": "verified"
@@ -2699,13 +3217,13 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/internal/natsjs TestFirstStartCreatesStreamsAndBucket",
        "status": "passed",
-       "seconds": 0.16
+       "seconds": 0.19
       },
       {
        "suite": "go",
        "id": "github.com/Pohi11/spotter/internal/natsjs TestRepeatedStartKeepsMessages",
        "status": "passed",
-       "seconds": 0.11
+       "seconds": 0.12
       },
       {
        "suite": "go",
@@ -2760,19 +3278,19 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/registry/internal/adapters/natspub TestRepublishedRecordIsStoredOnce",
        "status": "passed",
-       "seconds": 0.17
+       "seconds": 0.21
       },
       {
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/registry/internal/adapters/postgres TestContract/MarkPublished",
        "status": "passed",
-       "seconds": 13.29
+       "seconds": 21.92
       },
       {
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/registry/cmd/registry TestTransitionReachesTheStream",
        "status": "passed",
-       "seconds": 0.77
+       "seconds": 0.76
       }
      ],
      "status": "verified"
@@ -2807,7 +3325,7 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/registry/internal/adapters/postgres TestContract/TraceContextStoredWithOutbox",
        "status": "passed",
-       "seconds": 13.25
+       "seconds": 21.99
       },
       {
        "suite": "go",
@@ -2848,7 +3366,7 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/cmd/spotterchaos TestWorkerKillKillsAndStartsANewWorker",
        "status": "passed",
-       "seconds": 0.26
+       "seconds": 0.19
       },
       {
        "suite": "go",
@@ -2860,7 +3378,7 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/internal/chaos TestFaultAndHealRunOnSchedule",
        "status": "passed",
-       "seconds": 1.61
+       "seconds": 1.6
       }
      ],
      "status": "verified"
@@ -2936,7 +3454,7 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/cmd/spotterchaos TestReportHoldsConfigurationAndTimeline",
        "status": "passed",
-       "seconds": 0.05
+       "seconds": 0.03
       }
      ],
      "status": "verified"
@@ -2978,7 +3496,7 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/gateway/internal/restapi TestEveryOperationIsRouted",
        "status": "passed",
-       "seconds": 0.02
+       "seconds": 0.01
       },
       {
        "suite": "go",
@@ -2996,7 +3514,7 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/gateway/cmd/gateway TestRESTThroughTheProcess",
        "status": "passed",
-       "seconds": 8.16
+       "seconds": 6.06
       }
      ],
      "status": "verified"
@@ -3039,7 +3557,7 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/gateway/cmd/gateway TestBinaryRendersErrorDetails",
        "status": "passed",
-       "seconds": 12
+       "seconds": 17.67
       },
       {
        "suite": "go",
@@ -3147,19 +3665,19 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/gateway/cmd/gateway TestReadinessFollowsTheRegistry",
        "status": "passed",
-       "seconds": 0.07
+       "seconds": 0.24
       },
       {
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/gateway/cmd/gateway TestReadinessFollowsNATS",
        "status": "passed",
-       "seconds": 0.08
+       "seconds": 0.16
       },
       {
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/gateway/cmd/gateway TestStopSignal",
        "status": "passed",
-       "seconds": 0.11
+       "seconds": 0.1
       }
      ],
      "status": "verified"
@@ -3194,7 +3712,7 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/gateway/internal/adapters/grpcapi TestSubmitAnImage",
        "status": "passed",
-       "seconds": 20.58
+       "seconds": 23.78
       }
      ],
      "status": "verified"
@@ -3381,19 +3899,19 @@
        "suite": "python",
        "id": "workers.inference.tests.test_classifier test_classifies_with_the_production_version",
        "status": "passed",
-       "seconds": 0.258
+       "seconds": 0.072
       },
       {
        "suite": "python",
        "id": "workers.inference.tests.test_classifier test_no_model_loaded_is_unavailable",
        "status": "passed",
-       "seconds": 0.009
+       "seconds": 0.01
       },
       {
        "suite": "python",
        "id": "workers.inference.tests.test_classifier test_undecodable_image_is_invalid",
        "status": "passed",
-       "seconds": 0.735
+       "seconds": 0.144
       }
      ],
      "status": "verified"
@@ -3442,25 +3960,25 @@
        "suite": "python",
        "id": "workers.inference.tests.test_processing test_successful_job",
        "status": "passed",
-       "seconds": 0.521
+       "seconds": 0.729
       },
       {
        "suite": "python",
        "id": "workers.inference.tests.test_processing test_no_model_is_retried_then_dead_lettered",
        "status": "passed",
-       "seconds": 0.577
+       "seconds": 0.603
       },
       {
        "suite": "python",
        "id": "workers.inference.tests.test_processing test_checksum_mismatch_is_not_loaded",
        "status": "passed",
-       "seconds": 0.397
+       "seconds": 0.47
       },
       {
        "suite": "python",
        "id": "workers.inference.tests.test_processing test_onnx_production_version",
        "status": "passed",
-       "seconds": 4.903
+       "seconds": 4.772
       }
      ],
      "status": "verified"
@@ -3496,19 +4014,19 @@
        "suite": "python",
        "id": "workers.inference.tests.test_processing test_successful_job",
        "status": "passed",
-       "seconds": 0.521
+       "seconds": 0.729
       },
       {
        "suite": "python",
        "id": "workers.inference.tests.test_processing test_worker_stops_before_acknowledging",
        "status": "passed",
-       "seconds": 1.574
+       "seconds": 1.547
       },
       {
        "suite": "python",
        "id": "workers.inference.tests.test_processing test_worker_stops_before_recording",
        "status": "passed",
-       "seconds": 1.487
+       "seconds": 1.491
       }
      ],
      "status": "verified"
@@ -3544,19 +4062,19 @@
        "suite": "python",
        "id": "workers.inference.tests.test_processing test_corrupt_image_is_dead_lettered",
        "status": "passed",
-       "seconds": 2.488
+       "seconds": 2.533
       },
       {
        "suite": "python",
        "id": "workers.inference.tests.test_processing test_undecodable_event_is_dead_lettered",
        "status": "passed",
-       "seconds": 2.443
+       "seconds": 2.435
       },
       {
        "suite": "python",
        "id": "workers.inference.tests.test_processing test_no_model_is_retried_then_dead_lettered",
        "status": "passed",
-       "seconds": 0.577
+       "seconds": 0.603
       }
      ],
      "status": "verified"
@@ -3578,7 +4096,7 @@
        "suite": "python",
        "id": "workers.inference.tests.test_processing test_promotion_while_running",
        "status": "passed",
-       "seconds": 0.57
+       "seconds": 0.615
       }
      ],
      "status": "verified"
@@ -3708,7 +4226,7 @@
        "suite": "python",
        "id": "workers.trainer.tests.test_metrics test_class_never_predicted_is_zero_not_nan",
        "status": "passed",
-       "seconds": 0.001
+       "seconds": 0.002
       },
       {
        "suite": "python",
@@ -3743,7 +4261,7 @@
        "suite": "python",
        "id": "workers.trainer.tests.test_train test_holdout_untouched_until_training_ends",
        "status": "passed",
-       "seconds": 1.593
+       "seconds": 2.105
       }
      ],
      "status": "verified"
@@ -3797,13 +4315,13 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/registry/internal/adapters/postgres TestContract/EveryListedTransition",
        "status": "passed",
-       "seconds": 0.49
+       "seconds": 22.29
       },
       {
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/registry/internal/adapters/postgres TestContract/IllegalTransitionChangesNothing",
        "status": "passed",
-       "seconds": 0.29
+       "seconds": 21.94
       },
       {
        "suite": "go",
@@ -4019,7 +4537,7 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/registry/internal/domain TestEveryStagePair/rejected_to_registered",
        "status": "passed",
-       "seconds": 0.01
+       "seconds": 0
       },
       {
        "suite": "go",
@@ -4097,7 +4615,7 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/registry/internal/domain TestEveryStagePair/rolled_back_to_rolled_back",
        "status": "passed",
-       "seconds": 0.01
+       "seconds": 0
       },
       {
        "suite": "go",
@@ -4137,13 +4655,13 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/registry/internal/adapters/postgres TestContract/TerminalStages",
        "status": "passed",
-       "seconds": 13.39
+       "seconds": 22.07
       },
       {
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/registry/internal/domain TestEveryStagePair/rejected_to_registered",
        "status": "passed",
-       "seconds": 0.01
+       "seconds": 0
       },
       {
        "suite": "go",
@@ -4221,7 +4739,7 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/registry/internal/domain TestEveryStagePair/rolled_back_to_rolled_back",
        "status": "passed",
-       "seconds": 0.01
+       "seconds": 0
       }
      ],
      "status": "verified"
@@ -4249,7 +4767,7 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/registry/internal/adapters/postgres TestContract/BlankReason",
        "status": "passed",
-       "seconds": 13.26
+       "seconds": 21.93
       },
       {
        "suite": "go",
@@ -4296,13 +4814,13 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/registry/internal/adapters/postgres TestContract/IllegalTransitionChangesNothing",
        "status": "passed",
-       "seconds": 0.29
+       "seconds": 21.94
       },
       {
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/registry/internal/adapters/postgres TestContract/HistoryInOrder",
        "status": "passed",
-       "seconds": 13.28
+       "seconds": 21.93
       }
      ],
      "status": "verified"
@@ -4351,19 +4869,19 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/registry/internal/adapters/postgres TestContract/OneProductionPerModel",
        "status": "passed",
-       "seconds": 13.38
+       "seconds": 22.18
       },
       {
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/registry/internal/adapters/postgres TestContract/ProductionPerModelIsIndependent",
        "status": "passed",
-       "seconds": 13.39
+       "seconds": 22.17
       },
       {
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/registry/internal/adapters/postgres TestDatabaseRejectsSecondProductionRow",
        "status": "passed",
-       "seconds": 0.12
+       "seconds": 0.1
       }
      ],
      "status": "verified"
@@ -4405,25 +4923,25 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/registry/internal/adapters/memory TestContract/ConcurrentTransitionsOneWinner",
        "status": "passed",
-       "seconds": 0
+       "seconds": 0.01
       },
       {
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/registry/internal/adapters/postgres TestContract/StaleRevision",
        "status": "passed",
-       "seconds": 13.26
+       "seconds": 22.11
       },
       {
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/registry/internal/adapters/postgres TestContract/StaleRevisionAtRepository",
        "status": "passed",
-       "seconds": 13.26
+       "seconds": 22.11
       },
       {
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/registry/internal/adapters/postgres TestContract/ConcurrentTransitionsOneWinner",
        "status": "passed",
-       "seconds": 13.32
+       "seconds": 21.17
       }
      ],
      "status": "verified"
@@ -4477,19 +4995,19 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/registry/internal/adapters/postgres TestContract/RegistrationEvent",
        "status": "passed",
-       "seconds": 13.28
+       "seconds": 51.06
       },
       {
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/registry/internal/adapters/postgres TestContract/TransitionEvent",
        "status": "passed",
-       "seconds": 13.29
+       "seconds": 21.93
       },
       {
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/registry/internal/adapters/postgres TestContract/FailedTransitionsStoreNoEvent",
        "status": "passed",
-       "seconds": 13.37
+       "seconds": 22.06
       }
      ],
      "status": "verified"
@@ -4523,7 +5041,7 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/registry/internal/adapters/postgres TestContract/GenericTransitionToProductionRefused",
        "status": "passed",
-       "seconds": 13.35
+       "seconds": 0.37
       }
      ],
      "status": "verified"
@@ -4558,19 +5076,19 @@
        "suite": "python",
        "id": "workers.trainer.tests.test_optimize test_faithful_export",
        "status": "passed",
-       "seconds": 1.478
+       "seconds": 2.091
       },
       {
        "suite": "python",
        "id": "workers.trainer.tests.test_optimize test_unfaithful_export_is_rejected",
        "status": "passed",
-       "seconds": 1.662
+       "seconds": 2.354
       },
       {
        "suite": "python",
        "id": "workers.trainer.tests.test_optimize test_export_is_one_self_contained_file",
        "status": "passed",
-       "seconds": 1.096
+       "seconds": 1.961
       }
      ],
      "status": "verified"
@@ -4640,13 +5158,13 @@
        "suite": "python",
        "id": "workers.trainer.tests.test_optimize test_percentiles_from_samples",
        "status": "passed",
-       "seconds": 0.108
+       "seconds": 0.094
       },
       {
        "suite": "python",
        "id": "workers.trainer.tests.test_optimize test_benchmark_rows",
        "status": "passed",
-       "seconds": 0.224
+       "seconds": 0.511
       }
      ],
      "status": "verified"
@@ -4668,7 +5186,7 @@
        "suite": "python",
        "id": "workers.trainer.tests.test_optimize_registration test_two_variants_registered_with_lineage",
        "status": "passed",
-       "seconds": 0.416
+       "seconds": 0.521
       }
      ],
      "status": "verified"
@@ -4709,13 +5227,13 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/registry/internal/adapters/natssub TestShadowComparisonsFromJetStream",
        "status": "passed",
-       "seconds": 0.33
+       "seconds": 0.31
       },
       {
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/registry/internal/adapters/postgres TestContract/ShadowComparisonsCountedOnce",
        "status": "passed",
-       "seconds": 13.39
+       "seconds": 1.13
       }
      ],
      "status": "verified"
@@ -4757,7 +5275,7 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/registry/internal/adapters/postgres TestContract/SuccessfulPromotion",
        "status": "passed",
-       "seconds": 13.83
+       "seconds": 22.44
       },
       {
        "suite": "go",
@@ -4832,7 +5350,7 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/registry/internal/adapters/postgres TestContract/Approvals",
        "status": "passed",
-       "seconds": 13.32
+       "seconds": 1.16
       },
       {
        "suite": "go",
@@ -4879,13 +5397,13 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/registry/internal/adapters/postgres TestContract/PromotionRefusedWithoutApproval",
        "status": "passed",
-       "seconds": 13.77
+       "seconds": 22.43
       },
       {
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/registry/internal/adapters/postgres TestContract/SuccessfulPromotion",
        "status": "passed",
-       "seconds": 13.83
+       "seconds": 22.44
       }
      ],
      "status": "verified"
@@ -4926,13 +5444,13 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/registry/internal/adapters/postgres TestContract/RollbackAfterPromotion",
        "status": "passed",
-       "seconds": 13.83
+       "seconds": 22.46
       },
       {
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/registry/internal/adapters/postgres TestContract/NothingToRollBack",
        "status": "passed",
-       "seconds": 13.31
+       "seconds": 21.93
       }
      ],
      "status": "verified"
@@ -4954,7 +5472,7 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/registry/internal/adapters/grpcapi TestPromotionOverGRPC",
        "status": "passed",
-       "seconds": 0
+       "seconds": 0.01
       },
       {
        "suite": "go",
@@ -4995,13 +5513,13 @@
        "suite": "python",
        "id": "workers.trainer.tests.test_publish test_location_and_checksum_agree",
        "status": "passed",
-       "seconds": 0.468
+       "seconds": 0.49
       },
       {
        "suite": "python",
        "id": "workers.trainer.tests.test_publish test_republishing_is_idempotent",
        "status": "passed",
-       "seconds": 0.584
+       "seconds": 0.589
       }
      ],
      "status": "verified"
@@ -5023,7 +5541,7 @@
        "suite": "python",
        "id": "workers.trainer.tests.test_publish test_metadata_is_complete",
        "status": "passed",
-       "seconds": 0.379
+       "seconds": 0.417
       }
      ],
      "status": "verified"
@@ -5052,13 +5570,13 @@
        "suite": "python",
        "id": "workers.trainer.tests.test_registry test_first_version_of_a_new_model",
        "status": "passed",
-       "seconds": 0.02
+       "seconds": 0.012
       },
       {
        "suite": "python",
        "id": "workers.trainer.tests.test_registry test_model_already_exists",
        "status": "passed",
-       "seconds": 0.018
+       "seconds": 0.016
       }
      ],
      "status": "verified"
@@ -5087,7 +5605,7 @@
        "suite": "python",
        "id": "workers.trainer.tests.test_registry test_above_the_floor_is_validated",
        "status": "passed",
-       "seconds": 0.012
+       "seconds": 0.014
       },
       {
        "suite": "python",
@@ -5122,13 +5640,13 @@
        "suite": "python",
        "id": "workers.trainer.tests.test_reference test_same_features_as_serving",
        "status": "passed",
-       "seconds": 0.089
+       "seconds": 0.068
       },
       {
        "suite": "python",
        "id": "workers.trainer.tests.test_reference test_reference_written_with_a_version",
        "status": "passed",
-       "seconds": 0.349
+       "seconds": 0.386
       }
      ],
      "status": "verified"
@@ -5150,7 +5668,7 @@
        "suite": "python",
        "id": "workers.trainer.tests.test_registry test_validated_version_goes_to_shadow",
        "status": "passed",
-       "seconds": 0.018
+       "seconds": 0.016
       }
      ],
      "status": "verified"
@@ -5211,19 +5729,19 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/registry/internal/adapters/postgres TestContract/ValidModelName",
        "status": "passed",
-       "seconds": 13.2
+       "seconds": 21.18
       },
       {
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/registry/internal/adapters/postgres TestContract/MalformedModelName",
        "status": "passed",
-       "seconds": 0.27
+       "seconds": 0.32
       },
       {
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/registry/internal/adapters/postgres TestContract/DuplicateModelName",
        "status": "passed",
-       "seconds": 0.28
+       "seconds": 0.31
       },
       {
        "suite": "go",
@@ -5321,13 +5839,13 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/registry/internal/adapters/postgres TestContract/ValidVersion",
        "status": "passed",
-       "seconds": 0.33
+       "seconds": 0.37
       },
       {
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/registry/internal/adapters/postgres TestContract/InvalidVersionStoresNothing",
        "status": "passed",
-       "seconds": 0.29
+       "seconds": 0.35
       },
       {
        "suite": "go",
@@ -5375,7 +5893,7 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/registry/internal/domain TestVersionValidation/NaN_metric",
        "status": "passed",
-       "seconds": 0.01
+       "seconds": 0
       },
       {
        "suite": "go",
@@ -5435,19 +5953,19 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/registry/internal/adapters/postgres TestContract/SequentialNumbers",
        "status": "passed",
-       "seconds": 0.34
+       "seconds": 0.37
       },
       {
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/registry/internal/adapters/postgres TestContract/ConcurrentNumbers",
        "status": "passed",
-       "seconds": 0.41
+       "seconds": 0.43
       },
       {
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/registry/internal/adapters/postgres TestContract/NumbersPerModel",
        "status": "passed",
-       "seconds": 0.31
+       "seconds": 0.37
       }
      ],
      "status": "verified"
@@ -5488,13 +6006,13 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/registry/internal/adapters/postgres TestContract/UnknownModel",
        "status": "passed",
-       "seconds": 0.27
+       "seconds": 0.37
       },
       {
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/registry/internal/adapters/postgres TestContract/UnknownVersion",
        "status": "passed",
-       "seconds": 13.17
+       "seconds": 22.03
       }
      ],
      "status": "verified"
@@ -5516,13 +6034,13 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/registry/internal/adapters/memory TestContract/NewestFirst",
        "status": "passed",
-       "seconds": 0
+       "seconds": 0.04
       },
       {
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/registry/internal/adapters/postgres TestContract/NewestFirst",
        "status": "passed",
-       "seconds": 0.36
+       "seconds": 21.92
       }
      ],
      "status": "verified"
@@ -5564,19 +6082,19 @@
        "suite": "python",
        "id": "workers.trainer.tests.test_retrain test_probability_zero_only_flips",
        "status": "passed",
-       "seconds": 0.038
+       "seconds": 0.009
       },
       {
        "suite": "python",
        "id": "workers.trainer.tests.test_retrain test_probability_one_degrades_every_tile",
        "status": "passed",
-       "seconds": 0.022
+       "seconds": 0.019
       },
       {
        "suite": "python",
        "id": "workers.trainer.tests.test_retrain test_same_seed_same_tiles",
        "status": "passed",
-       "seconds": 0.016
+       "seconds": 0.026
       }
      ],
      "status": "verified"
@@ -5598,13 +6116,13 @@
        "suite": "python",
        "id": "workers.trainer.tests.test_retrain test_robustness_covers_clean_and_each_degradation",
        "status": "passed",
-       "seconds": 0.063
+       "seconds": 0.077
       },
       {
        "suite": "python",
        "id": "workers.trainer.tests.test_retrain test_accurate_version_goes_to_shadow",
        "status": "passed",
-       "seconds": 0.346
+       "seconds": 0.365
       }
      ],
      "status": "verified"
@@ -5633,13 +6151,13 @@
        "suite": "python",
        "id": "workers.trainer.tests.test_retrain test_accurate_version_goes_to_shadow",
        "status": "passed",
-       "seconds": 0.346
+       "seconds": 0.365
       },
       {
        "suite": "python",
        "id": "workers.trainer.tests.test_retrain test_below_floor_stays_registered",
        "status": "passed",
-       "seconds": 0.323
+       "seconds": 0.333
       }
      ],
      "status": "verified"
@@ -5668,13 +6186,13 @@
        "suite": "python",
        "id": "workers.trainer.tests.test_retrain_watch test_one_run_per_event_in_order",
        "status": "passed",
-       "seconds": 0.966
+       "seconds": 0.994
       },
       {
        "suite": "python",
        "id": "workers.trainer.tests.test_retrain_watch test_failed_run_is_delivered_again",
        "status": "passed",
-       "seconds": 1.63
+       "seconds": 1.627
       }
      ],
      "status": "verified"
@@ -5703,7 +6221,7 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/deploy/helm TestRetrainingJobAndWatcher",
        "status": "passed",
-       "seconds": 0.63
+       "seconds": 1.42
       }
      ],
      "status": "verified"
@@ -5752,7 +6270,7 @@
        "suite": "python",
        "id": "workers.inference.tests.test_observability test_worker_continues_the_trace_and_passes_it_on",
        "status": "passed",
-       "seconds": 1.703
+       "seconds": 1.458
       }
      ],
      "status": "verified"
@@ -5774,13 +6292,13 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/gateway/internal/adapters/grpcapi TestSpansHoldNoImageBytesOrSecrets",
        "status": "passed",
-       "seconds": 0.31
+       "seconds": 0.32
       },
       {
        "suite": "python",
        "id": "workers.inference.tests.test_observability test_spans_hold_no_image_bytes_or_secrets",
        "status": "passed",
-       "seconds": 0.47
+       "seconds": 0.516
       }
      ],
      "status": "verified"
@@ -5802,7 +6320,7 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/registry/cmd/registry TestMetricsEndpoint",
        "status": "passed",
-       "seconds": 0.17
+       "seconds": 0.2
       }
      ],
      "status": "verified"
@@ -5829,21 +6347,21 @@
      "tests": [
       {
        "suite": "go",
-       "id": "github.com/Pohi11/spotter/services/registry/cmd/registry TestMetricsEndpoint",
+       "id": "github.com/Pohi11/spotter/services/gateway/cmd/gateway TestMetricsAfterGRPCCalls",
        "status": "passed",
-       "seconds": 0.17
+       "seconds": 0.1
       },
       {
        "suite": "go",
-       "id": "github.com/Pohi11/spotter/services/gateway/cmd/gateway TestMetricsAfterGRPCCalls",
+       "id": "github.com/Pohi11/spotter/services/registry/cmd/registry TestMetricsEndpoint",
        "status": "passed",
-       "seconds": 0.07
+       "seconds": 0.2
       },
       {
        "suite": "python",
        "id": "workers.inference.tests.test_observability test_worker_outcome_metrics",
        "status": "passed",
-       "seconds": 0.618
+       "seconds": 0.764
       }
      ],
      "status": "verified"
@@ -5871,7 +6389,7 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/deploy/demo TestImageWorkflow",
        "status": "passed",
-       "seconds": 0
+       "seconds": 0.03
       }
      ],
      "status": "verified"
@@ -5907,19 +6425,48 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/deploy/demo TestRenderedWithSecrets",
        "status": "passed",
-       "seconds": 0.37
+       "seconds": 0.49
       },
       {
        "suite": "go",
        "id": "github.com/Pohi11/spotter/deploy/demo TestMissingSecretFails",
        "status": "passed",
-       "seconds": 0.27
+       "seconds": 0.4
       },
       {
        "suite": "go",
        "id": "github.com/Pohi11/spotter/deploy/demo TestRunningDemo",
        "status": "skipped",
        "seconds": 0
+      }
+     ],
+     "status": "verified"
+    },
+    {
+     "name": "The demo can retrain on drift without a terminal",
+     "text": "`deploy/demo/compose.yaml` SHALL define a `retrainer` service, only in the `retrain` profile, running `spotter-retrain --watch` from the Python image with the registry, NATS, and object-store settings and the bootstrap's dataset volume. It SHALL publish no port and SHALL not be part of the demo without the profile.",
+     "scenarios": [
+      {
+       "name": "Rendered with the retrain profile",
+       "steps": [
+        "**WHEN** the file is rendered with `--profile retrain`",
+        "**THEN** it contains a `retrainer` service running `spotter-retrain --watch` that mounts the same dataset volume as `bootstrap` and publishes no port"
+       ]
+      },
+      {
+       "name": "Rendered without it",
+       "steps": [
+        "**WHEN** the file is rendered without the profile",
+        "**THEN** it has no `retrainer` service"
+       ]
+      }
+     ],
+     "tests": [
+      {
+       "suite": "go",
+       "id": "github.com/Pohi11/spotter/deploy/demo TestRetrainProfileAddsTheWatcher",
+       "status": "passed",
+       "seconds": 0.69
       }
      ],
      "status": "verified"
@@ -5961,19 +6508,19 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/deploy/helm TestDefaultRender",
        "status": "passed",
-       "seconds": 0.81
+       "seconds": 1.29
       },
       {
        "suite": "go",
        "id": "github.com/Pohi11/spotter/deploy/helm TestWithoutDashboard",
        "status": "passed",
-       "seconds": 0.26
+       "seconds": 0.29
       },
       {
        "suite": "go",
        "id": "github.com/Pohi11/spotter/deploy/helm TestExternalDatabase",
        "status": "passed",
-       "seconds": 0.24
+       "seconds": 0.32
       }
      ],
      "status": "verified"
@@ -6002,7 +6549,7 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/deploy/helm TestCredentialsOnlyFromSecrets",
        "status": "passed",
-       "seconds": 0.25
+       "seconds": 0.41
       },
       {
        "suite": "go",
@@ -6030,7 +6577,7 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/deploy/helm TestProbesAndResources",
        "status": "passed",
-       "seconds": 0.22
+       "seconds": 0.26
       }
      ],
      "status": "verified"
@@ -6052,7 +6599,7 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/deploy/helm TestGracePeriodsAndThreads",
        "status": "passed",
-       "seconds": 0.88
+       "seconds": 0.96
       }
      ],
      "status": "verified"
@@ -6081,7 +6628,7 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/deploy/helm TestAutoscalingOn",
        "status": "passed",
-       "seconds": 0.19
+       "seconds": 0.25
       },
       {
        "suite": "go",
@@ -6109,7 +6656,7 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/deploy/helm TestTrainerJob",
        "status": "passed",
-       "seconds": 0.38
+       "seconds": 0.39
       }
      ],
      "status": "verified"
@@ -6131,13 +6678,13 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/cmd/spotterctl TestSmokePassesAgainstAWorkingPlatform",
        "status": "passed",
-       "seconds": 2.05
+       "seconds": 2.06
       },
       {
        "suite": "go",
        "id": "github.com/Pohi11/spotter/cmd/spotterctl TestSmokeFailsWithoutAWorker",
        "status": "passed",
-       "seconds": 3.03
+       "seconds": 3.04
       },
       {
        "suite": "go",
@@ -6149,7 +6696,7 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/cmd/spotterctl TestWaitReturnsOnceTheAddressListens",
        "status": "passed",
-       "seconds": 3.51
+       "seconds": 3.5
       }
      ],
      "status": "verified"
@@ -6198,7 +6745,7 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/registry/internal/adapters/grpcapi TestTransitionAndHistory",
        "status": "passed",
-       "seconds": 0.01
+       "seconds": 0
       },
       {
        "suite": "go",
@@ -6210,7 +6757,7 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/registry/cmd/registry TestGRPCServesRegistryOperations",
        "status": "passed",
-       "seconds": 0.26
+       "seconds": 0.19
       }
      ],
      "status": "verified"
@@ -6284,7 +6831,7 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/registry/internal/adapters/grpcapi TestPromotionErrorsAreFailedPrecondition/the_model_already_has_a_production_version",
        "status": "passed",
-       "seconds": 0
+       "seconds": 0.03
       },
       {
        "suite": "go",
@@ -6308,7 +6855,7 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/registry/internal/adapters/grpcapi TestUnexpectedErrorIsInternalAndHidden",
        "status": "passed",
-       "seconds": 0.01
+       "seconds": 0
       }
      ],
      "status": "verified"
@@ -6385,7 +6932,7 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/registry/cmd/registry TestGRPCHealthAndReflection",
        "status": "passed",
-       "seconds": 0.14
+       "seconds": 0.15
       }
      ],
      "status": "verified"
@@ -6481,13 +7028,13 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/registry/cmd/registry TestStartMigratesThenServesHealth",
        "status": "passed",
-       "seconds": 18.08
+       "seconds": 26.65
       },
       {
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/registry/cmd/registry TestSecondStartAppliesNothing",
        "status": "passed",
-       "seconds": 0.21
+       "seconds": 0.22
       }
      ],
      "status": "verified"
@@ -6516,7 +7063,7 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/registry/cmd/registry TestStartMigratesThenServesHealth",
        "status": "passed",
-       "seconds": 18.08
+       "seconds": 26.65
       },
       {
        "suite": "go",
@@ -6545,7 +7092,7 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/registry/cmd/registry TestStopSignalShutsDownGracefully",
        "status": "passed",
-       "seconds": 0.15
+       "seconds": 0.14
       }
      ],
      "status": "verified"
@@ -6565,21 +7112,21 @@
      "tests": [
       {
        "suite": "go",
+       "id": "github.com/Pohi11/spotter/services/registry/internal/archtest TestCoreDoesNotDependOnInfrastructure/services/registry/internal/app",
+       "status": "passed",
+       "seconds": 1.84
+      },
+      {
+       "suite": "go",
        "id": "github.com/Pohi11/spotter/services/registry/internal/archtest TestCoreDoesNotDependOnInfrastructure/services/registry/internal/domain",
        "status": "passed",
-       "seconds": 2.37
+       "seconds": 0.37
       },
       {
        "suite": "go",
        "id": "github.com/Pohi11/spotter/services/registry/internal/archtest TestCoreDoesNotDependOnInfrastructure/services/registry/internal/ports",
        "status": "passed",
-       "seconds": 0.26
-      },
-      {
-       "suite": "go",
-       "id": "github.com/Pohi11/spotter/services/registry/internal/archtest TestCoreDoesNotDependOnInfrastructure/services/registry/internal/app",
-       "status": "passed",
-       "seconds": 0.39
+       "seconds": 0.27
       },
       {
        "suite": "go",
@@ -6620,25 +7167,25 @@
        "suite": "python",
        "id": "workers.inference.tests.test_processing test_shadow_loaded",
        "status": "passed",
-       "seconds": 0.699
+       "seconds": 0.64
       },
       {
        "suite": "python",
        "id": "workers.inference.tests.test_processing test_shadow_fails",
        "status": "passed",
-       "seconds": 1.463
+       "seconds": 1.503
       },
       {
        "suite": "python",
        "id": "workers.inference.tests.test_processing test_shadow_with_bad_checksum_is_skipped",
        "status": "passed",
-       "seconds": 0.437
+       "seconds": 0.489
       },
       {
        "suite": "python",
        "id": "workers.inference.tests.test_processing test_worker_follows_shadow_changes",
        "status": "passed",
-       "seconds": 0.065
+       "seconds": 0.07
       }
      ],
      "status": "verified"
@@ -6660,7 +7207,7 @@
        "suite": "python",
        "id": "workers.inference.tests.test_processing test_shadow_loaded",
        "status": "passed",
-       "seconds": 0.699
+       "seconds": 0.64
       }
      ],
      "status": "verified"
@@ -6702,25 +7249,25 @@
        "suite": "python",
        "id": "workers.trainer.tests.test_splits test_same_seed_same_split",
        "status": "passed",
-       "seconds": 0.008
+       "seconds": 0.015
       },
       {
        "suite": "python",
        "id": "workers.trainer.tests.test_splits test_different_seed_different_split",
        "status": "passed",
-       "seconds": 0.011
+       "seconds": 0.015
       },
       {
        "suite": "python",
        "id": "workers.trainer.tests.test_splits test_input_order_does_not_matter",
        "status": "passed",
-       "seconds": 0.007
+       "seconds": 0.013
       },
       {
        "suite": "python",
        "id": "workers.trainer.tests.test_splits test_moving_one_image_changes_the_fingerprint",
        "status": "passed",
-       "seconds": 0.007
+       "seconds": 0.009
       }
      ],
      "status": "verified"
@@ -6749,19 +7296,19 @@
        "suite": "python",
        "id": "workers.trainer.tests.test_splits test_class_proportions",
        "status": "passed",
-       "seconds": 0.002
+       "seconds": 0.003
       },
       {
        "suite": "python",
        "id": "workers.trainer.tests.test_splits test_every_class_is_split_70_15_15",
        "status": "passed",
-       "seconds": 0.004
+       "seconds": 0.006
       },
       {
        "suite": "python",
        "id": "workers.trainer.tests.test_splits test_no_overlap_and_nothing_missing",
        "status": "passed",
-       "seconds": 0.005
+       "seconds": 0.007
       }
      ],
      "status": "verified"
@@ -6916,6 +7463,13 @@
    "date": "2026-11-22",
    "status": "Accepted. Records no change; it compares what was built with what could have been adopted.",
    "markdown": "# 0021 — Retrospective: what off-the-shelf tools would have given this design, and cost\n\n- **Date:** 2026-11-22\n- **Status:** Accepted. Records no change; it compares what was built with what could have been adopted.\n\n## Context\n\nSpotter builds its registry, serving path, monitoring, promotion, and messaging from small parts: Go services, a Python worker, NATS JetStream, Postgres, and an S3-compatible store. Each part has a mature off-the-shelf alternative. This record weighs, with hindsight and the measurements in `benchmarks/`, what each alternative would have given and what it would have cost, so the next design starts from evidence rather than habit.\n\n## Options considered\n\n### Model serving: KServe, NVIDIA Triton, BentoML\n\n- **KServe** (Kubernetes CRDs over Knative or raw Deployments): standard inference protocol, canary and shadow traffic splitting at the network layer, scale-to-zero, model storage initializers for S3. It would replace the worker's model loading, the shadow slot, and part of the promotion swap. Cost: Knative or Istio to operate, and canary routing that splits traffic rather than shadowing every request; agreement statistics, the gates, and the human approval would still be custom. The measured promotion and rollback times (232 ms and 457 ms to the worker serving the new version) come from an event and a reload; KServe would need a rollout instead.\n- **Triton Inference Server**: dynamic batching, concurrent model execution, ONNX Runtime, TensorRT, and PyTorch backends, and metrics out of the box. For a 289-thousand-parameter CNN taking about 2 ms per image, batching gains little end to end: the load tests found the model was 3 ms of a 65 ms job, with the object-store write the largest cost. Triton matters when the model dominates; here it would not have moved the measured bottleneck. It also has no notion of an event bus; the worker would still consume NATS and call Triton.\n- **BentoML**: packaging, an HTTP and gRPC server, adaptive batching, and a model store in one Python framework. It would replace the worker's serving code and artifact handling, but the registry, its stage machine, and the gates would stay outside it, and its model store overlaps the registry.\n\n### Experiment tracking and registry: MLflow\n\nMLflow's tracking server records parameters, metrics, and artifacts per run, and its model registry has versions, aliases, and stage tags. Spotter's training metadata (`metadata.json` beside a content-addressed artifact) and the registry cover the same ground. MLflow would have saved the metadata format and given a UI for runs. It would not give what the registry enforces: a transition table that refuses illegal moves, one production version per model in the database, optimistic concurrency, a transactional outbox, and gates as code. Those were the point of the registry, and they would have been built as a service beside MLflow anyway.\n\n### Messaging: Kafka and RabbitMQ instead of NATS JetStream\n\n- **Kafka**: partitioned logs with consumer groups, very high throughput, long retention, and a large ecosystem (Connect, Schema Registry). Ordering is per partition, so per-job work would need keys; there is no built-in per-message acknowledgment with redelivery after a timeout, so a slow or crashed consumer blocks its partition until it commits or is rebalanced. Exactly-once semantics exist inside Kafka transactions, not across a database and the bus, so the outbox pattern would remain. Cost: a heavier cluster (KRaft controllers and brokers) for a platform whose measured peak was 189 jobs per second.\n- **RabbitMQ**: work queues with per-message acknowledgment and redelivery fit the job path well; quorum queues give durability. It has no first-class key-value store, so job state would move to Postgres or Redis, and replaying the last day of events for the dashboard and the drift charts would need streams (RabbitMQ Streams) or a second system.\n- **NATS JetStream**, as built: per-message acknowledgment and redelivery (the worker-kill measurements in `benchmarks/` exercise them), de-duplication by message id, a key-value bucket with compare-and-set for job state, replay by start time for the dashboard, and a single small binary that also runs at the edge. Its gaps showed up too: the de-duplication window is two minutes, so a much later re-publish would be stored twice, and KEDA scales on consumer lag by polling NATS's monitoring endpoint.\n\n### Workflows: Temporal\n\nTemporal would model \"drift detected, retrain, shadow, wait for gates and an approval, promote\" as one durable workflow with timers and signals, with retries and history built in. Spotter spreads that across events: the monitor publishes drift, the retrainer consumes it, the registry holds the stages, and a person acts in the dashboard. Temporal would make the long-running process explicit and inspectable in one place. Cost: a Temporal cluster (and its database) to operate, and workflow code with determinism rules; for a loop that runs a few times a month, events and a state machine in Postgres were enough.\n\n## Decision\n\nKeep the design as built for this scope, and adopt the alternatives at these thresholds:\n\n- **Triton or KServe** when the model's own time dominates a job (larger models, GPUs), or when traffic splitting across clusters is needed.\n- **MLflow** when several people train many runs and need to compare them; keep the registry service as the authority for stages and gates.\n- **Kafka** when event volume or retention outgrows JetStream, or when many independent consumers need long replay; keep the outbox.\n- **Temporal** when promotion grows more steps, waits, and people than a state machine and a few events express clearly.\n\n## Consequences\n\n- **Good:** Every guarantee in the platform is code in this repository with a test that names it, which is why each could be measured under faults.\n- **Cost:** Features those tools give for free were built by hand or left out: dynamic batching, traffic-split canaries, a run-comparison UI, and long-horizon event retention.\n- **Cost:** Operating knowledge transfers less directly: an organization standardized on KServe and MLflow would need the registry's rules mapped onto their concepts.\n"
+  },
+  {
+   "number": "0022",
+   "title": "A guided demo driven from the browser through the public API, with a labeled recording as fallback",
+   "date": "2026-11-25",
+   "status": "Accepted",
+   "markdown": "# 0022 — A guided demo driven from the browser through the public API, with a labeled recording as fallback\n\n- **Date:** 2026-11-25\n- **Status:** Accepted\n\n## Context\n\nThe platform's main loop (traffic shifts, drift detected, a version retrained and shadowed, gates, a person's approval, the new version serving) can be seen only by running a load generator in a terminal and reading several pages at once. The dashboard should be able to show the loop on its own, step by step, with the evidence for each step, including why the monitor's PSI is what it is. The dashboard may also be hosted where no platform is running, and it must not show anything as live that isn't.\n\n## Options considered\n\nFor sending scenario traffic:\n\n1. **A command-line sender** (`spotterctl` or a script). Simple, but the audience sees a terminal, and the dashboard still can't show the loop by itself.\n2. **A demo endpoint in the gateway** that runs a scenario server-side. Survives a closed tab, but adds demo-only behavior to a production service and a new route to the proxy's allowlist.\n3. **The dashboard's server runs the scenario.** Keeps the browser simple, but makes the dashboard stateful and gives it a second, hidden path to the gateway.\n4. **The browser sends tiles through the existing inference API and proxy.** Uses only the public API, exactly like any client; everything the page shows comes from the event feed and the registry. The tab must stay open while a step sends.\n\nFor explaining drift: show only the published PSI; let the dashboard fetch each version's reference and recompute; or publish the bins with each comparison.\n\nFor a host without a platform: show nothing live; or replay a recorded run.\n\n## Decision\n\nOption 4. The monitor publishes the bin edges and the reference and window shares behind each PSI (additive protobuf fields), so the page shows the arithmetic the monitor actually did instead of recomputing it. When the gateway can't be reached, the page replays a recording of a live run of the same page, labeled as a recording with its date, with long waits shortened and their real length stated. Approval stays a person's action in both modes.\n\n## Consequences\n\n- **Good:** No service or proxy rule exists only for the demo; the demo exercises the same paths as real clients.\n- **Good:** The drift panel can't disagree with the monitor; it shows the monitor's own shares.\n- **Good:** A static host still shows the whole loop, truthfully labeled, because the replay runs the same reducer on recorded inputs.\n- **Cost:** Closing the tab stops the scenario mid-step; reopening starts again from the platform's current state.\n- **Cost:** The demo's traffic enters the same monitor window as any other traffic, so on a busy platform the steps take longer.\n- **Cost:** A recording shows the platform as it was on its date and has to be re-recorded when the page or the events change shape.\n"
   }
  ]
 }

@@ -2,7 +2,7 @@
 
 ## Context
 
-Every part of the loop exists: the inference API, the event feed (`GET /v1/events`, change `phase-10-dashboard`), the monitor's `DriftEvaluated` at every evaluation, the retrainer's watch mode (change `retrain-on-drift`), shadow statistics and gates (change `phase-08-promotion`). What's missing is a way to run the loop on demand and see each step's evidence without a terminal. The approach is recorded in decision record [0022](../../../docs/decisions/0022-guided-demo-driven-through-the-public-api.md).
+Every part of the loop exists: the inference API, the event feed (`GET /v1/events`, change `phase-10-dashboard`), the monitor's `DriftEvaluated` at every evaluation, the retrainer's watch mode (change `retrain-on-drift`), shadow statistics and gates (change `phase-08-promotion`). What's missing is a way to run the loop on demand and see each step's evidence without a terminal. The approach is recorded in decision record [0022](../../../../docs/decisions/0022-guided-demo-driven-through-the-public-api.md).
 
 ## Decisions
 
