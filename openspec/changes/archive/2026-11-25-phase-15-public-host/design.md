@@ -2,7 +2,7 @@
 
 ## Context
 
-`deploy/demo/compose.yaml` runs the platform from the GHCR images and publishes only the dashboard (decision record 0020). The choice of host, access control, and hostname is recorded in decision record [0023](../../../docs/decisions/0023-public-demo-host-on-a-vps-behind-caddy.md).
+`deploy/demo/compose.yaml` runs the platform from the GHCR images and publishes only the dashboard (decision record 0020). The choice of host, access control, and hostname is recorded in decision record [0023](../../../../docs/decisions/0023-public-demo-host-on-a-vps-behind-caddy.md).
 
 ## Decisions
 
