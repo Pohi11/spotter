@@ -41,7 +41,18 @@ const GATE_NAMES: Record<string, string> = {
   approval: "Human approval",
 };
 
-export function Promotion({ versionId, version, gates }: { versionId: string; version: number; gates: Gate[] }) {
+export function Promotion({
+  versionId,
+  version,
+  gates,
+  onApproved,
+}: {
+  versionId: string;
+  version: number;
+  gates: Gate[];
+  /** Told after the registry accepted a person's approval (the demo page records it). */
+  onApproved?: (approver: string, reason: string) => void;
+}) {
   const router = useRouter();
   const [approver, setApprover] = useState("");
   const [reason, setReason] = useState("");
@@ -55,7 +66,10 @@ export function Promotion({ versionId, version, gates }: { versionId: string; ve
     const r = await post(`v1/versions/${versionId}:approve`, { approver, reason });
     setOutcome(r.ok ? { ok: true, text: `Approved by ${approver}. The approval gate now reads the recorded approval.` } : { ok: false, text: `Approval refused: ${r.message}` });
     setBusy(false);
-    if (r.ok) router.refresh();
+    if (r.ok) {
+      onApproved?.(approver, reason);
+      router.refresh();
+    }
   }
 
   async function promote() {

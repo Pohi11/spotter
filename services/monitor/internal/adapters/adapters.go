@@ -111,7 +111,8 @@ func featureDrift(results []domain.Result) []*spotterv1.FeatureDrift {
 	features := make([]*spotterv1.FeatureDrift, len(results))
 	for i, r := range results {
 		features[i] = &spotterv1.FeatureDrift{Feature: string(r.Feature), Psi: r.PSI, KsStatistic: r.KSStatistic,
-			KsPValue: r.KSPValue, ReferenceMean: r.ReferenceMean, WindowMean: r.WindowMean}
+			KsPValue: r.KSPValue, ReferenceMean: r.ReferenceMean, WindowMean: r.WindowMean,
+			BinEdges: r.Bins.Edges, ReferenceShares: r.Bins.Reference, WindowShares: r.Bins.Window}
 	}
 	return features
 }

@@ -60,6 +60,61 @@ func TestPSIEmptyBinsStayFinite(t *testing.T) {
 	}
 }
 
+func TestBinsReproduceThePSI(t *testing.T) {
+	spectest.Verifies(t, capability, "Each comparison carries the bins behind its PSI")
+	r := rand.New(rand.NewPCG(3, 4))
+	ref := normal(r, 4000, 0.4, 0.1)
+	win := normal(r, 200, 0.5, 0.1)
+	b := domain.Compare(ref, win)
+	if len(b.Edges) != 9 || len(b.Reference) != 10 || len(b.Window) != 10 {
+		t.Fatalf("got %d edges, %d reference and %d window shares", len(b.Edges), len(b.Reference), len(b.Window))
+	}
+	for i := 1; i < len(b.Edges); i++ {
+		if b.Edges[i] < b.Edges[i-1] {
+			t.Fatalf("edges decrease at %d: %v", i, b.Edges)
+		}
+	}
+	sum := 0.0
+	for i := range b.Reference {
+		sum += (b.Window[i] - b.Reference[i]) * math.Log(b.Window[i]/b.Reference[i])
+	}
+	if psi := domain.PSI(ref, win); math.Abs(sum-psi) > 1e-12 || psi < 0.2 {
+		t.Fatalf("recomputed %v, PSI %v (want equal, and a shift of 1 sd to drift)", sum, psi)
+	}
+	// Deciles of the reference put about a tenth of it in each bin.
+	for i, s := range b.Reference {
+		if math.Abs(s-0.1) > 0.01 {
+			t.Fatalf("reference share in bin %d = %v, want about 0.1", i, s)
+		}
+	}
+}
+
+func TestDetectorResultsCarryBins(t *testing.T) {
+	spectest.Verifies(t, capability, "Each comparison carries the bins behind its PSI")
+	r := rand.New(rand.NewPCG(5, 6))
+	values := map[domain.Feature][]float64{}
+	for _, f := range domain.Features {
+		values[f] = normal(r, 1000, 0.4, 0.1)
+	}
+	d := domain.NewDetector(domain.Reference{VersionID: "v", Values: values}, domain.DefaultConfig)
+	var results []domain.Result
+	for range 200 {
+		var s domain.Sample
+		for i := range s {
+			s[i] = r.NormFloat64()*0.1 + 0.4
+		}
+		_, results = d.Observe(s)
+	}
+	if len(results) != len(domain.Features) {
+		t.Fatalf("no evaluation after a full window")
+	}
+	for _, res := range results {
+		if len(res.Bins.Window) != 10 || math.Abs(res.Bins.PSI()-res.PSI) > 1e-12 {
+			t.Fatalf("%s: bins %v give PSI %v, result says %v", res.Feature, res.Bins, res.Bins.PSI(), res.PSI)
+		}
+	}
+}
+
 func TestKSKnownStatistic(t *testing.T) {
 	spectest.Verifies(t, capability, "The KS test is reported with each comparison")
 	d, p := domain.KS([]float64{1, 2, 3, 4}, []float64{3, 4, 5, 6})

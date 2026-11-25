@@ -42,6 +42,7 @@ type Result struct {
 	KSPValue      float64
 	ReferenceMean float64
 	WindowMean    float64
+	Bins          Bins // the binning PSI was computed from
 }
 
 // Transition is what an evaluation changed.
@@ -100,8 +101,9 @@ func (d *Detector) Observe(s Sample) (Transition, []Result) {
 			values[j] = w[i]
 		}
 		ksD, ksP := KS(d.ref.Values[f], values)
-		results[i] = Result{Feature: f, PSI: PSI(d.ref.Values[f], values), KSStatistic: ksD, KSPValue: ksP,
-			ReferenceMean: d.refMeans[i], WindowMean: Mean(values)}
+		bins := Compare(d.ref.Values[f], values)
+		results[i] = Result{Feature: f, PSI: bins.PSI(), KSStatistic: ksD, KSPValue: ksP,
+			ReferenceMean: d.refMeans[i], WindowMean: Mean(values), Bins: bins}
 		maxPSI = max(maxPSI, results[i].PSI)
 	}
 	switch {

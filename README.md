@@ -144,6 +144,7 @@ Specs: [model-optimization](openspec/specs/model-optimization/spec.md), [load-te
 The monitor (Go) watches every `InferenceCompleted` event and compares a sliding window of the last 200 per model version with that version's **training-time reference**: per-image channel brightness, contrast, and model confidence over the validation split, stored as `reference.json` beside the artifact and computed exactly as the worker computes them ([0012](docs/decisions/0012-drift-detection-psi-against-training-reference.md)).
 
 - **PSI** per feature every 50 events; `DriftDetected` when any feature reaches 0.2, `DriftResolved` when all fall below 0.1, published once per change on the `MONITOR` stream. The KS statistic and p-value ride along as evidence. PSI per feature is a Prometheus gauge.
+- **The arithmetic is published:** each comparison carries the decile edges and the reference and window share per bin that the PSI was summed from, so a reader can check it.
 - PSI has a noise floor: with 10 bins and 200 events, identical distributions give about 0.047 on average (measured 0.051), which is why 0.2/0.1 rather than anything tighter.
 
 Measured against the live stack with `spotter-degrade` ([report](benchmarks/2026-11-22-drift-detection.md)):
@@ -232,6 +233,7 @@ Spec: [platform-deployment](openspec/specs/platform-deployment/spec.md).
 
 [`dashboard/`](dashboard/) is a Next.js app (TypeScript, Tailwind CSS) for operators and for anyone evaluating the design ([0016](docs/decisions/0016-dashboard-and-gateway-event-feed.md)):
 
+- **Guided demo:** one situation, start to finish, on the running platform ([0022](docs/decisions/0022-guided-demo-driven-through-the-public-api.md)): normal traffic, then haze rolls in, the monitor detects drift, the retrainer trains a new version into shadow, its gates fill up, a person approves and promotes it, and it answers the same hazed tiles. The page sends real tiles through the public inference API and moves on only when the platform's events say a step happened. Beside the steps it shows who published each event and why, the monitor's PSI bin by bin (from the bins it now publishes with every comparison), and accuracy on the page's own tiles, labeled as something production can't measure. Where no platform is reachable, it replays a dated recording of a live run.
 - **Home:** what Spotter does, one recorded tile followed span by span through its OpenTelemetry trace, and a panel that classifies EuroSAT tiles (optionally blurred, noised, hazed, or darkened with the drift experiment's functions) through the running platform.
 - **Live events:** every event on the three JetStream streams, decoded and summarized as it arrives, through the gateway's `GET /v1/events` server-sent-event feed.
 - **Model:** versions, stages, and stage history; each promotion gate with its reason; approval, promotion, and a rollback that names what it restores and asks first.
@@ -272,7 +274,15 @@ docker compose --env-file demo.env up -d --wait    # the platform; only the dash
 docker compose --env-file demo.env --profile bootstrap run --rm bootstrap   # trains version 1 into shadow
 ```
 
-Then open the dashboard's Model page, approve version 1 with your name and reason, and promote it. With no production version yet, the approval is the only gate (decision record [0015](docs/decisions/0015-first-promotion-without-shadow-evidence.md)). The demo has no authentication; put it behind a reverse proxy before sharing it.
+Then open the dashboard's Model page, approve version 1 with your name and reason, and promote it. With no production version yet, the approval is the only gate (decision record [0015](docs/decisions/0015-first-promotion-without-shadow-evidence.md)).
+
+To close the loop on the Guided demo page, also start the retrainer, which trains a new version into shadow on every drift event:
+
+```bash
+docker compose --env-file demo.env --profile retrain up -d
+```
+
+Then open `/demo` and follow the steps. The demo has no authentication; put it behind a reverse proxy before sharing it.
 
 **On Kubernetes** (also needs [k3d](https://k3d.io/), [Tilt](https://tilt.dev/), Helm, and kubectl):
 

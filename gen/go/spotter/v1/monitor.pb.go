@@ -32,8 +32,15 @@ type FeatureDrift struct {
 	KsPValue      float64 `protobuf:"fixed64,4,opt,name=ks_p_value,json=ksPValue,proto3" json:"ks_p_value,omitempty"`
 	ReferenceMean float64 `protobuf:"fixed64,5,opt,name=reference_mean,json=referenceMean,proto3" json:"reference_mean,omitempty"`
 	WindowMean    float64 `protobuf:"fixed64,6,opt,name=window_mean,json=windowMean,proto3" json:"window_mean,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	// The 9 inner bin edges behind psi: the reference's 10th to 90th percentiles. The outer
+	// bins are open-ended, and a value equal to an edge falls in the upper bin.
+	BinEdges []float64 `protobuf:"fixed64,7,rep,packed,name=bin_edges,json=binEdges,proto3" json:"bin_edges,omitempty"`
+	// The reference's and the window's share of values in each of the 10 bins, floored at
+	// 1e-4 exactly as summed: psi = Σ (window − reference) · ln(window / reference).
+	ReferenceShares []float64 `protobuf:"fixed64,8,rep,packed,name=reference_shares,json=referenceShares,proto3" json:"reference_shares,omitempty"`
+	WindowShares    []float64 `protobuf:"fixed64,9,rep,packed,name=window_shares,json=windowShares,proto3" json:"window_shares,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *FeatureDrift) Reset() {
@@ -106,6 +113,27 @@ func (x *FeatureDrift) GetWindowMean() float64 {
 		return x.WindowMean
 	}
 	return 0
+}
+
+func (x *FeatureDrift) GetBinEdges() []float64 {
+	if x != nil {
+		return x.BinEdges
+	}
+	return nil
+}
+
+func (x *FeatureDrift) GetReferenceShares() []float64 {
+	if x != nil {
+		return x.ReferenceShares
+	}
+	return nil
+}
+
+func (x *FeatureDrift) GetWindowShares() []float64 {
+	if x != nil {
+		return x.WindowShares
+	}
+	return nil
 }
 
 // Published by the monitor on monitor.drift.detected.<model_name> when a version starts drifting.
@@ -374,7 +402,7 @@ var File_spotter_v1_monitor_proto protoreflect.FileDescriptor
 const file_spotter_v1_monitor_proto_rawDesc = "" +
 	"\n" +
 	"\x18spotter/v1/monitor.proto\x12\n" +
-	"spotter.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xc3\x01\n" +
+	"spotter.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xb0\x02\n" +
 	"\fFeatureDrift\x12\x18\n" +
 	"\afeature\x18\x01 \x01(\tR\afeature\x12\x10\n" +
 	"\x03psi\x18\x02 \x01(\x01R\x03psi\x12!\n" +
@@ -383,7 +411,10 @@ const file_spotter_v1_monitor_proto_rawDesc = "" +
 	"ks_p_value\x18\x04 \x01(\x01R\bksPValue\x12%\n" +
 	"\x0ereference_mean\x18\x05 \x01(\x01R\rreferenceMean\x12\x1f\n" +
 	"\vwindow_mean\x18\x06 \x01(\x01R\n" +
-	"windowMean\"\xfb\x01\n" +
+	"windowMean\x12\x1b\n" +
+	"\tbin_edges\x18\a \x03(\x01R\bbinEdges\x12)\n" +
+	"\x10reference_shares\x18\b \x03(\x01R\x0freferenceShares\x12#\n" +
+	"\rwindow_shares\x18\t \x03(\x01R\fwindowShares\"\xfb\x01\n" +
 	"\rDriftDetected\x12\x1d\n" +
 	"\n" +
 	"model_name\x18\x01 \x01(\tR\tmodelName\x12\x1d\n" +

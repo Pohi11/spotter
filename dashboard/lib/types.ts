@@ -93,6 +93,10 @@ export interface FeatureDrift {
   ksPValue: number;
   referenceMean: number;
   windowMean: number;
+  /** The bins behind psi (spec: drift-monitoring); absent in events from before they were published. */
+  binEdges?: number[];
+  referenceShares?: number[];
+  windowShares?: number[];
 }
 
 export interface DriftEvaluated {

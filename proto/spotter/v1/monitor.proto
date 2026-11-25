@@ -13,6 +13,13 @@ message FeatureDrift {
   double ks_p_value = 4;
   double reference_mean = 5;
   double window_mean = 6;
+  // The 9 inner bin edges behind psi: the reference's 10th to 90th percentiles. The outer
+  // bins are open-ended, and a value equal to an edge falls in the upper bin.
+  repeated double bin_edges = 7;
+  // The reference's and the window's share of values in each of the 10 bins, floored at
+  // 1e-4 exactly as summed: psi = Σ (window − reference) · ln(window / reference).
+  repeated double reference_shares = 8;
+  repeated double window_shares = 9;
 }
 
 // Published by the monitor on monitor.drift.detected.<model_name> when a version starts drifting.

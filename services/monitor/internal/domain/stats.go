@@ -10,22 +10,38 @@ import (
 // MinShare floors every bin share in PSI so empty bins stay finite.
 const MinShare = 1e-4
 
-// PSI is the population stability index of window against reference, over 10 bins whose
-// edges are the reference's deciles (outer bins open-ended):
-//
-//	PSI = Σ (w_i − r_i) · ln(w_i / r_i)
-func PSI(reference, window []float64) float64 {
+// Bins is the binning behind one PSI: 9 inner edges at the reference's deciles (outer bins
+// open-ended) and each side's share of values in the 10 bins, floored at MinShare.
+type Bins struct {
+	Edges     []float64
+	Reference []float64
+	Window    []float64
+}
+
+// Compare bins window against reference. Both empty or either empty gives no bins.
+func Compare(reference, window []float64) Bins {
 	if len(reference) == 0 || len(window) == 0 {
-		return 0
+		return Bins{}
 	}
 	edges := deciles(reference)
-	r := shares(reference, edges)
-	w := shares(window, edges)
+	return Bins{Edges: edges, Reference: shares(reference, edges), Window: shares(window, edges)}
+}
+
+// PSI sums the bins' contributions:
+//
+//	PSI = Σ (w_i − r_i) · ln(w_i / r_i)
+func (b Bins) PSI() float64 {
 	psi := 0.0
-	for i := range r {
-		psi += (w[i] - r[i]) * math.Log(w[i]/r[i])
+	for i := range b.Reference {
+		psi += (b.Window[i] - b.Reference[i]) * math.Log(b.Window[i]/b.Reference[i])
 	}
 	return psi
+}
+
+// PSI is the population stability index of window against reference, over 10 bins whose
+// edges are the reference's deciles (see Compare).
+func PSI(reference, window []float64) float64 {
+	return Compare(reference, window).PSI()
 }
 
 // deciles returns the 9 inner bin edges at the reference's 10th…90th percentiles.

@@ -26,3 +26,14 @@ The image workflow SHALL build the Go, Python, and dashboard images for `linux/a
 #### Scenario: Running demo
 - **WHEN** the demo is started from locally built images
 - **THEN** every service reports healthy or running, and the dashboard and its proxy to the gateway answer on the published port
+
+### Requirement: The demo can retrain on drift without a terminal
+`deploy/demo/compose.yaml` SHALL define a `retrainer` service, only in the `retrain` profile, running `spotter-retrain --watch` from the Python image with the registry, NATS, and object-store settings and the bootstrap's dataset volume. It SHALL publish no port and SHALL not be part of the demo without the profile.
+
+#### Scenario: Rendered with the retrain profile
+- **WHEN** the file is rendered with `--profile retrain`
+- **THEN** it contains a `retrainer` service running `spotter-retrain --watch` that mounts the same dataset volume as `bootstrap` and publishes no port
+
+#### Scenario: Rendered without it
+- **WHEN** the file is rendered without the profile
+- **THEN** it has no `retrainer` service

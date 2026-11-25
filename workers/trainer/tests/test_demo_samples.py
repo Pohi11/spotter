@@ -53,3 +53,40 @@ def test_samples_come_from_the_holdout_split(tmp_path):
     holdout = set(split(data.list_images(images), seed=42).holdout)
     manifest = export(images, tmp_path / "samples")
     assert all(s["source"] in holdout for s in manifest["samples"])
+
+
+SCENARIO = ("dashboard", "Scenario tiles are a fixed sample of the holdout split")
+
+
+@pytest.mark.spec(*SCENARIO)
+def test_scenario_bundles_list_the_same_holdout_tiles(tmp_path):
+    import base64
+
+    from spotter_trainer import data
+    from spotter_trainer.demo_samples import export_scenario
+    from spotter_trainer.splits import split
+
+    images = fake_eurosat(tmp_path / "2750", per_class=40)
+    holdout = {
+        p.split("/")[1].removesuffix(".jpg").lower(): p
+        for p in split(data.list_images(images), seed=42).holdout
+    }
+    out = tmp_path / "scenario"
+    bundles = export_scenario(images, out, count=30)
+
+    assert set(bundles) == {"clean", *KINDS}
+    ids = [t["id"] for t in bundles["clean"]["tiles"]]
+    assert len(ids) == 30 and len(set(ids)) == 30 and set(ids) <= set(holdout)
+    for variant, bundle in bundles.items():
+        assert json.loads((out / f"{variant}.json").read_text(encoding="utf-8")) == bundle
+        assert [t["id"] for t in bundle["tiles"]] == ids
+        for i, tile in enumerate(bundle["tiles"]):
+            source = (images / holdout[tile["id"]]).read_bytes()
+            assert tile["cls"] == holdout[tile["id"]].split("/")[0]
+            want = source if variant == "clean" else degrade_jpeg(source, variant, 1.0, seed=i)
+            assert base64.b64decode(tile["jpeg"]) == want
+
+    again = tmp_path / "again"
+    export_scenario(images, again, count=30)
+    for variant in bundles:
+        assert (again / f"{variant}.json").read_bytes() == (out / f"{variant}.json").read_bytes()

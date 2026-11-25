@@ -65,6 +65,44 @@ func TestRenderedWithSecrets(t *testing.T) {
 	}
 }
 
+func TestRetrainProfileAddsTheWatcher(t *testing.T) {
+	spectest.Verifies(t, capability, "The demo can retrain on drift without a terminal")
+	type service struct {
+		Command []string `json:"command"`
+		Ports   []any    `json:"ports"`
+		Volumes []struct {
+			Source string `json:"source"`
+			Target string `json:"target"`
+		} `json:"volumes"`
+	}
+	render := func(args ...string) map[string]service {
+		out, err := compose(t, secrets, append(args, "config", "--format", "json")...)
+		if err != nil {
+			t.Fatalf("render %v: %v\n%s", args, err, out)
+		}
+		var doc struct{ Services map[string]service }
+		if err := json.Unmarshal(out, &doc); err != nil {
+			t.Fatal(err)
+		}
+		return doc.Services
+	}
+	if _, ok := render()["retrainer"]; ok {
+		t.Fatal("retrainer rendered without the retrain profile")
+	}
+	services := render("--profile", "retrain", "--profile", "bootstrap")
+	r, ok := services["retrainer"]
+	if !ok {
+		t.Fatal("no retrainer with the retrain profile")
+	}
+	if !slices.Equal(r.Command, []string{"spotter-retrain", "--watch"}) || len(r.Ports) > 0 {
+		t.Fatalf("retrainer command %v, ports %v", r.Command, r.Ports)
+	}
+	b := services["bootstrap"]
+	if len(r.Volumes) != 1 || len(b.Volumes) != 1 || r.Volumes[0] != b.Volumes[0] {
+		t.Fatalf("retrainer volumes %v, bootstrap volumes %v; want the same dataset volume", r.Volumes, b.Volumes)
+	}
+}
+
 func TestMissingSecretFails(t *testing.T) {
 	spectest.Verifies(t, capability, "The demo runs the platform on one machine")
 	env := []string{"POSTGRES_PASSWORD=", "S3_ACCESS_KEY=a", "S3_SECRET_KEY=b"}

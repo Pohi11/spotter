@@ -204,7 +204,7 @@ function TilePath() {
         className="mt-10"
         title="One classification, in order"
         width={1000}
-        height={600}
+        height={690}
         minWidth={820}
         description={
           <ol>
@@ -212,8 +212,9 @@ function TilePath() {
             <li>The gateway puts the tile in the object store.</li>
             <li>It records the job as pending in the JetStream key-value bucket.</li>
             <li>It publishes inference.requested and returns the job id.</li>
-            <li>JetStream delivers the job to one worker, which reads the tile and classifies it.</li>
+            <li>JetStream delivers the job to one worker, which reads the tile and classifies it with the production version.</li>
             <li>The worker sets the job to succeeded with a compare-and-set, publishes inference.completed, and then acknowledges.</li>
+            <li>Only after the acknowledgement does the worker run the shadow version, if there is one, and publish inference.shadow, so the shadow never delays or fails the job.</li>
             <li>The monitor consumes the completion and adds it to the version&apos;s drift window.</li>
             <li>The client reads the result by job id.</li>
           </ol>
@@ -221,7 +222,7 @@ function TilePath() {
       >
         {LANES.map((l) => (
           <g key={l.label}>
-            <line x1={l.x} y1={68} x2={l.x} y2={585} className="stroke-rule" strokeWidth={1.5} strokeDasharray="4 4" />
+            <line x1={l.x} y1={68} x2={l.x} y2={675} className="stroke-rule" strokeWidth={1.5} strokeDasharray="4 4" />
             <Box x={l.x - 70} y={14} w={140} h={50} tone={l.tone} title={l.label} />
           </g>
         ))}
@@ -233,12 +234,15 @@ function TilePath() {
         <Msg id={id} from={3} to={4} y={320} label="deliver (pull consumer)" ink="bus" />
         <Msg id={id} from={4} to={2} y={360} label="get tile" />
         <rect x={730} y={378} width={60} height={30} rx={6} className="fill-model-soft stroke-model" strokeWidth={1.5} />
-        <Note x={722} y={398} anchor="end" muted={false}>classify (production, then shadow)</Note>
+        <Note x={722} y={398} anchor="end" muted={false}>classify (production)</Note>
         <Msg id={id} from={4} to={3} y={440} label="job = SUCCEEDED (compare-and-set)" ink="bus" />
         <Msg id={id} from={4} to={3} y={480} label="publish inference.completed" ink="bus" />
         <Msg id={id} from={4} to={3} y={520} label="ack" ink="bus" />
-        <Msg id={id} from={3} to={5} y={545} label="completion" ink="bus" />
-        <Msg id={id} from={0} to={1} y={575} label="GetInference(job id)" />
+        <rect x={730} y={538} width={60} height={30} rx={6} className="fill-model-soft stroke-model" strokeWidth={1.5} strokeDasharray="5 4" />
+        <Note x={722} y={558} anchor="end">shadow classify, after the ack</Note>
+        <Msg id={id} from={4} to={3} y={595} label="publish inference.shadow" ink="bus" dashed />
+        <Msg id={id} from={3} to={5} y={632} label="completion" ink="bus" />
+        <Msg id={id} from={0} to={1} y={668} label="GetInference(job id)" />
       </Diagram>
       <Points
         className="mt-8 max-w-3xl"
@@ -330,7 +334,7 @@ function Lifecycle() {
           </>,
           <>
             The gates are plain Go: holdout accuracy within 0.01 of production, at least 200 shadow
-            comparisons agreeing 95% of the time, mean shadow latency within 25 ms, and a
+            comparisons agreeing 95% of the time, mean shadow latency of at most 25 ms, and a
             recorded approval. A model&apos;s first version has nothing to compare with, so the
             approval alone decides (<Decision n="0015" file="first-promotion-without-shadow-evidence" />).
           </>,
@@ -365,10 +369,12 @@ function Guarantees() {
               message id, and marks it published only after JetStream acknowledges.
             </p>
             <p>
-              Worker: it fetches a job, returns early if the job is no longer pending, classifies
-              the tile, sets the job to succeeded only if it is still pending, publishes the
-              completion with a de-duplicating message id, and acknowledges last. A crash before
-              the acknowledgement means a redelivery that finds the job done.
+              Worker: it fetches a job; if the job is already finished, it publishes the outcome
+              again and acknowledges without classifying. Otherwise it classifies the tile, sets
+              the job to succeeded only if it is still pending, publishes the completion with a
+              de-duplicating message id, and acknowledges last. A crash before the
+              acknowledgement means a redelivery that finds the job done and re-publishes its
+              completion, so a crash between recording and publishing loses nothing.
             </p>
           </>
         }
@@ -387,7 +393,7 @@ function Guarantees() {
 
         <Region x={520} y={20} w={460} h={380} label="Inference worker (Python)" />
         <Box x={545} y={55} w={190} h={60} tone="bus" title="Fetch job" sub={["durable pull consumer"]} />
-        <Box x={765} y={55} w={190} h={60} tone="model" title="Still pending?" sub={["no: ack and stop"]} />
+        <Box x={765} y={55} w={190} h={60} tone="model" title="Still pending?" sub={["no: re-publish, ack"]} />
         <Box x={765} y={140} w={190} h={60} tone="model" title="Classify" />
         <Box x={765} y={225} w={190} h={60} tone="bus" title="Compare-and-set" sub={["PENDING to SUCCEEDED"]} />
         <Box x={545} y={225} w={190} h={60} tone="bus" title="Publish completion" sub={["completed-<job id>"]} />
@@ -403,6 +409,7 @@ function Guarantees() {
         className="mt-8 max-w-3xl"
         items={[
           "Without the outbox, a crash between the database commit and the publish would lose the event, or a publish before a rollback would announce a change that never happened.",
+          "The worker re-publishes a finished job's outcome on redelivery for the same reason: the completed-<job id> message id drops the copy if the first publish got through, and replaces it if it didn't.",
           "Tests stop the worker after classifying and before recording, and after recording and before acknowledging; each job still ends with one result and one completion event.",
           "The registry's shadow-statistics consumer is idempotent too: comparisons are keyed by job id, so a redelivered comparison is counted once.",
         ]}
