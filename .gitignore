@@ -62,3 +62,7 @@ python-test.xml
 
 # Demo deployment secrets
 deploy/demo/demo.env
+deploy/vps/vps.env
+
+# OVHcloud CLI credentials, if the CLI is told to keep them in the repository
+ovh.conf

@@ -1,0 +1,22 @@
+# The public demo host (decision record 0023). Caddy terminates TLS with a certificate it
+# obtains for SITE_ADDRESS, asks for one shared password on every path, and forwards to the
+# dashboard on the Compose network. Nothing else on the host is reachable from outside.
+{$SITE_ADDRESS} {
+	encode zstd gzip
+
+	basic_auth {
+		{$BASIC_AUTH_USER} {$BASIC_AUTH_HASH}
+	}
+
+	# The event feed is a server-sent event stream; flush every write instead of buffering.
+	reverse_proxy dashboard:3000 {
+		flush_interval -1
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options nosniff
+		Referrer-Policy no-referrer
+		-Server
+	}
+}

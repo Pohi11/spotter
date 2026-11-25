@@ -1,0 +1,33 @@
+# The public demo host (decision record 0023): the one-machine demo in deploy/demo with
+# Caddy in front. Caddy is the only service with host ports (80 and 443); the dashboard's
+# port is removed, so the platform is reachable only through TLS and the password.
+#
+# Used as an override of the demo file, from deploy/vps/ on the host:
+#   docker compose -f ../demo/compose.yaml -f compose.yaml --env-file vps.env up -d --wait
+# Paths in an override resolve from the first file's directory (deploy/demo/), hence ../vps/.
+
+services:
+  dashboard:
+    ports: !reset []
+
+  caddy:
+    image: caddy:2.11.9-alpine
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:?set SITE_ADDRESS in vps.env}
+      BASIC_AUTH_USER: ${BASIC_AUTH_USER:?set BASIC_AUTH_USER in vps.env}
+      BASIC_AUTH_HASH: ${BASIC_AUTH_HASH:?set BASIC_AUTH_HASH in vps.env}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ../vps/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddydata:/data
+      - caddyconfig:/config
+    depends_on:
+      dashboard: { condition: service_started }
+    restart: unless-stopped
+
+volumes:
+  caddydata:
+  caddyconfig:

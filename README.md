@@ -284,6 +284,16 @@ docker compose --env-file demo.env --profile retrain up -d
 
 Then open `/demo` and follow the steps. The demo has no authentication; put it behind a reverse proxy before sharing it.
 
+**Public demo host** (one Ubuntu VPS behind Caddy with HTTPS and one shared password, [0023](docs/decisions/0023-public-demo-host-on-a-vps-behind-caddy.md)):
+
+```bash
+ssh ubuntu@<host> 'sh -s' < deploy/vps/setup-server.sh                         # Docker, the docker group, and swap
+ssh ubuntu@<host> 'sh -s <ip-with-dashes>.sslip.io' < deploy/vps/init-env.sh   # secrets and the site login, on the host
+sh deploy/vps/deploy.sh ubuntu@<host>                                           # ship the files, start the platform and the retrainer
+```
+
+Only Caddy publishes ports (80 and 443); it obtains the certificate itself and asks for the login on every path. Train version 1 with the `bootstrap` profile on the host, as above, then approve and promote it in the dashboard.
+
 **On Kubernetes** (also needs [k3d](https://k3d.io/), [Tilt](https://tilt.dev/), Helm, and kubectl):
 
 ```bash
