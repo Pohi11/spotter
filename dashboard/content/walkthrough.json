@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-26T15:44:35Z",
+ "generated_at": "2026-11-26T16:08:55Z",
  "reports": {
   "dashboard": "2026-11-25T15:49:33Z",
   "e2e": "2026-11-25T15:49:32Z",
@@ -1865,7 +1865,7 @@
    "slug": "gate-images-on-ci",
    "title": "Gate images on CI",
    "date": "2026-11-26",
-   "archived_at": null,
+   "archived_at": "2026-11-26T10:44:48-05:00",
    "why": "The image workflow publishes on every push to `main` without waiting for CI, so a commit whose checks fail still gets a `:main` image (it happened at `d063a5a`). The public demo host deploys `:main`.",
    "what_changes": "- **Gated publishing:** `images.yml` becomes a reusable workflow with a `publish` input. CI calls it in a final `images` job that needs every other CI job, so images are built only after all checks pass and pushed only for pushes to `main`.\n- **Narrower token:** only the `images` job gets `packages: write`.\n- Decision record 0024.",
    "tasks": [
@@ -1899,7 +1899,7 @@
      "items": [
       {
        "id": "3.1",
-       "done": false,
+       "done": true,
        "text": "A push to `main` runs the image builds after the checks, and they publish."
       }
      ]
