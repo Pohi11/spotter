@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/nats-io/nats.go/jetstream"
 	"go.opentelemetry.io/otel"
@@ -42,6 +43,30 @@ func spansOfTrace(id string) []sdktrace.ReadOnlySpan {
 	return out
 }
 
+// endedSpans waits up to five seconds for a trace's server and producer spans to end and
+// returns every ended span of the trace. The gRPC server ends its span after it has sent
+// the response, so a client can return from the call before that span is recorded.
+func endedSpans(t *testing.T, id string) (spans []sdktrace.ReadOnlySpan, server, producer bool) {
+	t.Helper()
+	deadline := time.Now().Add(5 * time.Second)
+	for {
+		spans = spansOfTrace(id)
+		server, producer = false, false
+		for _, s := range spans {
+			switch s.SpanKind() {
+			case trace.SpanKindServer:
+				server = true
+			case trace.SpanKindProducer:
+				producer = true
+			}
+		}
+		if (server && producer) || time.Now().After(deadline) {
+			return spans, server, producer
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+}
+
 func TestGatewayContinuesTheCallersTraceOntoNATS(t *testing.T) {
 	spectest.Verifies(t, observability, "Every request continues or starts a trace")
 	const callerTrace = "4bf92f3577b34da6a3ce929d0e0e4736"
@@ -51,16 +76,7 @@ func TestGatewayContinuesTheCallersTraceOntoNATS(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	var server, producer bool
-	for _, s := range spansOfTrace(callerTrace) {
-		switch s.SpanKind() {
-		case trace.SpanKindServer:
-			server = true
-		case trace.SpanKindProducer:
-			producer = true
-		}
-	}
-	if !server || !producer {
+	if _, server, producer := endedSpans(t, callerTrace); !server || !producer {
 		t.Fatalf("caller's trace has server span %v and producer span %v; want both", server, producer)
 	}
 
@@ -87,9 +103,9 @@ func TestSpansHoldNoImageBytesOrSecrets(t *testing.T) {
 		t.Fatal(err)
 	}
 	secret := s3test.Start(t).SecretKey
-	spans := spansOfTrace(id)
-	if len(spans) == 0 {
-		t.Fatal("no spans recorded")
+	spans, server, producer := endedSpans(t, id)
+	if !server || !producer {
+		t.Fatalf("server span %v, producer span %v; want both checked", server, producer)
 	}
 	for _, s := range spans {
 		for _, kv := range s.Attributes() {
