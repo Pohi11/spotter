@@ -2,7 +2,7 @@
 
 ## Context
 
-`images.yml` builds the Go, Python, and dashboard images for amd64 and arm64 and pushes them on pushes to `main` (decision record 0020). It runs beside CI and does not wait for it. The choice to gate it on CI, and how, is recorded in decision record [0024](../../../docs/decisions/0024-publish-images-only-after-ci-passes.md).
+`images.yml` builds the Go, Python, and dashboard images for amd64 and arm64 and pushes them on pushes to `main` (decision record 0020). It runs beside CI and does not wait for it. The choice to gate it on CI, and how, is recorded in decision record [0024](../../../../docs/decisions/0024-publish-images-only-after-ci-passes.md).
 
 ## Decisions
 

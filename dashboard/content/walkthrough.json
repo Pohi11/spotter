@@ -1,22 +1,22 @@
 {
- "generated_at": "2026-11-25T20:14:01Z",
+ "generated_at": "2026-11-26T15:44:35Z",
  "reports": {
   "dashboard": "2026-11-25T15:49:33Z",
   "e2e": "2026-11-25T15:49:32Z",
-  "go": "2026-11-25T20:13:59Z",
+  "go": "2026-11-26T15:44:34Z",
   "python": "2026-11-25T15:51:12Z"
  },
  "totals": {
-  "changes": 17,
+  "changes": 18,
   "requirements": 124,
   "verified": 124,
   "tests": {
    "dashboard": 43,
    "e2e": 21,
-   "go": 334,
+   "go": 335,
    "python": 78
   },
-  "linked_tests": 406
+  "linked_tests": 407
  },
  "changes": [
   {
@@ -1799,7 +1799,7 @@
    "slug": "phase-15-public-host",
    "title": "Phase 15: Public host",
    "date": "2026-11-25",
-   "archived_at": null,
+   "archived_at": "2026-11-25T15:14:09-05:00",
    "why": "The demo runs on any machine with Docker (change `phase-12-delivery`), but there is no public copy to show, and the demo has no TLS or authentication of its own. A public copy has to serve the model, so it needs the whole platform, not only the dashboard.",
    "what_changes": "- **Public host:** `deploy/vps/compose.yaml` layers Caddy over `deploy/demo/compose.yaml`. Caddy is the only service with host ports, serves the site over HTTPS with a certificate it obtains itself, requires one shared password on every path, and forwards to the dashboard. The dashboard loses its host port.\n- **Host as code:** `setup-server.sh` installs Docker and adds swap on a fresh Ubuntu host, `init-env.sh` writes the host's secrets and password hash on the host, and `deploy.sh` ships the files and starts the platform and the retrainer.\n- Decision record 0023.",
    "tasks": [
@@ -1858,6 +1858,62 @@
    ],
    "decisions": [
     "0023"
+   ]
+  },
+  {
+   "id": "2026-11-26-gate-images-on-ci",
+   "slug": "gate-images-on-ci",
+   "title": "Gate images on CI",
+   "date": "2026-11-26",
+   "archived_at": null,
+   "why": "The image workflow publishes on every push to `main` without waiting for CI, so a commit whose checks fail still gets a `:main` image (it happened at `d063a5a`). The public demo host deploys `:main`.",
+   "what_changes": "- **Gated publishing:** `images.yml` becomes a reusable workflow with a `publish` input. CI calls it in a final `images` job that needs every other CI job, so images are built only after all checks pass and pushed only for pushes to `main`.\n- **Narrower token:** only the `images` job gets `packages: write`.\n- Decision record 0024.",
+   "tasks": [
+    {
+     "title": "1. Decision",
+     "items": [
+      {
+       "id": "1.1",
+       "done": true,
+       "text": "Decision record 0024."
+      }
+     ]
+    },
+    {
+     "title": "2. Workflows",
+     "items": [
+      {
+       "id": "2.1",
+       "done": true,
+       "text": "`images.yml` as a reusable workflow with a `publish` input (`compose_test.go`: workflow definition)."
+      },
+      {
+       "id": "2.2",
+       "done": true,
+       "text": "CI's `images` job, needing every other job (`compose_test.go`: gated on CI)."
+      }
+     ]
+    },
+    {
+     "title": "3. Verification",
+     "items": [
+      {
+       "id": "3.1",
+       "done": false,
+       "text": "A push to `main` runs the image builds after the checks, and they publish."
+      }
+     ]
+    }
+   ],
+   "requirements": [
+    {
+     "capability": "platform-delivery",
+     "kind": "modified",
+     "name": "Images are built on every change and published from main"
+    }
+   ],
+   "decisions": [
+    "0024"
    ]
   }
  ],
@@ -6440,13 +6496,20 @@
    "requirements": [
     {
      "name": "Images are built on every change and published from main",
-     "text": "The image workflow SHALL build the Go, Python, and dashboard images for `linux/amd64` and `linux/arm64` on every pull request and every push to `main`, and SHALL push them to `ghcr.io/\u003cowner\u003e/spotter-go`, `spotter-python`, and `spotter-dashboard` only on pushes to `main`, tagged with the full commit SHA and `main`.",
+     "text": "The image workflow SHALL build the Go, Python, and dashboard images for `linux/amd64` and `linux/arm64` on every pull request and every push to `main`, only after every other CI job has passed, and SHALL push them to `ghcr.io/\u003cowner\u003e/spotter-go`, `spotter-python`, and `spotter-dashboard` only on pushes to `main`, tagged with the full commit SHA and `main`. The image workflow SHALL not run except from CI.",
      "scenarios": [
       {
        "name": "Workflow definition",
        "steps": [
         "**WHEN** the workflow file is read",
-        "**THEN** it builds all three images for both platforms, logs in and pushes only for push events, and tags with the commit SHA and `main`"
+        "**THEN** it builds all three images for both platforms, logs in and pushes only when asked to publish, and tags with the commit SHA and `main`"
+       ]
+      },
+      {
+       "name": "Gated on CI",
+       "steps": [
+        "**WHEN** the CI workflow is read",
+        "**THEN** its `images` job calls the image workflow, needs every other CI job with no condition that could run it after a failure, and asks to publish only for push events, and the image workflow has no trigger other than being called"
        ]
       }
      ],
@@ -6455,7 +6518,13 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/deploy/demo TestImageWorkflow",
        "status": "passed",
-       "seconds": 0.01
+       "seconds": 0
+      },
+      {
+       "suite": "go",
+       "id": "github.com/Pohi11/spotter/deploy/demo TestImagesGatedOnCI",
+       "status": "passed",
+       "seconds": 0
       }
      ],
      "status": "verified"
@@ -6491,13 +6560,13 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/deploy/demo TestRenderedWithSecrets",
        "status": "passed",
-       "seconds": 1.51
+       "seconds": 0.19
       },
       {
        "suite": "go",
        "id": "github.com/Pohi11/spotter/deploy/demo TestMissingSecretFails",
        "status": "passed",
-       "seconds": 1.25
+       "seconds": 0.18
       },
       {
        "suite": "go",
@@ -6532,7 +6601,7 @@
        "suite": "go",
        "id": "github.com/Pohi11/spotter/deploy/demo TestRetrainProfileAddsTheWatcher",
        "status": "passed",
-       "seconds": 1.97
+       "seconds": 0.37
       }
      ],
      "status": "verified"
@@ -7613,6 +7682,13 @@
    "date": "2026-11-25",
    "status": "Accepted",
    "markdown": "# 0023 — Host the public demo on a VPS with Compose, behind Caddy with TLS and a password\n\n- **Date:** 2026-11-25\n- **Status:** Accepted\n\n## Context\n\nDecision record 0020 made the demo a Compose file that runs the whole platform on one machine, and left open where a public copy runs. A public copy has to serve the model, not only the dashboard: the guided demo sends real tiles through the inference API, and the monitor, retrainer, and promotion flow need the full platform behind it. The demo has no authentication of its own, and anyone who reaches it can send traffic, approve, promote, and roll back (decision record 0016).\n\n## Options considered\n\nFor the host:\n\n1. **Hugging Face Docker Space:** Docker Spaces on the free CPU tier now need a paid subscription. A Space runs one container, so every process would run under a supervisor, the second way to run everything that 0020 rejected. Its disk resets on restart unless persistent storage is bought, and it sleeps when idle.\n2. **A static or serverless host for the dashboard (Vercel, a static Space):** serves the dashboard and its recorded replay, but not the model, the event bus, or the services.\n3. **One small VPS running the existing Compose file:** the same images and separation as the demo, persistent volumes, no sleep, at a lower monthly price than option 1. A 4 GB, 2 vCPU machine fits the platform; a swap file covers training peaks. The host is OVHcloud's VPS-1; the cheaper Hetzner plans could not be ordered at the time.\n\nFor access:\n\n1. **Fully open:** anyone who finds the address can promote, roll back, or flood the model.\n2. **Public reading, a password for actions:** needs changes in the dashboard and the proxy to tell reading from acting, and the guided demo itself sends traffic.\n3. **One shared password on the whole site:** no code changes; viewers get the password with the link.\n\nFor the hostname: a real domain, or an `sslip.io` name (`\u003cip-with-dashes\u003e.sslip.io`), which resolves to the address it contains and can get a public certificate with no DNS setup.\n\n## Decision\n\nA VPS runs `deploy/demo/compose.yaml` with an override, `deploy/vps/compose.yaml`, that adds Caddy and removes the dashboard's host port. Caddy is the only service with host ports (80 and 443). It obtains a Let's Encrypt certificate for `SITE_ADDRESS`, redirects HTTP to HTTPS, requires one shared basic-auth login on every path, and forwards to the dashboard on the Compose network. The hostname starts as the `sslip.io` name of the host's address. Secrets and the password are generated on the host (`init-env.sh`) and never leave it; `vps.env` holds the password's bcrypt hash. Scripts in `deploy/vps/` prepare the host and ship the files, so the host is rebuilt from the repository, not by hand.\n\n## Consequences\n\n- **Good:** The public copy is the real platform: inference, events, drift, retraining, and promotion all run, from the same published images as every other deployment.\n- **Good:** Nothing but Caddy is reachable from outside, and nothing changes in the dashboard or services.\n- **Cost:** One password for everyone: no per-person accounts, and the approval name in the dashboard is whatever a viewer types. Changing the password means regenerating the hash and restarting Caddy.\n- **Cost:** One machine, no redundancy; a VPS restart is downtime, and its backups are the provider's.\n- **Cost:** The `sslip.io` name depends on a third-party DNS service; moving to a real domain changes only `SITE_ADDRESS`.\n"
+  },
+  {
+   "number": "0024",
+   "title": "Publish images only after every CI check passes",
+   "date": "2026-11-26",
+   "status": "Accepted. Amends decision record 0020's publishing trigger.",
+   "markdown": "# 0024 — Publish images only after every CI check passes\n\n- **Date:** 2026-11-26\n- **Status:** Accepted. Amends decision record 0020's publishing trigger.\n\n## Context\n\nDecision record 0020 publishes the three images to GitHub Container Registry on every push to `main`, from a workflow (`images.yml`) that runs beside CI (`ci.yml`) and does not wait for it. Commit `d063a5a` failed CI and still published `:main` and its SHA tag. The public demo host (decision record 0023) deploys `:main`, so a broken commit could reach it: the tag carries no signal that the code behind it was tested.\n\n## Options considered\n\n1. **Keep the workflows independent.** Fastest feedback (images finish about 11 minutes after a push, in parallel with CI), but `:main` can point at an image whose tests failed.\n2. **Trigger the image workflow with `workflow_run` when CI completes successfully.** Gated, keeps the files apart, but the run starts from the default branch's workflow file with a different event: the checkout ref and the SHA tag have to be taken from the triggering run, a pull request's images can no longer be built from the pull request's own workflow, and the link between a commit's checks and its images is split across two runs.\n3. **Make the image workflow reusable and call it from CI as a final job that needs every other job.** Gated by GitHub's own `needs` semantics (a failed or skipped dependency skips the job), one run per commit shows the checks and the images together, and the image workflow keeps its own file and its own permissions. Images start only after the slowest check (the kind job, about 8 minutes), so a push takes about 19 minutes to publish instead of 11.\n\n## Decision\n\nOption 3. `images.yml` runs only through `workflow_call`, with a `publish` input. CI calls it in an `images` job that needs every other CI job, passes `publish: true` only on pushes, and grants `packages: write` to that job alone. Pull requests still build both platforms, without logging in or pushing.\n\n## Consequences\n\n- **Good:** An image tag, `:main` included, exists only for a commit whose checks all passed, so the demo host never pulls an untested build. The rest of the CI jobs no longer hold `packages: write`.\n- **Cost:** Publishing waits for CI: about 8 extra minutes per push to `main`, and a pull request's image build also waits for its checks. A flaky check now blocks publishing until it is rerun.\n- **Unchanged:** Deployment to the host stays a person's step (`deploy.sh`); this changes which images can exist, not when they are deployed.\n"
   }
  ]
 }
