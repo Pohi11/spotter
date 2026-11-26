@@ -292,7 +292,7 @@ ssh ubuntu@<host> 'sh -s <ip-with-dashes>.sslip.io' < deploy/vps/init-env.sh   #
 sh deploy/vps/deploy.sh ubuntu@<host>                                           # ship the files, start the platform and the retrainer
 ```
 
-Only Caddy publishes ports (80 and 443); it obtains the certificate itself and asks for the login on every path. Train version 1 with the `bootstrap` profile on the host, as above, then approve and promote it in the dashboard.
+Only Caddy publishes ports (80 and 443); it obtains the certificate itself and asks for the login on every path. Train version 1 with the `bootstrap` profile on the host, as above (the host's `vps.env` sets `BOOTSTRAP_EPOCHS=12`), then approve and promote it in the dashboard. `sh deploy/vps/reset-data.sh ubuntu@<host>` wipes the platform's data, keeping the dataset and the certificate, and trains a fresh version 1.
 
 **On Kubernetes** (also needs [k3d](https://k3d.io/), [Tilt](https://tilt.dev/), Helm, and kubectl):
 
