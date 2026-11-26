@@ -136,8 +136,8 @@ func TestImageWorkflow(t *testing.T) {
 	if err := yaml.Unmarshal(b, &wf); err != nil {
 		t.Fatal(err)
 	}
-	if _, ok := wf.On["pull_request"]; !ok {
-		t.Error("not built on pull requests")
+	if _, ok := wf.On["workflow_call"]; !ok || len(wf.On) != 1 {
+		t.Errorf("triggers %v: want only workflow_call, so it runs only from CI", wf.On)
 	}
 	job := wf.Jobs["build"]
 	var images []string
@@ -153,12 +153,12 @@ func TestImageWorkflow(t *testing.T) {
 		switch {
 		case strings.HasPrefix(s.Uses, "docker/login-action"):
 			sawLogin = true
-			if s.If != "github.event_name == 'push'" || s.With["registry"] != "ghcr.io" {
-				t.Errorf("login step %+v: want ghcr.io, push events only", s)
+			if s.If != "inputs.publish" || s.With["registry"] != "ghcr.io" {
+				t.Errorf("login step %+v: want ghcr.io, only when publishing", s)
 			}
 		case strings.HasPrefix(s.Uses, "docker/build-push-action"):
 			sawBuild = true
-			if s.With["platforms"] != "linux/amd64,linux/arm64" || s.With["push"] != "${{ github.event_name == 'push' }}" {
+			if s.With["platforms"] != "linux/amd64,linux/arm64" || s.With["push"] != "${{ inputs.publish }}" {
 				t.Errorf("build step %+v", s.With)
 			}
 		case strings.HasPrefix(s.Uses, "docker/metadata-action"):
@@ -169,6 +169,67 @@ func TestImageWorkflow(t *testing.T) {
 	}
 	if !sawLogin || !sawBuild {
 		t.Error("login or build step missing")
+	}
+}
+
+// TestImagesGatedOnCI checks that images are built only after every other CI job passes
+// and are published only for pushes (decision record 0024).
+func TestImagesGatedOnCI(t *testing.T) {
+	spectest.Verifies(t, capability, "Images are built on every change and published from main")
+	b, err := os.ReadFile("../../.github/workflows/ci.yml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var wf struct {
+		On   map[string]any `yaml:"on"`
+		Jobs map[string]struct {
+			Needs       []string          `yaml:"needs"`
+			If          string            `yaml:"if"`
+			Uses        string            `yaml:"uses"`
+			With        map[string]string `yaml:"with"`
+			Permissions map[string]string `yaml:"permissions"`
+		} `yaml:"jobs"`
+	}
+	if err := yaml.Unmarshal(b, &wf); err != nil {
+		t.Fatal(err)
+	}
+	for _, ev := range []string{"push", "pull_request"} {
+		if _, ok := wf.On[ev]; !ok {
+			t.Errorf("CI does not run on %s", ev)
+		}
+	}
+	job, ok := wf.Jobs["images"]
+	if !ok {
+		t.Fatal("no images job in CI")
+	}
+	if job.Uses != "./.github/workflows/images.yml" {
+		t.Errorf("images job uses %q", job.Uses)
+	}
+	if job.If != "" {
+		t.Errorf("images job has if %q: it could run after a failed check", job.If)
+	}
+	var others []string
+	for name := range wf.Jobs {
+		if name != "images" {
+			others = append(others, name)
+		}
+	}
+	slices.Sort(others)
+	needs := slices.Clone(job.Needs)
+	slices.Sort(needs)
+	if !slices.Equal(needs, others) {
+		t.Errorf("images needs %v, want every other job %v", needs, others)
+	}
+	if job.With["publish"] != "${{ github.event_name == 'push' }}" {
+		t.Errorf("publish = %q, want push events only", job.With["publish"])
+	}
+	if job.Permissions["packages"] != "write" {
+		t.Errorf("images job permissions %v: needs packages: write", job.Permissions)
+	}
+	for name, j := range wf.Jobs {
+		if name != "images" && j.Permissions["packages"] == "write" {
+			t.Errorf("job %s can write packages", name)
+		}
 	}
 }
 
